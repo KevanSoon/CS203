@@ -22,6 +22,7 @@ jobs:
         run: |
           cd backend
           git init
+          git branch -M main
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
           git add .
