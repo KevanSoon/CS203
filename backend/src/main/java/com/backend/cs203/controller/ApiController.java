@@ -2,15 +2,21 @@ package com.backend.cs203.controller;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
 @RequestMapping("/api")
 public class ApiController {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
@@ -25,5 +31,11 @@ public class ApiController {
         return ResponseEntity.ok(Map.of(
             "message", "Hello, " + name + "!"
         ));
+    }
+
+    @GetMapping("/db/test")
+    public String dbTest() {
+        Integer v = jdbcTemplate.queryForObject("SELECT 1", Integer.class);
+        return v != null && v == 1 ? "DB OK" : "DB FAIL";
     }
 }
