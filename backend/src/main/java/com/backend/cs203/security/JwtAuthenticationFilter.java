@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,18 +32,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Step 1: Get the Authorization header
+        // Step 1: Prefer Authorization header
         String authHeader = request.getHeader("Authorization");
+        String token = null;
 
-        // Step 2: Check if header exists and starts with "Bearer "
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            // No token provided - continue without authentication
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else {
+            // Fallback: try reading JWT from cookie named 'jwt'
+            if (request.getCookies() != null) {
+                for (Cookie c : request.getCookies()) {
+                    if ("jwt".equals(c.getName())) {
+                        token = c.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If no token found, continue unauthenticated
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        // Step 3: Extract the token (remove "Bearer " prefix)
-        String token = authHeader.substring(7);
 
         // Step 4: Validate the token
         if (!jwtUtil.validateToken(token)) {
