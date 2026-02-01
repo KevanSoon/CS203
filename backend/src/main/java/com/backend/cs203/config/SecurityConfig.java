@@ -54,16 +54,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/health").permitAll()         // Health check
                 .requestMatchers("/api/hello").permitAll()          // Test endpoint
                 .requestMatchers("/api/db/test").permitAll()        // DB test
-                .requestMatchers("/api/docs").permitAll() 
-                .requestMatchers("/api/swagger-ui/**").permitAll()   
-
+    
                 // Swagger/OpenAPI documentation - allow GET requests for UI and docs
                 .requestMatchers(HttpMethod.GET,
                     "/api/docs",
                     "/api/docs/**",
                     "/api/docs/openapi",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
+                    "/api/swagger-ui/**",
+                    "/api/swagger-ui.html",
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/webjars/**"
