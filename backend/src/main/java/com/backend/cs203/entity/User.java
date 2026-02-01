@@ -21,6 +21,8 @@ public class User {
     private String email;
 
     @Column(length = 100, nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private String password;
 
     @Enumerated(EnumType.STRING)
