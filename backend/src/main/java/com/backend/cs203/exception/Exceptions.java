@@ -55,16 +55,6 @@ public class Exceptions {
          * Returns 400 Bad Request with field-specific errors
          */
         @ExceptionHandler(MethodArgumentNotValidException.class)
-<<<<<<< Updated upstream
-        public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
-            Map<String, String> errors = new HashMap<>();
-            ex.getBindingResult().getFieldErrors().forEach(error -> {
-                String field = error.getField();
-                String message = error.getDefaultMessage();
-                errors.put(field, message);
-            });
-            return ResponseEntity.badRequest().body(errors);
-=======
         public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest req) {
             String msg = ex.getBindingResult().getAllErrors().stream()
                     .map(error -> {
@@ -83,7 +73,6 @@ public class Exceptions {
                     .path(req.getRequestURI())
                     .build();
                 return ResponseEntity.badRequest().body(body);
->>>>>>> Stashed changes
         }
 
         /**
