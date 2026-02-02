@@ -53,12 +53,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-        public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout() {
         ResponseCookie cookie = cookieFactory.clearJwtCookie();
         return ResponseEntity.noContent()
             .header(HttpHeaders.SET_COOKIE, cookie.toString())
             .build();
-        }
+    }
         
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication authentication) {
