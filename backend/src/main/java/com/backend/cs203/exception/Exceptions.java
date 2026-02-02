@@ -9,6 +9,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.backend.cs203.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Container class for all exception-related classes
@@ -37,10 +39,15 @@ public class Exceptions {
          * Returns 401 Unauthorized
          */
         @ExceptionHandler(AuthException.class)
-        public ResponseEntity<Map<String, String>> handleAuthException(AuthException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", ex.getMessage()));
+        public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex, HttpServletRequest req) {
+            ErrorResponse body = ErrorResponse.builder()
+                .timestamp(java.time.Instant.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error(HttpStatus.UNAUTHORIZED.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(req.getRequestURI())
+                .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
         }
 
         /**
@@ -48,6 +55,7 @@ public class Exceptions {
          * Returns 400 Bad Request with field-specific errors
          */
         @ExceptionHandler(MethodArgumentNotValidException.class)
+<<<<<<< Updated upstream
         public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
             Map<String, String> errors = new HashMap<>();
             ex.getBindingResult().getFieldErrors().forEach(error -> {
@@ -56,6 +64,26 @@ public class Exceptions {
                 errors.put(field, message);
             });
             return ResponseEntity.badRequest().body(errors);
+=======
+        public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest req) {
+            String msg = ex.getBindingResult().getAllErrors().stream()
+                    .map(error -> {
+                        String field = ((FieldError) error).getField();
+                        String message = error.getDefaultMessage();
+                        return field + ": " + message;
+                    })
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse(ex.getMessage());
+
+                ErrorResponse body = ErrorResponse.builder()
+                    .timestamp(java.time.Instant.now())
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                    .message(msg)
+                    .path(req.getRequestURI())
+                    .build();
+                return ResponseEntity.badRequest().body(body);
+>>>>>>> Stashed changes
         }
 
         /**
@@ -63,10 +91,15 @@ public class Exceptions {
          * Returns 500 Internal Server Error
          */
         @ExceptionHandler(Exception.class)
-        public ResponseEntity<Map<String, String>> handleUnexpectedError(Exception ex) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred"));
+        public ResponseEntity<ErrorResponse> handleUnexpectedError(Exception ex, HttpServletRequest req) {
+            ErrorResponse body = ErrorResponse.builder()
+                .timestamp(java.time.Instant.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
+                .message("An unexpected error occurred")
+                .path(req.getRequestURI())
+                .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         }
     }
 }
