@@ -47,9 +47,7 @@ public class AuthController {
                 .usertype(auth.getUsertype())
                 .build();
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(userInfo);
+        return cookieFactory.withCookie(cookie, userInfo);
     }
 
     @PostMapping("/logout")
