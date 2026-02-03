@@ -41,12 +41,12 @@ const HeroSection = () => {
           </p>
           <div className="flex gap-4 flex-wrap">
             <Link href="/signup">
-              <CartoonButton label="Start Learning for Free" />
+              <CartoonButton label="Get started" />
             </Link>
-            <Link href="/dictionary">
+            <Link href="/login">
               <CartoonButton
-                label="Explore the Dictionary"
-                color="bg-[#4a4e69]"
+                label="Log in"
+                color="bg-foreground"
                 textColor="text-white"
               />
             </Link>
