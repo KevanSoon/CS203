@@ -1,4 +1,4 @@
-package com.backend.cs203.dto;
+package com.backend.cs203.dto.error;
 
 import java.time.Instant;
 

@@ -9,7 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.backend.cs203.dto.ErrorResponse;
+import com.backend.cs203.dto.error.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
