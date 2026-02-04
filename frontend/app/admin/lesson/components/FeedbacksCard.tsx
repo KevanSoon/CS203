@@ -58,7 +58,7 @@ export const FeedbacksCard = () => {
             key={i}
             className={`p-4 rounded-lg border transition-colors cursor-pointer ${
               item.type === "alert"
-                ? "border-orange-500/50 hover:bg-orange-500/5"
+                ? "border-primary/50 bg-primary/5 hover:bg-primary/10"
                 : "border-border hover:bg-border/50"
             }`}
           >
@@ -70,13 +70,7 @@ export const FeedbacksCard = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
-                      item.type === "alert"
-                        ? "bg-orange-500/20 text-orange-500"
-                        : "bg-primary/20 text-primary"
-                    }`}
-                  >
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
                     {item.type === "alert" ? (
                       <>
                         <AlertTriangle className="h-3 w-3" />

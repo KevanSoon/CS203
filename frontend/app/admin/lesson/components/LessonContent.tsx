@@ -11,7 +11,7 @@ export const LessonContent = ({ selected }: LessonContentProps) => {
   return (
     <div className="flex-1 bg-background p-6 overflow-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col items-start gap-4 mb-8 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             Lesson Management

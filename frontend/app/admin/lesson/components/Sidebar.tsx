@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Home, BookOpen, Settings, HelpCircle } from "lucide-react";
+import { Home, BookOpen, Settings, HelpCircle, MessageSquare } from "lucide-react";
 import { SidebarOption } from "./SidebarOption";
 import { SidebarTitleSection } from "./SidebarTitleSection";
 import { SidebarToggle } from "./SidebarToggle";
@@ -23,19 +23,19 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
 
       <div className="space-y-1 mb-8">
         <SidebarOption
-          Icon={Home}
+          Icon={BookOpen}
           title="My Lessons"
           selected={selected}
           setSelected={setSelected}
           open={open}
         />
         <SidebarOption
-          Icon={BookOpen}
+          Icon={MessageSquare}
           title="Feedbacks and Alerts"
           selected={selected}
           setSelected={setSelected}
           open={open}
-          notifs={3}
+          // notifs={3}
         />
       </div>
       <SidebarToggle open={open} setOpen={setOpen} />

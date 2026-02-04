@@ -8,7 +8,6 @@ export const StatsGrid = () => {
           <div className="p-2 bg-primary/10 rounded-lg">
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
-          <TrendingUp className="h-4 w-4 text-primary" />
         </div>
         <h3 className="font-medium text-muted-foreground mb-1">
           Total Lessons
@@ -21,7 +20,6 @@ export const StatsGrid = () => {
           <div className="p-2 bg-primary/10 rounded-lg">
             <FileText className="h-5 w-5 text-primary" />
           </div>
-          <TrendingUp className="h-4 w-4 text-primary" />
         </div>
         <h3 className="font-medium text-muted-foreground mb-1">
           Lessons Published
@@ -34,7 +32,6 @@ export const StatsGrid = () => {
           <div className="p-2 bg-primary/10 rounded-lg">
             <GraduationCap className="h-5 w-5 text-primary" />
           </div>
-          <TrendingUp className="h-4 w-4 text-primary" />
         </div>
         <h3 className="font-medium text-muted-foreground mb-1">
           Completions
