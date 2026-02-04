@@ -7,6 +7,7 @@ export interface SidebarOptionProps {
   setSelected: (title: string) => void;
   open: boolean;
   notifs?: number;
+  onSelect?: () => void;
 }
 
 export const SidebarOption = ({
@@ -16,12 +17,18 @@ export const SidebarOption = ({
   setSelected,
   open,
   notifs,
+  onSelect,
 }: SidebarOptionProps) => {
   const isSelected = selected === title;
 
+  const handleClick = () => {
+    setSelected(title);
+    onSelect?.();
+  };
+
   return (
     <button
-      onClick={() => setSelected(title)}
+      onClick={handleClick}
       className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${
         isSelected
           ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"

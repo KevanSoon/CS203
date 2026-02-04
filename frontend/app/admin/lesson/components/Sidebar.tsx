@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Home, BookOpen, Settings, HelpCircle, MessageSquare } from "lucide-react";
+import { BookOpen, MessageSquare, Menu } from "lucide-react";
 import { SidebarOption } from "./SidebarOption";
 import { SidebarTitleSection } from "./SidebarTitleSection";
 import { SidebarToggle } from "./SidebarToggle";
@@ -11,34 +11,65 @@ export interface SidebarProps {
 }
 
 export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  const handleOptionSelect = () => {
+    // Only close sidebar on mobile (< 768px)
+    if (window.innerWidth < 768) {
+      setOpen(false);
+    }
+  };
 
   return (
-    <nav
-      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${
-        open ? "w-64" : "w-16"
-      } border-border bg-card p-2 shadow-sm`}
-    >
-      <SidebarTitleSection open={open} />
+    <>
+      {/* Mobile menu button - always visible on mobile when sidebar is closed */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed top-4 right-4 z-50 p-2 rounded-lg bg-card border border-border shadow-md md:hidden"
+        >
+          <Menu className="h-5 w-5 text-foreground" />
+        </button>
+      )}
 
-      <div className="space-y-1 mb-8">
-        <SidebarOption
-          Icon={BookOpen}
-          title="My Lessons"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
+      {/* Backdrop overlay for mobile */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setOpen(false)}
         />
-        <SidebarOption
-          Icon={MessageSquare}
-          title="Feedbacks and Alerts"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-          // notifs={3}
-        />
-      </div>
-      <SidebarToggle open={open} setOpen={setOpen} />
-    </nav>
+      )}
+
+      <nav
+        className={`
+          fixed md:sticky top-0 left-0 h-screen z-50 shrink-0 border-r transition-all duration-300 ease-in-out
+          border-border bg-card p-2 shadow-sm
+          ${open ? "w-64" : "w-16"}
+          ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
+        <SidebarTitleSection open={open} />
+
+        <div className="space-y-1 mb-8">
+          <SidebarOption
+            Icon={BookOpen}
+            title="My Lessons"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+            onSelect={handleOptionSelect}
+          />
+          <SidebarOption
+            Icon={MessageSquare}
+            title="Feedbacks and Alerts"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+            onSelect={handleOptionSelect}
+          />
+        </div>
+        <SidebarToggle open={open} setOpen={setOpen} />
+      </nav>
+    </>
   );
 };
