@@ -39,10 +39,7 @@ public class User {
     private Instant lastLogin;
 
     @Column(name = "deactivated_at")
-    private LocalDateTime deactivatedAt;
-
-    // createdAt is set by the database default or can be set explicitly by application
-    // Do not set lastLogin here; set on successful login in the service layer
+    private Instant deactivatedAt;
 
     public enum UserType {
         user, admin, root
