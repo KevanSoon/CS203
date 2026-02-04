@@ -1,12 +1,14 @@
 package com.backend.cs203.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.backend.cs203.dto.AuthResponse;
-import com.backend.cs203.dto.LoginRequest;
+import com.backend.cs203.dto.auth.AuthResponse;
+import com.backend.cs203.dto.auth.LoginRequest;
+import com.backend.cs203.dto.auth.UserInfoResponse;
 import com.backend.cs203.exception.Exceptions.AuthException;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
@@ -22,6 +24,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AuthException("Invalid username or password"));
@@ -37,7 +40,7 @@ public class AuthService {
         }
 
         // Update lastLogin and persist
-        user.setLastLogin(LocalDateTime.now());
+        user.setLastLogin(Instant.now());
         userRepository.save(user);
 
         // Generate JWT token
@@ -45,6 +48,17 @@ public class AuthService {
 
         return AuthResponse.builder()
                 .token(token)
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .usertype(user.getUsertype().name())
+                .build();
+    }
+
+    public UserInfoResponse getCurrentUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AuthException("User not found"));
+
+        return UserInfoResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .usertype(user.getUsertype().name())
