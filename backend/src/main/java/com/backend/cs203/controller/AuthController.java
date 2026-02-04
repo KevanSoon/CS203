@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.backend.cs203.dto.AuthResponse;
-import com.backend.cs203.dto.LoginRequest;
-import com.backend.cs203.dto.UserInfoResponse;
+import com.backend.cs203.dto.auth.AuthResponse;
+import com.backend.cs203.dto.auth.LoginRequest;
+import com.backend.cs203.dto.auth.UserInfoResponse;
 import com.backend.cs203.exception.Exceptions.AuthException;
 import com.backend.cs203.security.CookieFactory;
 import com.backend.cs203.service.AuthService;
@@ -59,15 +59,14 @@ public class AuthController {
     }
         
     @GetMapping("/me")
-    public ResponseEntity<?> me(Authentication authentication) {
+    public ResponseEntity<UserInfoResponse> me(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AuthException("Unauthorized");
         }
 
-        return ResponseEntity.ok(java.util.Map.of(
-                "username", authentication.getName(),
-                "roles", authentication.getAuthorities()
-        ));
+        String username = authentication.getName();
+        UserInfoResponse resp = authService.getCurrentUser(username);
+        return ResponseEntity.ok(resp);
     }
 
 }

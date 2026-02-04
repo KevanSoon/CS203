@@ -1,6 +1,6 @@
 package com.backend.cs203.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,24 +33,16 @@ public class User {
     private Integer streak;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private Instant lastLogin;
 
     @Column(name = "deactivated_at")
     private LocalDateTime deactivatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        lastLogin = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastLogin = LocalDateTime.now();
-    }
+    // createdAt is set by the database default or can be set explicitly by application
+    // Do not set lastLogin here; set on successful login in the service layer
 
     public enum UserType {
         user, admin, root
