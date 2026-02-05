@@ -3,24 +3,38 @@
 import Link from "next/link";
 import { useState } from "react";
 
+interface SignUpForm {
+  username: string;
+  email: string;
+  password: string;
+  confirmpassword: string;
+}
+
+interface FormErrors {
+  username?: string;
+  email?:string;
+  password?: string;
+  confirmpassword?: string;
+}
+
 export default function SignUp() {
-  const[form, setForm] = useState({
+  const[form, setForm] = useState<SignUpForm>({
     username: "",
     email: "",
     password: "",
     confirmpassword: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  function handleChange(e){
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>){
     setForm({...form, [e.target.name]: e.target.value});
   }
 
-  function handleSubmit(e){
+  function handleSubmit(e: React.FormEvent){
     e.preventDefault();
 
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     // other error for username -- username already taken 
     if(!form.username) newErrors.username = "Don't shy la, put your name!";
