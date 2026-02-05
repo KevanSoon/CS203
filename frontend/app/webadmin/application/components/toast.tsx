@@ -25,8 +25,8 @@ export function Toast({ show, message, type, onClose }: ToastProps) {
       <div
         className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg ${
           type === "success"
-            ? "border-success/30 bg-success-background"
-            : "border-destructive/30 bg-destructive-background"
+            ? "border-success/30 bg-success-light"
+            : "border-destructive/30 bg-destructive-light"
         }`}
       >
         {type === "success" ? (
@@ -36,7 +36,7 @@ export function Toast({ show, message, type, onClose }: ToastProps) {
         )}
         <p
           className={`text-sm font-medium ${
-            type === "success" ? "text-success-foreground" : "text-destructive-foreground"
+            type === "success" ? "text-success-dark" : "text-destructive-dark"
           }`}
         >
           {message}

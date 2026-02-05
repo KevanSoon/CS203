@@ -15,20 +15,20 @@
 
   /* Status colors */
   --color-success: #10b981;
-  --color-success-foreground: #065f46;
-  --color-success-background: #ecfdf5;
+  --color-success-dark: #065f46;
+  --color-success-light: #ecfdf5;
 
   --color-warning: #f59e0b;
-  --color-warning-foreground: #92400e;
-  --color-warning-background: #fffbeb;
+  --color-warning-dark: #92400e;
+  --color-warning-light: #fffbeb;
 
   --color-destructive: #ef4444;
-  --color-destructive-foreground: #991b1b;
-  --color-destructive-background: #fef2f2;
+  --color-destructive-dark: #991b1b;
+  --color-destructive-light: #fef2f2;
 
   --color-accent: #3b82f6;
-  --color-accent-foreground: #1e40af;
-  --color-accent-background: #eff6ff;
+  --color-accent-dark: #1e40af;
+  --color-accent-light: #eff6ff;
 }
 
 .dark {
@@ -41,20 +41,20 @@
 
   /* Status colors - dark mode */
   --color-success: #34d399;
-  --color-success-foreground: #6ee7b7;
-  --color-success-background: #064e3b;
+  --color-success-dark: #6ee7b7;
+  --color-success-light: #064e3b;
 
   --color-warning: #fbbf24;
-  --color-warning-foreground: #fcd34d;
-  --color-warning-background: #78350f;
+  --color-warning-dark: #fcd34d;
+  --color-warning-light: #78350f;
 
   --color-destructive: #f87171;
-  --color-destructive-foreground: #fca5a5;
-  --color-destructive-background: #7f1d1d;
+  --color-destructive-dark: #fca5a5;
+  --color-destructive-light: #7f1d1d;
 
   --color-accent: #60a5fa;
-  --color-accent-foreground: #93c5fd;
-  --color-accent-background: #1e3a8a;
+  --color-accent-dark: #93c5fd;
+  --color-accent-light: #1e3a8a;
 }
 
 @layer base {

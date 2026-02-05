@@ -7,20 +7,20 @@ interface StatusBadgeProps {
 export function StatusBadge({ status }: StatusBadgeProps) {
   const variants = {
     pending: {
-      bg: "bg-warning-background",
-      text: "text-warning-foreground",
+      bg: "bg-warning-light",
+      text: "text-warning-dark",
       dot: "bg-warning",
       label: "Pending",
     },
     approved: {
-      bg: "bg-success-background",
-      text: "text-success-foreground",
+      bg: "bg-success-light",
+      text: "text-success-dark",
       dot: "bg-success",
       label: "Approved",
     },
     rejected: {
-      bg: "bg-destructive-background",
-      text: "text-destructive-foreground",
+      bg: "bg-destructive-light",
+      text: "text-destructive-dark",
       dot: "bg-destructive",
       label: "Rejected",
     },
