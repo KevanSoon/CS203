@@ -17,25 +17,25 @@ export function StatsCards({ stats }: StatsCardsProps) {
       label: "Total Lessons",
       value: stats.total,
       icon: BookOpen,
-      color: "text-[var(--color-primary)]",
+      color: "text-accent",
     },
     {
       label: "Pending Review",
       value: stats.pending,
       icon: Clock,
-      color: "text-[var(--color-warning)]",
+      color: "text-warning",
     },
     {
       label: "Approved",
       value: stats.approved,
       icon: CheckCircle2,
-      color: "text-[var(--color-success)]",
+      color: "text-success",
     },
     {
       label: "Rejected",
       value: stats.rejected,
       icon: XCircle,
-      color: "text-[var(--color-destructive)]",
+      color: "text-destructive",
     },
   ]
 
@@ -44,13 +44,13 @@ export function StatsCards({ stats }: StatsCardsProps) {
       {cards.map((card) => (
         <div
           key={card.label}
-          className="rounded-lg border border-[var(--color-border)] bg-white p-4"
+          className="rounded-lg border border-border bg-card p-4"
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--color-text-muted)]">{card.label}</p>
+            <p className="text-sm text-muted-foreground">{card.label}</p>
             <card.icon className={`h-5 w-5 ${card.color}`} />
           </div>
-          <p className="mt-2 text-2xl font-semibold text-[var(--color-text)]">
+          <p className="mt-2 text-2xl font-semibold text-foreground">
             {card.value}
           </p>
         </div>

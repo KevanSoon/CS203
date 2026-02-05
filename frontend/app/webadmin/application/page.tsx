@@ -149,15 +149,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-     
-
+    <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">
+          <h1 className="text-2xl font-bold text-foreground">
             Lesson Approval Dashboard
           </h1>
-          <p className="mt-1 text-[var(--color-text-muted)]">
+          <p className="mt-1 text-muted-foreground">
             Review and approve lessons submitted by instructors for publication.
           </p>
         </div>

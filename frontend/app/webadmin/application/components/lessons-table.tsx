@@ -45,9 +45,9 @@ export function LessonsTable({
   }
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white">
-      <div className="flex flex-col gap-4 border-b border-[var(--color-border)] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold text-[var(--color-text)]">
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold text-foreground">
           Lesson Submissions
         </h2>
         <FilterTabs
@@ -57,11 +57,11 @@ export function LessonsTable({
         />
       </div>
 
-      <div className="divide-y divide-[var(--color-border)]">
+      <div className="divide-y divide-border">
         {filteredLessons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-[var(--color-text-muted)]">No lessons found</p>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            <p className="text-muted-foreground">No lessons found</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               {filter !== "all"
                 ? `No ${filter} lessons at the moment`
                 : "No lessons have been submitted yet"}

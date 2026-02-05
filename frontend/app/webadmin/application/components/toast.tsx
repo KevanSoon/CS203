@@ -25,18 +25,18 @@ export function Toast({ show, message, type, onClose }: ToastProps) {
       <div
         className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg ${
           type === "success"
-            ? "border-[var(--color-success)]/30 bg-[var(--color-success)]/10"
-            : "border-[var(--color-destructive)]/30 bg-[var(--color-destructive)]/10"
+            ? "border-success/30 bg-success-background"
+            : "border-destructive/30 bg-destructive-background"
         }`}
       >
         {type === "success" ? (
-          <CheckCircle2 className="h-5 w-5 text-[var(--color-success)]" />
+          <CheckCircle2 className="h-5 w-5 text-success" />
         ) : (
-          <XCircle className="h-5 w-5 text-[var(--color-destructive)]" />
+          <XCircle className="h-5 w-5 text-destructive" />
         )}
         <p
           className={`text-sm font-medium ${
-            type === "success" ? "text-[var(--color-success)]" : "text-[var(--color-destructive)]"
+            type === "success" ? "text-success-foreground" : "text-destructive-foreground"
           }`}
         >
           {message}
@@ -45,8 +45,8 @@ export function Toast({ show, message, type, onClose }: ToastProps) {
           onClick={onClose}
           className={`ml-2 rounded-md p-1 transition-colors ${
             type === "success"
-              ? "text-[var(--color-success)] hover:bg-[var(--color-success)]/20"
-              : "text-[var(--color-destructive)] hover:bg-[var(--color-destructive)]/20"
+              ? "text-success hover:bg-success/20"
+              : "text-destructive hover:bg-destructive/20"
           }`}
           aria-label="Close"
         >

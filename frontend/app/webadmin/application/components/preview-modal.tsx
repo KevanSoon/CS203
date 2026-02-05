@@ -42,50 +42,50 @@ export function PreviewModal({ lesson, onClose }: PreviewModalProps) {
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-lg rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)]"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
         </button>
 
         <div className="flex items-start justify-between gap-4 pr-8">
-          <h2 className="text-xl font-semibold text-[var(--color-text)]">
+          <h2 className="text-xl font-semibold text-foreground">
             {lesson.title}
           </h2>
           <StatusBadge status={lesson.status} />
         </div>
 
         <div className="mt-6 space-y-4">
-          <p className="text-[var(--color-text-muted)]">{lesson.description}</p>
+          <p className="text-muted-foreground">{lesson.description}</p>
 
-          <div className="grid grid-cols-3 gap-4 rounded-lg border border-[var(--color-border)] bg-gray-50 p-4">
+          <div className="grid grid-cols-3 gap-4 rounded-lg border border-border bg-background p-4">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-[var(--color-text-muted)]" />
+              <User className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Author</p>
-                <p className="text-sm font-medium text-[var(--color-text)]">{lesson.author}</p>
+                <p className="text-xs text-muted-foreground">Author</p>
+                <p className="text-sm font-medium text-foreground">{lesson.author}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-[var(--color-text-muted)]" />
+              <Tag className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Category</p>
-                <p className="text-sm font-medium text-[var(--color-text)]">{lesson.category}</p>
+                <p className="text-xs text-muted-foreground">Category</p>
+                <p className="text-sm font-medium text-foreground">{lesson.category}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[var(--color-text-muted)]" />
+              <Clock className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-[var(--color-text-muted)]">Duration</p>
-                <p className="text-sm font-medium text-[var(--color-text)]">{lesson.duration}</p>
+                <p className="text-xs text-muted-foreground">Duration</p>
+                <p className="text-sm font-medium text-foreground">{lesson.duration}</p>
               </div>
             </div>
           </div>
 
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             Submitted {lesson.submittedAt}
           </p>
         </div>

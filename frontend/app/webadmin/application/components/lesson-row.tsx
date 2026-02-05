@@ -50,21 +50,21 @@ export function LessonRow({
   }, [])
 
   return (
-    <div className="flex items-center justify-between px-4 py-4 transition-colors hover:bg-[var(--color-surface-hover)]">
+    <div className="flex items-center justify-between px-4 py-4 transition-colors hover:bg-background">
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-hover)]">
-          <BookOpen className="h-5 w-5 text-[var(--color-text-muted)]" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background">
+          <BookOpen className="h-5 w-5 text-muted-foreground" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h3 className="truncate font-medium text-[var(--color-text)]">
+            <h3 className="truncate font-medium text-foreground">
               {lesson.title}
             </h3>
             <StatusBadge status={lesson.status} />
           </div>
-          <div className="mt-1 flex items-center gap-4 text-sm text-[var(--color-text-muted)]">
+          <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-primary)] text-[8px] font-medium text-[var(--color-background)]">
+              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8px] font-medium text-white">
                 {initials}
               </div>
               <span>{lesson.author}</span>
@@ -79,27 +79,27 @@ export function LessonRow({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="mr-2 hidden text-sm text-[var(--color-text-muted)] lg:inline">
+        <span className="mr-2 hidden text-sm text-muted-foreground lg:inline">
           {lesson.submittedAt}
         </span>
 
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)]"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
             aria-label="More options"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border border-[var(--color-border)] bg-white py-1 shadow-lg">
+            <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border border-border bg-card py-1 shadow-lg">
               <button
                 onClick={() => {
                   onPreview(lesson)
                   setMenuOpen(false)
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] transition-colors hover:bg-gray-100"
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-background"
               >
                 <Eye className="h-4 w-4" />
                 Preview
@@ -110,7 +110,7 @@ export function LessonRow({
                     onApprove(lesson.id)
                     setMenuOpen(false)
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-success)] transition-colors hover:bg-gray-100"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success transition-colors hover:bg-success-background"
                 >
                   <Check className="h-4 w-4" />
                   Approve
@@ -122,7 +122,7 @@ export function LessonRow({
                     onReject(lesson.id)
                     setMenuOpen(false)
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-destructive)] transition-colors hover:bg-gray-100"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive-background"
                 >
                   <X className="h-4 w-4" />
                   Reject
