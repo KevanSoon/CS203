@@ -16,7 +16,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.dto.error.ErrorResponse;
