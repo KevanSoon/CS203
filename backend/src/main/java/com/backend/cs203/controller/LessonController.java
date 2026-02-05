@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,13 @@ public class LessonController {
     @GetMapping("/")
     public ResponseEntity<List<LessonSummaryDTO>> getAllAvailableLessons() {
             return ResponseEntity.ok(lessonService.getAllLessons());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/user-lessons/")
+    public ResponseEntity<List<LessonSummaryDTO>> getUserCreatedLessons() {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return ResponseEntity.ok(lessonService.getUserCreatedLessons(username));
     }
 
     @PreAuthorize("hasRole('ROOT')")
