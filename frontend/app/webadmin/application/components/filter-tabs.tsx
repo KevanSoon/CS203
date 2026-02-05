@@ -28,12 +28,12 @@ export function FilterTabs({
   ]
 
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-1">
+    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1">
       {tabs.map((tab) => (
         <button
           key={tab.value}
           onClick={() => onFilterChange(tab.value)}
-          className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-1 sm:gap-2 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
             activeFilter === tab.value
               ? `${tab.activeColor} text-white`
               : "text-muted-foreground hover:text-foreground"
