@@ -15,7 +15,7 @@ export interface Lesson {
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: string
+  submittedAt: Date
   description: string
 }
 
@@ -35,7 +35,7 @@ const mockLessons: Lesson[] = [
     category: "gen-alpha",
     duration: "15 min",
     status: "pending",
-    submittedAt: "2 hours ago",
+    submittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
     description: "No cap, this lesson is bussin! Learn the most fire slang from Gen Alpha including skibidi, rizz, and gyatt. Your brain rot era starts here fr fr.",
   },
   {
@@ -45,7 +45,7 @@ const mockLessons: Lesson[] = [
     category: "gaming",
     duration: "20 min",
     status: "pending",
-    submittedAt: "5 hours ago",
+    submittedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
     description: "Get gud at gaming terminology! Learn what GG, AFK, and noob mean. This lesson hits different - you'll be speaking gamer in no time, no cap.",
   },
   {
@@ -55,7 +55,7 @@ const mockLessons: Lesson[] = [
     category: "tiktok",
     duration: "25 min",
     status: "approved",
-    submittedAt: "1 day ago",
+    submittedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
     description: "Slay the FYP with this bussin guide to TikTok trends! From the Skibidi Toilet to Grimace Shake, we got you covered. It's giving main character energy.",
   },
   {
@@ -65,7 +65,7 @@ const mockLessons: Lesson[] = [
     category: "lifestyle",
     duration: "10 min",
     status: "approved",
-    submittedAt: "2 days ago",
+    submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     description: "Want that sigma jawline? This lesson teaches proper mewing technique. Looksmax your way to success - your glow up starts now bestie!",
   },
   {
@@ -75,7 +75,7 @@ const mockLessons: Lesson[] = [
     category: "memes",
     duration: "30 min",
     status: "rejected",
-    submittedAt: "3 days ago",
+    submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     description: "Only in Ohio would someone make a whole lesson about Ohio memes. This is lowkey unhinged but highkey educational. Certified brainrot content.",
   },
   {
@@ -85,7 +85,7 @@ const mockLessons: Lesson[] = [
     category: "social",
     duration: "45 min",
     status: "pending",
-    submittedAt: "4 hours ago",
+    submittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
     description: "Become the ultimate rizzler! Learn W rizz techniques that are absolutely goated. This lesson is so sigma it should be illegal. No L's allowed.",
   },
 ]
@@ -152,7 +152,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-foreground">
             Lesson Approval Dashboard
           </h1>
           <p className="mt-1 text-muted-foreground">

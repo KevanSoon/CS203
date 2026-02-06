@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { LessonRow } from "./lesson-row"
 import { FilterTabs } from "./filter-tabs"
 import { PreviewModal } from "./preview-modal"
@@ -14,7 +14,7 @@ interface Lesson {
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: string
+  submittedAt: Date
   description: string
 }
 
@@ -34,8 +34,11 @@ export function LessonsTable({
   const [filter, setFilter] = useState<FilterValue>("all")
   const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null)
 
-  const filteredLessons =
-    filter === "all" ? lessons : lessons.filter((l) => l.status === filter)
+  // Filter by status and sort by most recent submission first
+  const filteredLessons = useMemo(() => {
+    const filtered = filter === "all" ? lessons : lessons.filter((l) => l.status === filter)
+    return [...filtered].sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime())
+  }, [lessons, filter])
 
   const counts = {
     all: lessons.length,

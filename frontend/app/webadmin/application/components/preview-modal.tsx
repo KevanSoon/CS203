@@ -13,8 +13,19 @@ interface Lesson {
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: string
+  submittedAt: Date
   description: string
+}
+
+function formatRelativeTime(date: Date): string {
+  const now = Date.now()
+  const diff = now - date.getTime()
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const days = Math.floor(hours / 24)
+
+  if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`
+  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`
+  return "Just now"
 }
 
 interface PreviewModalProps {
@@ -86,7 +97,7 @@ export function PreviewModal({ lesson, onClose }: PreviewModalProps) {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Submitted {lesson.submittedAt}
+            Submitted {formatRelativeTime(lesson.submittedAt)}
           </p>
         </div>
       </div>

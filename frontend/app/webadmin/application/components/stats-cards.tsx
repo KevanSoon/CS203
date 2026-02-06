@@ -47,7 +47,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           className="rounded-lg border border-border bg-card p-4"
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{card.label}</p>
+            <p className="text-md text-muted-foreground">{card.label}</p>
             <card.icon className={`h-5 w-5 ${card.color}`} />
           </div>
           <p className="mt-2 text-2xl font-semibold text-foreground">
