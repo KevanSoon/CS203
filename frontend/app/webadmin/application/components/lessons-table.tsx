@@ -10,12 +10,12 @@ type LessonStatus = "pending" | "approved" | "rejected"
 interface Lesson {
   id: string
   title: string
-  author: string
+  description: string
+  created_by: string
+  createdAt: string
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: Date
-  description: string
 }
 
 type FilterValue = "all" | LessonStatus
@@ -37,7 +37,7 @@ export function LessonsTable({
   // Filter by status and sort by most recent submission first
   const filteredLessons = useMemo(() => {
     const filtered = filter === "all" ? lessons : lessons.filter((l) => l.status === filter)
-    return [...filtered].sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime())
+    return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [lessons, filter])
 
   const counts = {

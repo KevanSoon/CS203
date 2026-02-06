@@ -11,12 +11,12 @@ export type LessonStatus = "pending" | "approved" | "rejected"
 export interface Lesson {
   id: string
   title: string
-  author: string
+  description: string
+  created_by: string
+  createdAt: string
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: Date
-  description: string
 }
 
 export interface LessonStats {
@@ -31,62 +31,62 @@ const mockLessons: Lesson[] = [
   {
     id: "1",
     title: "Gen Alpha Slangs 101",
-    author: "Skibidi Steve",
+    description: "No cap, this lesson is bussin! Learn the most fire slang from Gen Alpha including skibidi, rizz, and gyatt. Your brain rot era starts here fr fr.",
+    created_by: "Skibidi Steve",
+    createdAt: "2026-02-06T06:00:00",
     category: "gen-alpha",
     duration: "15 min",
     status: "pending",
-    submittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    description: "No cap, this lesson is bussin! Learn the most fire slang from Gen Alpha including skibidi, rizz, and gyatt. Your brain rot era starts here fr fr.",
   },
   {
     id: "2",
     title: "Gaming Lingo Basics",
-    author: "Rizz Master",
+    description: "Get gud at gaming terminology! Learn what GG, AFK, and noob mean. This lesson hits different - you'll be speaking gamer in no time, no cap.",
+    created_by: "Rizz Master",
+    createdAt: "2026-02-06T03:00:00",
     category: "gaming",
     duration: "20 min",
     status: "pending",
-    submittedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-    description: "Get gud at gaming terminology! Learn what GG, AFK, and noob mean. This lesson hits different - you'll be speaking gamer in no time, no cap.",
   },
   {
     id: "3",
     title: "TikTok Trends Decoded",
-    author: "Sigma Sarah",
+    description: "Slay the FYP with this bussin guide to TikTok trends! From the Skibidi Toilet to Grimace Shake, we got you covered. It's giving main character energy.",
+    created_by: "Sigma Sarah",
+    createdAt: "2026-02-05T08:00:00",
     category: "tiktok",
     duration: "25 min",
     status: "approved",
-    submittedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    description: "Slay the FYP with this bussin guide to TikTok trends! From the Skibidi Toilet to Grimace Shake, we got you covered. It's giving main character energy.",
   },
   {
     id: "4",
     title: "Mewing for Beginners",
-    author: "Chad McRizz",
+    description: "Want that sigma jawline? This lesson teaches proper mewing technique. Looksmax your way to success - your glow up starts now bestie!",
+    created_by: "Chad McRizz",
+    createdAt: "2026-02-04T08:00:00",
     category: "lifestyle",
     duration: "10 min",
     status: "approved",
-    submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    description: "Want that sigma jawline? This lesson teaches proper mewing technique. Looksmax your way to success - your glow up starts now bestie!",
   },
   {
     id: "5",
     title: "Ohio Memes Explained",
-    author: "Only in Ohio",
+    description: "Only in Ohio would someone make a whole lesson about Ohio memes. This is lowkey unhinged but highkey educational. Certified brainrot content.",
+    created_by: "Only in Ohio",
+    createdAt: "2026-02-03T08:00:00",
     category: "memes",
     duration: "30 min",
     status: "rejected",
-    submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    description: "Only in Ohio would someone make a whole lesson about Ohio memes. This is lowkey unhinged but highkey educational. Certified brainrot content.",
   },
   {
     id: "6",
     title: "Rizz Academy: Level Up",
-    author: "Duke of Rizz",
+    description: "Become the ultimate rizzler! Learn W rizz techniques that are absolutely goated. This lesson is so sigma it should be illegal. No L's allowed.",
+    created_by: "Duke of Rizz",
+    createdAt: "2026-02-06T04:00:00",
     category: "social",
     duration: "45 min",
     status: "pending",
-    submittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    description: "Become the ultimate rizzler! Learn W rizz techniques that are absolutely goated. This lesson is so sigma it should be illegal. No L's allowed.",
   },
 ]
 
@@ -116,7 +116,7 @@ export default function DashboardPage() {
     return lessons.filter(
       (lesson) =>
         lesson.title.toLowerCase().includes(query) ||
-        lesson.author.toLowerCase().includes(query) ||
+        lesson.created_by.toLowerCase().includes(query) ||
         lesson.category.toLowerCase().includes(query)
     )
   }, [lessons, searchQuery])

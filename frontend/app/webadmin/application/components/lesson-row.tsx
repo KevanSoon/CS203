@@ -9,23 +9,17 @@ type LessonStatus = "pending" | "approved" | "rejected"
 interface Lesson {
   id: string
   title: string
-  author: string
+  description: string
+  created_by: string
+  createdAt: string
   category: string
   duration: string
   status: LessonStatus
-  submittedAt: Date
-  description: string
 }
 
-function formatRelativeTime(date: Date): string {
-  const now = Date.now()
-  const diff = now - date.getTime()
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const days = Math.floor(hours / 24)
-
-  if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`
-  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`
-  return "Just now"
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toISOString().split("T")[0]
 }
 
 interface LessonRowProps {
@@ -124,7 +118,7 @@ export function LessonRow({
           </div>
           <p className="text-sm text-muted-foreground mb-1">{lesson.description}</p>
           <p className="text-xs text-muted-foreground">
-            {lesson.author} · {lesson.duration} · Submitted {formatRelativeTime(lesson.submittedAt)}
+            {lesson.created_by} · {lesson.duration} · Created: {formatDate(lesson.createdAt)}
           </p>
         </div>
       </div>
