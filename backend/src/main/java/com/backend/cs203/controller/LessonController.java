@@ -19,7 +19,19 @@ public class LessonController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/")
-    public ResponseEntity<List<LessonsSummaryDTO>> getAllAvailableLessons() {
-            return ResponseEntity.ok(lessonService.getAllLessonSummaries());
+    public ResponseEntity<List<LessonSummaryDTO>> getAllAvailableLessons() {
+            return ResponseEntity.ok(lessonService.getAllLessons());
+    }
+
+    @PreAuthorize("hasRole('ROOT')")
+    @GetMapping("/applications/")
+    public ResponseEntity<List<LessonApplicationDTO>> getAllLessonApplications() {
+            return ResponseEntity.ok(lessonService.getAllLessonApplications());
+    }
+
+    @PreAuthorize("hasRole('ROOT')")
+    @GetMapping("/applications/pending")
+    public ResponseEntity<List<LessonSummaryDTO>> getPendingLessonApplications() {
+            return ResponseEntity.ok(lessonService.getPendingLessonApplications());
     }
 }
