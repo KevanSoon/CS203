@@ -278,7 +278,8 @@ export default function UpdateProfile() {
             </div>
 
             <div className="mt-8 text-center">
-              <Link href="/dashboard" className="text-sm font-bold hover:underline">
+              {/* Need to re-route to user dashboard */}
+              <Link href="/" className="text-sm font-bold hover:underline">
                 ← Back to User Dashboard
               </Link>
             </div>
