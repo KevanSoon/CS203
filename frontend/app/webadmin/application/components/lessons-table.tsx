@@ -8,13 +8,10 @@ import { PreviewModal } from "./preview-modal"
 type LessonStatus = "pending" | "approved" | "rejected"
 
 interface Lesson {
-  id: string
   title: string
   description: string
-  created_by: string
+  createdBy: string
   createdAt: string
-  category: string
-  duration: string
   status: LessonStatus
 }
 
@@ -22,8 +19,8 @@ type FilterValue = "all" | LessonStatus
 
 interface LessonsTableProps {
   lessons: Lesson[]
-  onApprove: (id: string) => void
-  onReject: (id: string) => void
+  onApprove: (title: string) => void
+  onReject: (title: string) => void
 }
 
 export function LessonsTable({
@@ -73,7 +70,7 @@ export function LessonsTable({
         ) : (
           filteredLessons.map((lesson) => (
             <LessonRow
-              key={lesson.id}
+              key={lesson.title}
               lesson={lesson}
               onApprove={onApprove}
               onReject={onReject}

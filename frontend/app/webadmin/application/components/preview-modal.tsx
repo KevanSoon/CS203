@@ -1,19 +1,16 @@
 "use client"
 
 import { useEffect } from "react"
-import { X, Clock, User, Tag } from "lucide-react"
+import { X, User } from "lucide-react"
 import { StatusBadge } from "./status-badge"
 
 type LessonStatus = "pending" | "approved" | "rejected"
 
 interface Lesson {
-  id: string
   title: string
   description: string
-  created_by: string
+  createdBy: string
   createdAt: string
-  category: string
-  duration: string
   status: LessonStatus
 }
 
@@ -66,26 +63,12 @@ export function PreviewModal({ lesson, onClose }: PreviewModalProps) {
         <div className="mt-6 space-y-4">
           <p className="text-muted-foreground">{lesson.description}</p>
 
-          <div className="grid grid-cols-3 gap-4 rounded-lg border border-border bg-background p-4">
+          <div className="rounded-lg border border-border bg-background p-4">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Author</p>
-                <p className="text-sm font-medium text-foreground">{lesson.created_by}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Category</p>
-                <p className="text-sm font-medium text-foreground">{lesson.category}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Duration</p>
-                <p className="text-sm font-medium text-foreground">{lesson.duration}</p>
+                <p className="text-sm font-medium text-foreground">{lesson.createdBy}</p>
               </div>
             </div>
           </div>
