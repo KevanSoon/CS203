@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useSiteState } from "@/app/store/SiteStore";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [result, setResult] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const isLoading = useSiteState((s) => s.isLoading);
 
   const handleLogin = async () => {
-    setLoading(true);
     setResult("");
     try {
       const res = await fetch("/api/auth/login", {
@@ -22,7 +22,6 @@ export default function LoginPage() {
     } catch (err) {
       setResult("Error: " + (err instanceof Error ? err.message : String(err)));
     } finally {
-      setLoading(false);
     }
   };
 
@@ -46,10 +45,10 @@ export default function LoginPage() {
         />
         <button
           onClick={handleLogin}
-          disabled={loading}
+          disabled={isLoading}
           className="w-full bg-foreground text-white rounded-lg py-2 font-semibold hover:opacity-90 disabled:opacity-50"
         >
-          {loading ? "Logging in..." : "Log In"}
+          {isLoading ? "Logging in..." : "Log In"}
         </button>
         {result && (
           <pre className="bg-muted rounded-md p-3 text-xs overflow-auto max-h-60">

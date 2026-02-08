@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { LessonContent } from "./components/LessonContent";
-import axios from "axios";
+import { api } from "@/app/api/api";
 
 export const AdminLessonPage = () => {
   const [selected, setSelected] = useState("My Lessons");
@@ -12,7 +12,7 @@ export const AdminLessonPage = () => {
     const fetchLessons = async () => {
       try {
         //calls route.ts
-        const result = await axios.get("/api/lesson/user-lessons");
+        const result = await api.get("/api/lesson/user-lessons");
         console.log(result.data)
         setLessons(result.data);
       }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSiteState } from "@/app/store/SiteStore";
 
 interface SignUpForm {
   username: string;
@@ -31,7 +32,7 @@ export default function SignUp() {
     setForm({...form, [e.target.name]: e.target.value});
   }
 
-  function handleSubmit(e: React.FormEvent){
+  async function handleSubmit(e: React.FormEvent){
     e.preventDefault();
 
     const newErrors: FormErrors = {};
@@ -50,7 +51,12 @@ export default function SignUp() {
     setErrors(newErrors);
     
     if(Object.keys(newErrors).length === 0){
-      console.log("Submitting: ", form);
+      useSiteState.setState({ isLoading: true })
+      // Add mock Call here
+      // console.log(useSiteState.getState().isLoading)
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // sleep 5s
+      useSiteState.setState({ isLoading: false })
+
     }
   }
 
