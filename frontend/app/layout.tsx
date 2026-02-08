@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Loader from "@/app/components/Spinner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,7 +16,7 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-        <Loader>{children}</Loader>
+        {children}
       </body>
     </html>
   );
