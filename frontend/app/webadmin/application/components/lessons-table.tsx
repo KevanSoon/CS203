@@ -33,12 +33,12 @@ export function LessonsTable({
 
   // Filter by status and sort by most recent submission first
   const filteredLessons = useMemo(() => {
-    const filtered = filter === "all" ? lessons : lessons.filter((l) => l.status === filter)
+    const filtered = filter === "all" ? lessons.filter((l) => l.status !== "pending") : lessons.filter((l) => l.status === filter)
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [lessons, filter])
 
   const counts = {
-    all: lessons.length,
+    all: lessons.filter((l) => l.status !== "pending").length,
     pending: lessons.filter((l) => l.status === "pending").length,
     approved: lessons.filter((l) => l.status === "approved").length,
     rejected: lessons.filter((l) => l.status === "rejected").length,

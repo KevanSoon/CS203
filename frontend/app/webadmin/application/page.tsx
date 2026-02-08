@@ -47,9 +47,14 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchLessons() {
       try {
-        const result = await axios.get("/api/lesson/applications")
-        console.log(result.data)
-        setLessons(result.data)
+        const [pendingRes, applicationsRes] = await Promise.all([
+          axios.get("/api/lesson/applications/pending"),
+          axios.get("/api/lesson/applications"),
+        ])
+        const pendingLessons = pendingRes.data.map((l: Omit<Lesson, "status">) => ({ ...l, status: "pending" as const }))
+        const allLessons = [...pendingLessons, ...applicationsRes.data]
+        console.log(allLessons)
+        setLessons(allLessons)
       } catch (err) {
         console.error("Failed to fetch lessons:", err)
         showToast("Failed to fetch lessons.", "error")
