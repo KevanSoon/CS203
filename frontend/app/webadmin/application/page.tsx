@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import axios from "axios"
+import { api } from "@/app/api/api"
 import { StatsCards } from "./components/stats-cards"
 import { LessonsTable } from "./components/lessons-table"
 import { Toast } from "./components/toast"
@@ -48,8 +48,8 @@ export default function DashboardPage() {
     async function fetchLessons() {
       try {
         const [pendingRes, applicationsRes] = await Promise.all([
-          axios.get("/api/lesson/applications/pending"),
-          axios.get("/api/lesson/applications"),
+          api.get("/api/lesson/applications/pending"),
+          api.get("/api/lesson/applications"),
         ])
         const pendingLessons = pendingRes.data.map((l: Omit<Lesson, "status">) => ({ ...l, status: "pending" as const }))
         const allLessons = [...pendingLessons, ...applicationsRes.data]

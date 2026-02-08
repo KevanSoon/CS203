@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useSiteState } from "../store/SiteStore";
+import { useSiteState } from "@/app/store/SiteStore";
 
 interface SignUpForm {
   username: string;
