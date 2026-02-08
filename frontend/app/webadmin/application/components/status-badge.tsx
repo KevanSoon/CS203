@@ -26,7 +26,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     },
   }
 
-  const variant = variants[status]
+  const variant = variants[status.toLowerCase() as LessonStatus] ?? variants.pending
 
   return (
     <span

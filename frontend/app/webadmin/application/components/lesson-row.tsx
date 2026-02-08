@@ -7,13 +7,10 @@ import { StatusBadge } from "./status-badge"
 type LessonStatus = "pending" | "approved" | "rejected"
 
 interface Lesson {
-  id: string
   title: string
   description: string
-  created_by: string
+  createdBy: string
   createdAt: string
-  category: string
-  duration: string
   status: LessonStatus
 }
 
@@ -24,8 +21,8 @@ function formatDate(dateStr: string): string {
 
 interface LessonRowProps {
   lesson: Lesson
-  onApprove: (id: string) => void
-  onReject: (id: string) => void
+  onApprove: (title: string) => void
+  onReject: (title: string) => void
   onPreview: (lesson: Lesson) => void
 }
 
@@ -61,9 +58,6 @@ export function LessonRow({
                 {lesson.title}
               </p>
               <div className="flex flex-wrap items-center gap-1 mb-2">
-                <span className="px-2 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
-                  {lesson.category}
-                </span>
                 <StatusBadge status={lesson.status} />
               </div>
             </div>
@@ -91,7 +85,7 @@ export function LessonRow({
                   {lesson.status !== "approved" && (
                     <button
                       onClick={() => {
-                        onApprove(lesson.id)
+                        onApprove(lesson.title)
                         setMenuOpen(false)
                       }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success transition-colors hover:bg-success-light"
@@ -103,7 +97,7 @@ export function LessonRow({
                   {lesson.status !== "rejected" && (
                     <button
                       onClick={() => {
-                        onReject(lesson.id)
+                        onReject(lesson.title)
                         setMenuOpen(false)
                       }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive-light"
@@ -118,7 +112,7 @@ export function LessonRow({
           </div>
           <p className="text-sm text-muted-foreground mb-1">{lesson.description}</p>
           <p className="text-xs text-muted-foreground">
-            {lesson.created_by} · {lesson.duration} · Created: {formatDate(lesson.createdAt)}
+            {lesson.createdBy} · Created: {formatDate(lesson.createdAt)}
           </p>
         </div>
       </div>

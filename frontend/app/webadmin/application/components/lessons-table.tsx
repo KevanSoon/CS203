@@ -8,13 +8,10 @@ import { PreviewModal } from "./preview-modal"
 type LessonStatus = "pending" | "approved" | "rejected"
 
 interface Lesson {
-  id: string
   title: string
   description: string
-  created_by: string
+  createdBy: string
   createdAt: string
-  category: string
-  duration: string
   status: LessonStatus
 }
 
@@ -22,8 +19,8 @@ type FilterValue = "all" | LessonStatus
 
 interface LessonsTableProps {
   lessons: Lesson[]
-  onApprove: (id: string) => void
-  onReject: (id: string) => void
+  onApprove: (title: string) => void
+  onReject: (title: string) => void
 }
 
 export function LessonsTable({
@@ -36,12 +33,12 @@ export function LessonsTable({
 
   // Filter by status and sort by most recent submission first
   const filteredLessons = useMemo(() => {
-    const filtered = filter === "all" ? lessons : lessons.filter((l) => l.status === filter)
+    const filtered = filter === "all" ? lessons.filter((l) => l.status !== "pending") : lessons.filter((l) => l.status === filter)
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [lessons, filter])
 
   const counts = {
-    all: lessons.length,
+    all: lessons.filter((l) => l.status !== "pending").length,
     pending: lessons.filter((l) => l.status === "pending").length,
     approved: lessons.filter((l) => l.status === "approved").length,
     rejected: lessons.filter((l) => l.status === "rejected").length,
@@ -73,7 +70,7 @@ export function LessonsTable({
         ) : (
           filteredLessons.map((lesson) => (
             <LessonRow
-              key={lesson.id}
+              key={lesson.title}
               lesson={lesson}
               onApprove={onApprove}
               onReject={onReject}
