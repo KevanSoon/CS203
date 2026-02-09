@@ -84,22 +84,21 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
         </div>
         
         {/* Logout button at the bottom - only show if user is logged in */}
-        {user && (
-          <div className="absolute bottom-16 left-0 right-0 px-2">
-            <button
-              onClick={handleLogout}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
-                hover:bg-accent text-muted-foreground hover:text-foreground
-                ${!open && "justify-center"}
-              `}
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5 shrink-0" />
-              {open && <span className="font-medium">Logout</span>}
-            </button>
-          </div>
-        )}
+        {/* for now no check for user login, but userstore logic still above */}
+        <div className="absolute bottom-16 left-0 right-0 px-2">
+          <button
+            onClick={handleLogout}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+              hover:bg-accent text-muted-foreground hover:text-foreground
+              ${!open && "justify-center"}
+            `}
+            title="Logout"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            {open && <span className="font-medium">Logout</span>}
+          </button>
+        </div>
 
         <SidebarToggle open={open} setOpen={setOpen} />
       </nav>
