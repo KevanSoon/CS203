@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,9 +9,8 @@ import { api } from "@/app/api/api";
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<string>("");
   const isLoading = useSiteState((s) => s.isLoading);
-  const router = useRouter();
 
   const router = useRouter();
 
