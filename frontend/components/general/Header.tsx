@@ -12,7 +12,6 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 h-14 md:h-20 flex items-center justify-between">
-        {/* Logo */}
         <Link href="/">
           <Image
             src="/navbar_logo.png"
@@ -23,7 +22,6 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
           />
         </Link>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <Link href="/profile">

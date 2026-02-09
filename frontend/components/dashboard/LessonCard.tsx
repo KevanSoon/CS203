@@ -27,7 +27,6 @@ export default function LessonCard({
           </p>
         </div>
 
-        {/* Progress */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs font-semibold text-muted-foreground">
             <span>Completion</span>
