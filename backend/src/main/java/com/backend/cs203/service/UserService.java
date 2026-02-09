@@ -19,7 +19,24 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional // Ensures the database update is atomic
+    @Transactional(readOnly = true)
+    public UpdateProfileDTO getProfile(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "User not found: " + username
+            ));
+
+        UpdateProfileDTO dto = new UpdateProfileDTO();
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setProfilePictureUrl(user.getProfilePictureUrl());
+
+        // DO NOT include password in GET response
+        return dto;
+    }
+
+    @Transactional
     public User updateProfile(String username, UpdateProfileDTO dto) {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new ResponseStatusException(
