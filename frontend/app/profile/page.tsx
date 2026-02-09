@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Pencil, Camera, BookOpen, Clock, Award } from "lucide-react";
 import Image from "next/image";
+import axios, { AxiosError } from "axios";
 
 interface UpdateProfileForm {
   username: string;
   email: string;
   password: string;
-  confirmpassword: string;
-  profilePic: string;
+  confirmpassword: string; // frontend-only
+  profilePic: string; // preview URL (blob or real URL)
 }
 
-// --- Mock Data ---
 const MOCK_STATS = {
   overallProgress: 65,
   lessonsCompleted: 12,
@@ -26,18 +26,21 @@ const MOCK_HISTORY = [
   { id: 3, title: "Gaming Culture and Slangs", date: "2024-05-15", score: "75%" },
 ];
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export default function UpdateProfile() {
   const [form, setForm] = useState<UpdateProfileForm>({
-    username: "SkibidiStudent",
+    username: "",
     email: "",
     password: "",
     confirmpassword: "",
     profilePic: "",
   });
 
-  // ✅ use STATE instead of ref so it is safe during render
   const [originalForm, setOriginalForm] = useState<UpdateProfileForm>({
-    username: "SkibidiStudent",
+    username: "",
     email: "",
     password: "",
     confirmpassword: "",
@@ -45,78 +48,190 @@ export default function UpdateProfile() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError] = useState<string>("");
   const [success, setSuccess] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const objectUrlRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (isEditingUsername) {
-      usernameInputRef.current?.focus();
-    }
+    if (isEditingUsername) usernameInputRef.current?.focus();
   }, [isEditingUsername]);
 
-  // ✅ safe — no refs used
-  function hasChanges(): boolean {
+  // ✅ Load logged-in profile (username like "alice")
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setApiError("");
+      try {
+        setIsLoadingProfile(true);
+
+        // calls Next GET /api/profile
+        const res = await axios.get("/api/profile");
+        const user = res.data;
+
+        const username = user?.username ?? "";
+        const email = user?.email ?? "";
+        const profilePic = user?.profilePictureUrl ?? "";
+
+        setForm((prev) => ({
+          ...prev,
+          username,
+          email,
+          profilePic,
+          password: "",
+          confirmpassword: "",
+        }));
+
+        setOriginalForm((prev) => ({
+          ...prev,
+          username,
+          email,
+          profilePic,
+          password: "",
+          confirmpassword: "",
+        }));
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+        const axiosErr = err as AxiosError<any>;
+        const msg =
+          axiosErr.response?.data?.message ||
+          axiosErr.response?.data?.error ||
+          axiosErr.message ||
+          "Failed to load profile. Please log in again.";
+
+        setApiError(msg);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const hasChanges = useMemo(() => {
     return (
       form.username !== originalForm.username ||
       form.email !== originalForm.email ||
       form.profilePic !== originalForm.profilePic ||
-      form.password !== ""
+      form.password.trim() !== ""
     );
-  }
+  }, [form, originalForm]);
 
-  const handleImageClick = () => {
+  const handleImageClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setForm({ ...form, profilePic: imageUrl });
+    if (!file) return;
+
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+
+    const previewUrl = URL.createObjectURL(file);
+    objectUrlRef.current = previewUrl;
+
+    setForm((prev) => ({ ...prev, profilePic: previewUrl }));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
+
+  const buildPatchPayload = useCallback(() => {
+    const payload: Record<string, any> = {};
+
+    if (form.username !== originalForm.username) payload.username = form.username;
+    if (form.email !== originalForm.email) payload.email = form.email;
+
+    if (form.password.trim() !== "") payload.password = form.password;
+
+    // ✅ backend field is profilePictureUrl
+    const isBlobUrl = form.profilePic.startsWith("blob:");
+    if (!isBlobUrl && form.profilePic !== originalForm.profilePic) {
+      payload.profilePictureUrl = form.profilePic;
     }
-  };
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+    return payload;
+  }, [form, originalForm]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSuccess(false);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setSuccess(false);
+      setApiError("");
 
-    const newErrors: Record<string, string> = {};
+      const newErrors: Record<string, string> = {};
 
-    if (!form.username) newErrors.username = "Cannot be anonymous la!";
+      if (!form.username.trim()) newErrors.username = "Cannot be anonymous la!";
 
-    if (form.password && form.password !== form.confirmpassword) {
-      newErrors.confirmpassword = "Eh the password not the same leh.";
-    }
+      if (form.email.trim() && !isValidEmail(form.email.trim())) {
+        newErrors.email = "Eh email format wrong leh.";
+      }
 
-    if (!hasChanges()) {
-      newErrors.nochange = "Please update at least one field before saving.";
-    }
+      if (form.password.trim() && form.password !== form.confirmpassword) {
+        newErrors.confirmpassword = "Eh the password not the same leh.";
+      }
 
-    setErrors(newErrors);
+      if (!hasChanges) newErrors.nochange = "Please update at least one field before saving.";
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log("Saving changes:", form);
+      setErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) return;
 
-      // simulate save → update original snapshot
-      setOriginalForm({
-        ...form,
-        password: "",
-        confirmpassword: "",
-      });
+      const payload = buildPatchPayload();
+      if (Object.keys(payload).length === 0) {
+        setErrors({ nochange: "No valid changes to save (image must be a real URL)." });
+        return;
+      }
 
-      // clear password fields after save
-      setForm((prev) => ({ ...prev, password: "", confirmpassword: "" }));
+      try {
+        setIsSaving(true);
 
-      setSuccess(true);
-    }
-  }
+        // calls Next PATCH /api/profile
+        const result = await axios.patch("/api/profile", payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+
+        console.log("PATCH success:", result.data);
+
+        setOriginalForm((prev) => ({
+          ...prev,
+          ...form,
+          password: "",
+          confirmpassword: "",
+        }));
+
+        setForm((prev) => ({ ...prev, password: "", confirmpassword: "" }));
+        setErrors({});
+        setSuccess(true);
+      } catch (err) {
+        console.error("Failed to update profile", err);
+
+        const axiosErr = err as AxiosError<any>;
+        const msg =
+          axiosErr.response?.data?.message ||
+          axiosErr.response?.data?.error ||
+          axiosErr.message ||
+          "Failed to update profile";
+
+        setApiError(msg);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [form, hasChanges, buildPatchPayload]
+  );
 
   return (
     <div className="min-h-screen bg-[#FCFBF7] p-4 md:p-8 font-sans text-slate-800">
@@ -151,8 +266,15 @@ export default function UpdateProfile() {
                 />
               ) : (
                 <>
-                  <h1 className="text-xl font-extrabold">{form.username}</h1>
-                  <button onClick={() => setIsEditingUsername(true)} className="p-1 hover:bg-slate-100 rounded-full">
+                  <h1 className="text-xl font-extrabold">
+                    {isLoadingProfile ? "Loading..." : form.username || "User"}
+                  </h1>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingUsername(true)}
+                    className="p-1 hover:bg-slate-100 rounded-full"
+                    disabled={isLoadingProfile}
+                  >
                     <Pencil size={16} className="text-[#9D94EB]" />
                   </button>
                 </>
@@ -167,11 +289,15 @@ export default function UpdateProfile() {
               <input
                 type="email"
                 name="email"
-                placeholder="skibidi@example.com"
+                placeholder="alice@example.com"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm"
+                disabled={isLoadingProfile}
+                className={`w-full border-2 rounded-xl px-4 py-2.5 text-sm ${
+                  errors.email ? "border-red-400" : "border-slate-100"
+                } ${isLoadingProfile ? "opacity-60 cursor-not-allowed" : ""}`}
               />
+              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </div>
 
             <div className="space-y-1">
@@ -182,7 +308,10 @@ export default function UpdateProfile() {
                 placeholder="••••••••"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm"
+                disabled={isLoadingProfile}
+                className={`w-full border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm ${
+                  isLoadingProfile ? "opacity-60 cursor-not-allowed" : ""
+                }`}
               />
             </div>
 
@@ -194,25 +323,23 @@ export default function UpdateProfile() {
                 placeholder="••••••••"
                 value={form.confirmpassword}
                 onChange={handleChange}
+                disabled={isLoadingProfile}
                 className={`w-full border-2 rounded-xl px-4 py-2.5 text-sm ${
                   errors.confirmpassword ? "border-red-400" : "border-slate-100"
-                }`}
+                } ${isLoadingProfile ? "opacity-60 cursor-not-allowed" : ""}`}
               />
-              {errors.confirmpassword && (
-                <p className="text-xs text-red-500">{errors.confirmpassword}</p>
-              )}
+              {errors.confirmpassword && <p className="text-xs text-red-500">{errors.confirmpassword}</p>}
             </div>
 
-            {errors.nochange && (
-              <p className="text-xs text-red-500 text-center">{errors.nochange}</p>
-            )}
+            {errors.nochange && <p className="text-xs text-red-500 text-center">{errors.nochange}</p>}
+            {apiError && <p className="text-xs text-red-600 text-center">{apiError}</p>}
 
             <button
               type="submit"
-              disabled={!hasChanges()}
+              disabled={!hasChanges || isSaving || isLoadingProfile}
               className="w-full h-11 rounded-xl bg-[#9D94EB] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </form>
 
@@ -237,10 +364,7 @@ export default function UpdateProfile() {
                   <span className="text-xl font-black">{MOCK_STATS.overallProgress}%</span>
                 </div>
                 <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#9D94EB]"
-                    style={{ width: `${MOCK_STATS.overallProgress}%` }}
-                  />
+                  <div className="h-full bg-[#9D94EB]" style={{ width: `${MOCK_STATS.overallProgress}%` }} />
                 </div>
               </div>
 
@@ -278,7 +402,6 @@ export default function UpdateProfile() {
             </div>
 
             <div className="mt-8 text-center">
-              {/* Need to re-route to user dashboard */}
               <Link href="/" className="text-sm font-bold hover:underline">
                 ← Back to User Dashboard
               </Link>
