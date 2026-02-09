@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSiteState } from "@/app/store/SiteStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "@/app/api/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -10,20 +12,26 @@ export default function LoginPage() {
   const [result, setResult] = useState<string>("");
   const isLoading = useSiteState((s) => s.isLoading);
 
+  const router = useRouter();
+
   const handleLogin = async () => {
-    setResult("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      setResult(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResult("Error: " + (err instanceof Error ? err.message : String(err)));
+  try {
+    await api.post("/api/auth/login", {
+      username,
+      password,
+    });
+
+    router.push("/dashboard");
+
+  } catch (err: any) {
+    if (err.response?.status === 401) {
+      setResult("Invalid username or password");
+    } else {
+      setResult("Login failed");
     }
+  }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FCFBF7] p-4 font-sans text-slate-800">
