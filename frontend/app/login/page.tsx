@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { useSiteState } from "@/app/store/SiteStore";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [result, setResult] = useState<string>("");
   const isLoading = useSiteState((s) => s.isLoading);
+  const setUser = useSiteState((s) => s.setUser);
+  const router = useRouter();
 
   const handleLogin = async () => {
     setResult("");
@@ -17,8 +20,25 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        setResult("Error: " + (error.message || "Login failed"));
+        return;
+      }
+      
       const data = await res.json();
-      setResult(JSON.stringify(data, null, 2));
+      
+      // Save user to state
+      setUser({
+        username: data.username,
+        email: data.email,
+        usertype: data.usertype,
+      });
+      
+      // Redirect based on user type or to a default page
+      router.push("/admin/lesson");
+      
     } catch (err) {
       setResult("Error: " + (err instanceof Error ? err.message : String(err)));
     } finally {
