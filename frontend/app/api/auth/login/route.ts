@@ -1,20 +1,36 @@
 import axios from "axios";
 
+export const runtime = "nodejs";
 const BACKEND_URL = process.env.BACKEND_URL;
 
 export async function POST(req: Request) {
+  try {
+    if (!BACKEND_URL) {
+      return Response.json(
+        { error: "Server misconfiguration" },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
-    const response = await axios.post(`${BACKEND_URL}/api/auth/login`,body);
-    //retrieve jwt cookie from Spring Boot      
+    const response = await axios.post(
+      `${BACKEND_URL}/api/auth/login`,
+      body,
+      { withCredentials: true }
+    );
     const cookie = response.headers["set-cookie"];
 
-    //set jwt cookie in browser and return user info
     return new Response(JSON.stringify(response.data), {
-        status: 200,
-        headers: {
-            "Content-Type": "application/json",
-            "Set-Cookie": cookie?.[0] || "",
-        }
+      status: response.status,
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookie ? { "Set-Cookie": cookie[0] } : {}),
+      },
     });
-
+  } catch (err: any) {
+    return Response.json(
+      { error: err?.response?.data?.message || "Authentication failed" },
+      { status: err?.response?.status || 500 }
+    );
+  }
 }
