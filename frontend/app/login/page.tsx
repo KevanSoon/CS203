@@ -1,61 +1,35 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSiteState } from "@/app/store/SiteStore";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<string>("");
+  const isLoading = useSiteState((s) => s.isLoading);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!username.trim()) {
-      setError("Bro forgot their username 💀");
-      return;
-    }
-
-    if (!password.trim()) {
-      setError("Password missing. This ain’t optional 😭");
-      return;
-    }
-
-    setIsLoading(true);
-
+  const handleLogin = async () => {
+    setResult("");
     try {
-      const res = await fetch("http://localhost:7860/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
-
-      console.log(username, password)
-      console.log(res)
-
-      if (!res.ok) {
-        throw new Error("Invalid");
-      }
-
-      router.push("/dashboard");
-    } catch {
-      setError("Wrong combo. That was NOT very sigma of you.");
-    } finally {
-      setIsLoading(false);
+      const data = await res.json();
+      setResult(JSON.stringify(data, null, 2));
+    } catch (err) {
+      setResult("Error: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FCFBF7] p-4 font-sans text-slate-800">
-      <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-100">
+      <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-100 space-y-6">
 
-        <div className="mb-8 text-center">
+        <div className="text-center">
           <h2 className="text-xl font-bold text-[#9D94EB] mb-2 tracking-tight">
             Simi Slang
           </h2>
@@ -67,14 +41,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
-              {error}
-            </div>
-          )}
-
+        <div className="space-y-5">
           <div className="space-y-1">
             <label className="text-sm font-semibold ml-1">
               Username
@@ -106,20 +73,23 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-[#9D94EB] text-white font-bold text-lg
-              hover:bg-[#7f75d4] transition-colors
-              disabled:opacity-50"
-            >
-              {isLoading ? "Loading… don’t blink 👀" : "Let me in 😤"}
-            </button>
-          </div>
-        </form>
+          <button
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="w-full h-12 rounded-xl bg-[#9D94EB] text-white font-bold text-lg
+            hover:bg-[#7f75d4] transition-colors disabled:opacity-50"
+          >
+            {isLoading ? "Loading… don’t blink 👀" : "Let me in 😤"}
+          </button>
+        </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+        {result && (
+          <pre className="bg-slate-100 rounded-xl p-4 text-xs overflow-auto max-h-60">
+            {result}
+          </pre>
+        )}
+
+        <div className="pt-6 border-t border-slate-100 text-center">
           <p className="text-sm text-slate-500">
             First time here?{" "}
             <Link
@@ -130,7 +100,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-
       </div>
     </div>
   );

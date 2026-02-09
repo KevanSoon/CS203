@@ -12,7 +12,17 @@ import com.backend.cs203.repository.LessonRepository;
 public class LessonService {
     private final LessonRepository lessonRepository;
     
-    public List<LessonsSummaryDTO> getAllLessonSummaries() {
+    public List<LessonSummaryDTO> getAllLessons() {
         return lessonRepository.findAllLessons();
     }
+    public List<LessonSummaryDTO> getUserCreatedLessons(String username) {
+        return lessonRepository.findUserCreatedLessons(username);
+    }
+    public List<LessonApplicationDTO> getAllLessonApplications() {
+        return lessonRepository.findAllLessonApplications();
+    }
+    public List<LessonSummaryDTO> getPendingLessonApplications() {
+        return lessonRepository.findAllPendingLessonApplications();
+    }
+
 }
