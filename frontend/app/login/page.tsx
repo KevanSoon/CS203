@@ -11,25 +11,32 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [result, setResult] = useState<string>("");
   const isLoading = useSiteState((s) => s.isLoading);
-
+  const setUser = useSiteState((s) => s.setUser);
   const router = useRouter();
-
   const handleLogin = async () => {
   try {
-    await api.post("/api/auth/login", {
+    const res = await api.post("/api/auth/login", {
       username,
       password,
     });
 
+      const data = res.data;
+
+      // update global user state
+      setUser({
+        username: data.username,
+        email: data.email,
+        usertype: data.usertype,
+      });
     router.push("/dashboard");
 
-  } catch (err: any) {
-    if (err.response?.status === 401) {
-      setResult("Invalid username or password");
-    } else {
-      setResult("Login failed");
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setResult("Invalid username or password");
+      } else {
+        setResult("Login failed");
+      }
     }
-  }
   };
 
 
