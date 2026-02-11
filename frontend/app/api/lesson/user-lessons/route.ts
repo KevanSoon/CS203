@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     try {
-        const {data} = await axios.get(`${BACKEND_URL}/api/lesson/user-lessons/`, {
+        const {data} = await axios.get(`${BACKEND_URL}/api/lesson/`, {
             headers: {Authorization: `Bearer ${token}`},
         });
 
