@@ -9,7 +9,6 @@ interface Lesson {
   description: string;
   createdBy: string;
   createdAt: string;
-  rating: string;
 }
 
 export default function DashboardPage() {
@@ -49,6 +48,7 @@ export default function DashboardPage() {
             description={lesson.description}
             image={`https://source.unsplash.com/random/400x300?sig=${i}`}
             progress={0}
+            rating={3} // hardcoded rating for now
           />
         ))}
       </div>

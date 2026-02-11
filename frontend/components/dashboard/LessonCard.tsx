@@ -8,6 +8,7 @@ type LessonCardProps = {
   title: string;
   description: string; // truncated preview
   progress: number;
+  rating: number;
 };
 
 export default function LessonCard({
@@ -15,6 +16,7 @@ export default function LessonCard({
   title,
   description,
   progress,
+  rating,
 }: LessonCardProps) {
   const [showModal, setShowModal] = useState(false);
 
@@ -70,6 +72,10 @@ export default function LessonCard({
                 className="h-full bg-primary transition-all duration-700 ease-out"
                 style={{ width: `${progress}%` }}
               />
+            </div>
+
+            <div className="mt-2 text-xs text-muted-foreground">
+              Rating: {rating} ★
             </div>
           </div>
         </div>
