@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSiteState } from "@/app/store/SiteStore";
 
 interface SignUpForm {
   username: string;
   email: string;
+  usertype: string;
   password: string;
   confirmpassword: string;
 }
@@ -13,6 +15,7 @@ interface SignUpForm {
 interface FormErrors {
   username?: string;
   email?:string;
+  usertype?: string;
   password?: string;
   confirmpassword?: string;
 }
@@ -21,28 +24,25 @@ export default function SignUp() {
   const[form, setForm] = useState<SignUpForm>({
     username: "",
     email: "",
+    usertype: "user",
     password: "",
     confirmpassword: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>){
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>){
     setForm({...form, [e.target.name]: e.target.value});
   }
 
-  function handleSubmit(e: React.FormEvent){
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const newErrors: FormErrors = {};
     
-    // other error for username -- username already taken 
     if(!form.username) newErrors.username = "Don't shy la, put your name!";
-
     if(!form.email) newErrors.email = "Send to where ah? My carrier pigeon on leave leh.";
-
     if(!form.password) newErrors.password = "Don't let people fanum tax your account. Faster set your password la!";
-
     if (form.password !== form.confirmpassword) {
       newErrors.confirmpassword = "Eh the password not the same leh. Try again.";
     }
@@ -50,7 +50,51 @@ export default function SignUp() {
     setErrors(newErrors);
     
     if(Object.keys(newErrors).length === 0){
-      console.log("Submitting: ", form);
+      useSiteState.setState({ isLoading: true });
+      
+      try {
+        // Call your registration API route
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: form.username,
+            email: form.email,
+            usertype: form.usertype,
+            password: form.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Handle specific errors from backend
+          const errorMessage = data.error || 'Registration failed';
+          
+          if (errorMessage.toLowerCase().includes('username')) {
+            setErrors({ username: 'Username already taken lah!' });
+          } else if (errorMessage.toLowerCase().includes('email')) {
+            setErrors({ email: 'Email already registered leh!' });
+          } else {
+            alert('Registration failed: ' + errorMessage);
+          }
+          return;
+        }
+
+        // Success!
+        console.log('Registration successful:', data);
+        
+        // Redirect to login page
+        window.location.href = '/login';
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('Something went wrong. Try again later!');
+      } finally {
+        useSiteState.setState({ isLoading: false });
+      }
     }
   }
 
@@ -104,6 +148,25 @@ export default function SignUp() {
             />
             {errors.email && (
               <p className="text-sm text-red-500 ml-1 mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Select Dropdown */}
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-700 ml-1">User Type</label>
+            <select
+              name="usertype"
+              value={form.usertype}
+              onChange={handleChange}
+              className={`w-full border-2 border-slate-100 bg-slate-50/50 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:border-[#9D94EB] focus:bg-white focus:ring-4 focus:ring-[#9D94EB]/10 transition-all duration-200 appearance-none cursor-pointer
+                          ${errors.usertype ? "border-red-400 bg-red-50" : "border-slate-100 bg-slate-50/50 focus:border-[#9D94EB] focus:ring-[#9D94EB]/10"}`}
+            >
+              <option value="user" className="text-slate-800 bg-white py-2">User</option>
+              <option value="admin" className="text-slate-800 bg-white py-2">Creator</option>
+            </select>
+            
+            {errors.usertype && (
+              <p className="text-sm text-red-500 ml-1 mt-1">{errors.usertype}</p>
             )}
           </div>
 
