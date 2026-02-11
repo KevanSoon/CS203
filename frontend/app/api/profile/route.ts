@@ -1,49 +1,30 @@
-import axios from "axios";
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL!;
+const BACKEND_URL = process.env.BACKEND_URL!; // e.g. http://localhost:8080
 
 export async function GET() {
   try {
-    const cookieStore = await cookies(); // ✅ Next 15/16 requires await
+    const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
-    const response = await axios.get(`${BACKEND_URL}/api/profile`, {
+    if (!jwt) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const res = await fetch(`${BACKEND_URL}/api/profile`, {
+      method: "GET",
       headers: {
-        ...(jwt ? { Cookie: `jwt=${jwt}` } : {}),
+        Cookie: `jwt=${jwt}`, // forward jwt cookie to Spring Boot
+        Accept: "application/json",
       },
-      timeout: 8000,
+      cache: "no-store",
     });
 
-    return Response.json(response.data);
-  } catch (err: any) {
-    console.error("GET /api/profile error:", err?.message, err?.response?.data);
-    return Response.json(err?.response?.data || { error: err?.message || "Server error" }, {
-      status: err?.response?.status || 500,
-    });
-  }
-}
+    const data = await res.json().catch(() => ({}));
 
-export async function PATCH(req: Request) {
-  try {
-    const body = await req.json();
-
-    const cookieStore = await cookies(); // ✅ await
-    const jwt = cookieStore.get("jwt")?.value;
-
-    const response = await axios.patch(`${BACKEND_URL}/api/profile`, body, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(jwt ? { Cookie: `jwt=${jwt}` } : {}),
-      },
-      timeout: 8000,
-    });
-
-    return Response.json(response.data);
-  } catch (err: any) {
-    console.error("PATCH /api/profile error:", err?.message, err?.response?.data);
-    return Response.json(err?.response?.data || { error: err?.message || "Server error" }, {
-      status: err?.response?.status || 500,
-    });
+    return Response.json(data, { status: res.status });
+  } catch (err) {
+    console.error("BFF GET /api/profile failed:", err);
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
