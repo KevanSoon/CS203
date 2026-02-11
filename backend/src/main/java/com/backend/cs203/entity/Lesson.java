@@ -28,9 +28,6 @@ public class Lesson {
     
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    @Column(name="created_by")
-    private String createdBy;
     
     @PrePersist
     protected void onCreate() {

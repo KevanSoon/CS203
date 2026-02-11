@@ -2,7 +2,6 @@ package com.backend.cs203.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,13 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.auth.AuthResponse;
 import com.backend.cs203.dto.auth.LoginRequest;
-import com.backend.cs203.dto.auth.RegisterRequest;
-import com.backend.cs203.dto.auth.RegisterResponse;
 import com.backend.cs203.dto.auth.UserInfoResponse;
 import com.backend.cs203.exception.Exceptions.AuthException;
 import com.backend.cs203.security.CookieFactory;
 import com.backend.cs203.service.AuthService;
-import com.backend.cs203.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +28,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieFactory cookieFactory;
-    private final UserService userService;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpirationMs;
@@ -55,19 +50,6 @@ public class AuthController {
         return cookieFactory.withCookie(cookie, userInfo);
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> registerUser(
-        @Valid @RequestBody RegisterRequest request
-    ) {
-        RegisterResponse response = userService.registerUser(request);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        }
-    }
-
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         ResponseCookie cookie = cookieFactory.clearJwtCookie();
@@ -86,4 +68,5 @@ public class AuthController {
         UserInfoResponse resp = authService.getCurrentUser(username);
         return ResponseEntity.ok(resp);
     }
+
 }

@@ -1,11 +1,36 @@
 import { BookOpen, Pencil, Trash2 } from "lucide-react";
-import { Lesson } from "./LessonContent";
 
-interface MyLessonsCardProps {
-  lessons: Lesson[];
-}
+const lessons = [
+  {
+    title: "Gen Alpha Slangs 101",
+    tag: "gen-alpha",
+    status: "published",
+    desc: "Learn the most bussin slang from Gen Alpha",
+    chapters: 4,
+    completions: 156,
+    created: "2024-01-15",
+  },
+  {
+    title: "Gaming Lingo Basics",
+    tag: "gaming",
+    status: "published",
+    desc: "Master the essential gaming terminology",
+    chapters: 3,
+    completions: 89,
+    created: "2024-01-20",
+  },
+  {
+    title: "TikTok Trends Decoded",
+    tag: "tiktok",
+    status: "draft",
+    desc: "Understand viral TikTok phrases",
+    chapters: 5,
+    completions: 0,
+    created: "2024-01-25",
+  },
+];
 
-export const MyLessonsCard = ({ lessons }: MyLessonsCardProps) => {
+export const MyLessonsCard = () => {
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -27,6 +52,20 @@ export const MyLessonsCard = ({ lessons }: MyLessonsCardProps) => {
                     <p className="text-sm font-semibold text-foreground mb-1">
                       {lesson.title}
                     </p>
+                    <div className="flex flex-wrap items-center gap-1 mb-2">
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
+                        {lesson.tag}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded-full ${
+                          lesson.status === "published"
+                            ? "bg-primary text-card"
+                            : "bg-border text-muted-foreground"
+                        }`}
+                      >
+                        {lesson.status}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -37,9 +76,10 @@ export const MyLessonsCard = ({ lessons }: MyLessonsCardProps) => {
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-1">{lesson.description}</p>
+                <p className="text-sm text-muted-foreground mb-1">{lesson.desc}</p>
                 <p className="text-xs text-muted-foreground">
-                  Created: {new Date(lesson.createdAt).toLocaleDateString()}
+                  {lesson.chapters} chapters · {lesson.completions} completions ·
+                  Created: {lesson.created}
                 </p>
               </div>
             </div>

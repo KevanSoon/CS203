@@ -17,9 +17,7 @@ CREATE TABLE IF NOT EXISTS lesson(
   description TEXT,
   status ENUM('saved','pending', 'approved', 'rejected'),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL,
-  created_by varchar(50) NOT NULL,
-  FOREIGN KEY (`created_by`) references user(`username`)
+  deleted_at TIMESTAMP NULL
 );
 
 

@@ -3,18 +3,11 @@ import { StatsGrid } from "./StatsGrid";
 import { MyLessonsCard } from "./MyLessonsCard";
 import { FeedbacksCard } from "./FeedbacksCard";
 
-export interface Lesson {
-  createdAt: string;
-  title: string;
-  description: string;
-}
-
 export interface LessonContentProps {
   selected: string;
-  lessons: Lesson[];
 }
 
-export const LessonContent = ({ selected, lessons }: LessonContentProps) => {
+export const LessonContent = ({ selected }: LessonContentProps) => {
   return (
     <div className="flex-1 bg-background p-6 overflow-auto">
       {/* Header */}
@@ -35,7 +28,7 @@ export const LessonContent = ({ selected, lessons }: LessonContentProps) => {
       {/* Content Grid */}
       <div>
         {selected === "My Lessons" ? (
-          <MyLessonsCard lessons={lessons} />
+          <MyLessonsCard />
         ) : selected === "Feedbacks and Alerts" ? (
           <FeedbacksCard />
         ) : null}
