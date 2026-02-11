@@ -66,10 +66,10 @@ const validateUserType = (usertype: string): string | undefined => {
 };
 
 export default function SignUp() {
-  const[form, setForm] = useState({
+  const[form, setForm] = useState<SignUpForm>({
     username: "",
     email: "",
-    usertype: "",
+    usertype: "user",
     password: "",
     confirmpassword: "",
   });
@@ -88,11 +88,19 @@ export default function SignUp() {
     form.password !== "" &&
     form.confirmpassword !== "";
 
-  function handleChange(e){
-    setForm({...form, [e.target.name]: e.target.value});
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>){
+    const { name, value } = e.target;
+    setForm({...form, [name]: value});
+    
     // Clear error for this field when user starts typing
-    if (errors[e.target.name as keyof FormErrors]) {
-      setErrors({...errors, [e.target.name]: undefined});
+    if (errors[name as keyof FormErrors]) {
+      setErrors({...errors, [name]: undefined});
+    }
+    
+    // Special handling: if password changes and confirmpassword has error, clear it
+    // so user can see if they now match
+    if (name === 'password' && errors.confirmpassword) {
+      setErrors({...errors, confirmpassword: undefined});
     }
   }
 
@@ -110,6 +118,11 @@ export default function SignUp() {
         break;
       case 'password':
         error = validatePassword(value);
+        // Also check if confirmpassword now matches
+        if (!error && form.confirmpassword && value !== form.confirmpassword) {
+          setErrors({...errors, password: undefined, confirmpassword: "Eh the password not the same leh. Try again."});
+          return;
+        }
         break;
       case 'confirmpassword':
         if (value !== form.password) {
@@ -123,13 +136,16 @@ export default function SignUp() {
 
     if (error) {
       setErrors({...errors, [name]: error});
+    } else {
+      // Clear the error if validation passed
+      setErrors({...errors, [name]: undefined});
     }
   }
 
-  function handleSubmit(e){
+  async function handleSubmit(e: React.FormEvent){
     e.preventDefault();
 
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     // Validate all fields using the validation functions
     const usernameError = validateUsername(form.username);
@@ -273,6 +289,7 @@ export default function SignUp() {
                 ${errors.usertype ? "border-red-400 bg-red-50" : "border-slate-100 bg-slate-50/50 focus:border-[#9D94EB] focus:ring-[#9D94EB]/10"}
                 ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
             >
+              <option value="" disabled className="text-slate-400 bg-white py-2">Select user type...</option>
               <option value="user" className="text-slate-800 bg-white py-2">User</option>
               <option value="admin" className="text-slate-800 bg-white py-2">Creator</option>
             </select>
