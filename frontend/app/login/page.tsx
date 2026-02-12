@@ -52,9 +52,9 @@ export default function LoginPage() {
       if (data.usertype === "user") {
         router.push("/dashboard");
       } else if (data.usertype === "admin") {
-        router.push("/admin/lesson");
+        router.push("/admin");
       } else if (data.usertype === "root") {
-        router.push("/webadmin/application");
+        router.push("/webadmin");
       }
     } catch (err: any) {
       setPassword("");
