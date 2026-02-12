@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CartoonButton } from "@/components/CartoonButton";
+import { CartoonButton } from "@/app/components/CartoonButton";
 
 type HeaderProps = {
   isAuthenticated?: boolean;

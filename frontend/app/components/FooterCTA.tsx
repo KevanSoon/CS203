@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CartoonButton } from "@/components/CartoonButton";
+import { CartoonButton } from "@/app/components/CartoonButton";
 
 const FooterCTA = () => {
   return (

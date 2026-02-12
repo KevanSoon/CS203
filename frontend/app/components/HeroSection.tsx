@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import Tungtung from "../../public/Tungtung";
-import { CartoonButton } from "@/components/CartoonButton";
+import { CartoonButton } from "@/app/components/CartoonButton";
 
 const HeroSection = () => {
   return (
