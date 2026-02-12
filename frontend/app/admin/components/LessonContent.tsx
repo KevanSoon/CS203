@@ -1,4 +1,4 @@
-import { CartoonButton } from "@/components/CartoonButton";
+import { CartoonButton } from "@/app/components/CartoonButton";
 import { StatsGrid } from "./StatsGrid";
 import { MyLessonsCard } from "./MyLessonsCard";
 import { FeedbacksCard } from "./FeedbacksCard";

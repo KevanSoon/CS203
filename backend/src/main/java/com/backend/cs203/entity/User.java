@@ -2,8 +2,18 @@ package com.backend.cs203.entity;
 
 import java.time.Instant;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "user")
@@ -44,4 +54,7 @@ public class User {
     public enum UserType {
         user, admin, root
     }
+
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 }
