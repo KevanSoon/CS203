@@ -68,3 +68,12 @@ CREATE TABLE IF NOT EXISTS lesson_tagging(
   FOREIGN KEY (`tag_name`) REFERENCES tag(`name`),
   FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
 );
+
+CREATE TABLE IF NOT EXISTS friendship(
+  username1 varchar(45) NOT NULL,
+  username2 varchar(45) NOT NULL,
+  status ENUM('pending', 'confirmed'),
+  PRIMARY KEY (`username1`, `username2`),
+  FOREIGN KEY (`username1`) REFERENCES user(`username`),
+  FOREIGN KEY (`username2`) REFERENCES user(`username`)
+);
