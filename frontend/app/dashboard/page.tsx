@@ -18,7 +18,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const { data } = await api.get<Lesson[]>("/api/lesson/user-lessons/");
+        const { data } = await api.get<Lesson[]>("/api/lesson/");
         setLessons(data);
       } catch (err: any) {
         console.error(err);
