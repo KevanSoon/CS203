@@ -53,3 +53,18 @@ CREATE TABLE IF NOT EXISTS quiz(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`card_id`) REFERENCES card(`id`)
 );
+
+CREATE TABLE IF NOT EXISTS tag(
+  name varchar(45) UNIQUE NOT NULL PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP NULL
+);
+
+CREATE TABLE IF NOT EXISTS lesson_tagging(
+  tag_name varchar(45) NOT NULL,
+  lesson_id INT NOT NULL,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (`tag_name`, `lesson_id`),
+  FOREIGN KEY (`tag_name`) REFERENCES tag(`name`),
+  FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
+);
