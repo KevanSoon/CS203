@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -16,13 +16,6 @@ import {
 type Profile = {
   username: string;
   profilePictureUrl?: string;
-};
-
-// ✅ Mock profile (replace with real API later)
-const MOCK_PROFILE: Profile = {
-  username: "Nicole",
-  // You can swap this to your own uploaded/static image too
-  profilePictureUrl: "https://i.pravatar.cc/200?img=15",
 };
 
 // ✅ Mock learning progress
@@ -103,8 +96,44 @@ function CollapsibleCard({
 export default function ProfilePage() {
   const router = useRouter();
 
-  const name = useMemo(() => MOCK_PROFILE.username || "User", []);
-  const profilePic = MOCK_PROFILE.profilePictureUrl || "";
+  // ✅ profile from backend now
+  const [profile, setProfile] = useState<Profile>({
+    username: "",
+    profilePictureUrl: "",
+  });
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      setProfileError("");
+      setIsLoadingProfile(true);
+
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store" });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(data?.message || data?.error || "Failed to load profile");
+        }
+
+        setProfile({
+          username: data?.username ?? "",
+          profilePictureUrl: data?.profilePictureUrl ?? "",
+        });
+      } catch (e: any) {
+        setProfileError(e?.message || "Failed to load profile");
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const name = isLoadingProfile ? "Loading..." : profile.username || "User";
+  const profilePic = profile.profilePictureUrl || "";
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#F2F0FF] via-white to-white font-sans text-slate-900">
@@ -147,16 +176,24 @@ export default function ProfilePage() {
 
                   <button
                     type="button"
-                    className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105"
+                    onClick={() => router.push("/profile/edit")}
+                    className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isLoadingProfile}
                   >
                     <PencilLine size={16} />
                     Edit profile
                   </button>
+
+                  {profileError && (
+                    <div className="mt-5 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {profileError}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* RIGHT — Progress + Friends (collapsible) */}
+            {/* RIGHT — Progress + Friends (mock) */}
             <div className="md:col-span-2 space-y-6">
               <CollapsibleCard
                 title="Learning Progress"
@@ -243,7 +280,7 @@ export default function ProfilePage() {
                             src={friend.avatarUrl}
                             alt={`${friend.name} avatar`}
                             fill
-                            className="h-full w-full object-cover"
+                            className="object-cover"
                             unoptimized
                           />
                         </div>
