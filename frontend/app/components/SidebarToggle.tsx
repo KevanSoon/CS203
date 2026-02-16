@@ -9,7 +9,7 @@ export const SidebarToggle = ({ open, setOpen }: SidebarToggleProps) => {
   return (
     <button
       onClick={() => setOpen(!open)}
-      className="absolute bottom-0 left-0 right-0 border-t border-border transition-colors hover:bg-border"
+      className="w-full border-b border-border transition-colors hover:bg-border mb-2"
     >
       <div className="flex items-center p-3">
         <div className="grid size-10 place-content-center">
