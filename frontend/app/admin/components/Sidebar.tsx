@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { BookOpen, MessageSquare, Menu, LogOut } from "lucide-react";
+import { BookOpen, MessageSquare, Menu } from "lucide-react";
 import { SidebarOption } from "./SidebarOption";
 import { SidebarTitleSection } from "./SidebarTitleSection";
 import { SidebarToggle } from "./SidebarToggle";
@@ -25,14 +25,7 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push("/");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+  // logout handled from Header; Sidebar no longer exposes logout
 
   return (
     <>
@@ -83,22 +76,7 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
           />
         </div>
         
-        {/* Logout button at the bottom - only show if user is logged in */}
-        {/* for now no check for user login, but userstore logic still above */}
-        <div className="absolute bottom-16 left-0 right-0 px-2">
-          <button
-            onClick={handleLogout}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
-              hover:bg-accent text-muted-foreground hover:text-foreground
-              ${!open && "justify-center"}
-            `}
-            title="Logout"
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            {open && <span className="font-medium">Logout</span>}
-          </button>
-        </div>
+        {/* Sidebar no longer shows logout; header handles global logout UI */}
 
         <SidebarToggle open={open} setOpen={setOpen} />
       </nav>
