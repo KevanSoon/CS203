@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar } from "@/app/components/Sidebar";
 import { LessonContent } from "./components/LessonContent";
 import { api } from "@/app/api/api";
 
 export const AdminLessonPage = () => {
-  const [selected, setSelected] = useState("My Lessons");
+  const [selected, setSelected] = useState("Manage Lessons");
   const [lessons, setLessons] = useState([]);
 
   useEffect(() => {

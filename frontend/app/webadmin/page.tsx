@@ -5,6 +5,7 @@ import { api } from "@/app/api/api"
 import { StatsCards } from "./components/stats-cards"
 import { LessonsTable } from "./components/lessons-table"
 import { Toast } from "./components/toast"
+import { Sidebar } from "@/app/components/Sidebar";
 
 // Types
 export type LessonStatus = "pending" | "approved" | "rejected"
@@ -40,6 +41,7 @@ interface ToastState {
 }
 
 export default function DashboardPage() {
+  const [selected, setSelected] = useState("Manage Applications");
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "success" })
@@ -91,29 +93,32 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Lesson Approval Dashboard
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Review and approve lessons submitted by instructors for publication.
-          </p>
-        </div>
-
-        {loading ? (
-          <p className="text-muted-foreground">Loading lessons...</p>
-        ) : (
-          <div className="flex flex-col gap-6">
-            <StatsCards stats={stats} />
-            <LessonsTable
-              lessons={lessons}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
+    <div className="flex min-h-screen bg-background">
+      <Sidebar selected={selected} setSelected={setSelected} />
+      <main className="flex-1 overflow-auto">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground">
+              Lesson Approval Dashboard
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              Review and approve lessons submitted by instructors for publication.
+            </p>
           </div>
-        )}
+
+          {loading ? (
+            <p className="text-muted-foreground">Loading lessons...</p>
+          ) : (
+            <div className="flex flex-col gap-6">
+              <StatsCards stats={stats} />
+              <LessonsTable
+                lessons={lessons}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            </div>
+          )}
+        </div>
       </main>
 
       <Toast

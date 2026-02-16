@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { BookOpen, MessageSquare, Menu, LogOut } from "lucide-react";
-import { SidebarOption } from "./SidebarOption";
-import { SidebarTitleSection } from "./SidebarTitleSection";
-import { SidebarToggle } from "./SidebarToggle";
+import { BookOpen, MessageSquare, Menu, LogOut, Settings, Users, BarChart3, FileText } from "lucide-react";
+import { SidebarOption } from "@/app/components/SidebarOption";
+import { SidebarTitleSection } from "@/app/components/SidebarTitleSection";
+import { SidebarToggle } from "@/app/components/SidebarToggle";
 import { logout } from "@/app/api/api";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
 
 export interface SidebarProps {
@@ -16,9 +16,13 @@ export interface SidebarProps {
 export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const user = useSiteState((s) => s.user);
 
-  const handleOptionSelect = () => {
+  const handleOptionSelect = (title: string, route: string) => {
+    setSelected(title);
+    router.push(route);
+    
     // Only close sidebar on mobile (< 768px)
     if (window.innerWidth < 768) {
       setOpen(false);
@@ -30,9 +34,36 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
       await logout();
       router.push("/");
     } catch (error) {
-      console.error("Logout error:", error);
+      // Error handling without console
     }
   };
+
+  // Define menu options based on user type
+  const getMenuOptions = () => {
+    if (!user) return [];
+
+    switch (user.usertype) {
+      case 'admin':
+        return [
+          { Icon: FileText, title: "Manage Lessons", route: "/admin" },
+          { Icon: BarChart3, title: "View Alerts", route: "/admin/alerts" },
+          { Icon: BookOpen, title: "Lesson Application", route: "/admin/lesson" },
+        ];
+      case 'root':
+        return [
+          { Icon: FileText, title: "Manage Applications", route: "/webadmin" },
+          { Icon: BarChart3, title: "Manage Reports", route: "/webadmin/reports" },
+        ];
+      
+      case 'user':
+      default:
+        return [
+          { Icon: MessageSquare, title: "View Lessons", route: "/dashboard/" },
+        ];
+    }
+  };
+
+  const menuOptions = getMenuOptions();
 
   return (
     <>
@@ -60,37 +91,34 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
           border-border bg-card p-2 shadow-sm
           ${open ? "w-64" : "w-16"}
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          flex flex-col
         `}
       >
-        <SidebarTitleSection open={open} />
+        <SidebarToggle open={open} setOpen={setOpen} />
+        <SidebarTitleSection open={open} user={user}  selected={selected}/>
 
-        <div className="space-y-1 mb-8">
-          <SidebarOption
-            Icon={BookOpen}
-            title="My Lessons"
-            selected={selected}
-            setSelected={setSelected}
-            open={open}
-            onSelect={handleOptionSelect}
-          />
-          <SidebarOption
-            Icon={MessageSquare}
-            title="Feedbacks and Alerts"
-            selected={selected}
-            setSelected={setSelected}
-            open={open}
-            onSelect={handleOptionSelect}
-          />
+        <div className="space-y-1 mb-8 flex-1">
+          {menuOptions.map((option) => (
+            <SidebarOption
+              key={option.title}
+              Icon={option.Icon}
+              title={option.title}
+              selected={selected}
+              setSelected={setSelected}
+              open={open}
+              onSelect={() => handleOptionSelect(option.title, option.route)}
+            />
+          ))}
         </div>
         
         {/* Logout button at the bottom - only show if user is logged in */}
         {/* for now no check for user login, but userstore logic still above */}
-        <div className="absolute bottom-16 left-0 right-0 px-2">
+        <div className="mt-auto pb-2">
           <button
             onClick={handleLogout}
             className={`
               w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
-              hover:bg-accent text-muted-foreground hover:text-foreground
+              hover:bg-border text-muted-foreground hover:text-foreground
               ${!open && "justify-center"}
             `}
             title="Logout"
@@ -100,7 +128,7 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
           </button>
         </div>
 
-        <SidebarToggle open={open} setOpen={setOpen} />
+        
       </nav>
     </>
   );
