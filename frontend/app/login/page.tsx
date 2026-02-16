@@ -152,7 +152,7 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500">
             First time here?{" "}
             <Link
-              href="/register"
+              href="/signup"
               className="font-bold text-[#9D94EB] hover:underline"
             >
               Join the chaos
