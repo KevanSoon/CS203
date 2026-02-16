@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from "zustand/middleware"; 
 
 interface UserInfo {
     username: string;
@@ -15,10 +16,19 @@ interface SiteState {
     clearUser: () => void;
 }
 
-export const useSiteState = create<SiteState>((set) => ({
-  isLoading: false,
-  error: null,
-  user: null,
-  setUser: (user) => set({ user }),
-  clearUser: () => set({ user: null }),
-}));
+export const useSiteState = create<SiteState>()(
+  persist(
+    (set) => ({
+      isLoading: false,
+      error: null,
+      user: null,
+      setUser: (user) => set({ user }),
+      clearUser: () => set({ user: null }),
+    }),
+    {
+      name: 'site-storage', // storage key
+      //  persist the user object
+      partialize: (state) => ({ user: state.user })
+    }
+  )
+);

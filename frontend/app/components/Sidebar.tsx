@@ -18,6 +18,7 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);
+  const clearUser = useSiteState((s) => s.clearUser);
 
   const handleOptionSelect = (title: string, route: string) => {
     setSelected(title);
@@ -32,9 +33,10 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
   const handleLogout = async () => {
     try {
       await logout();
+      clearUser();
       router.push("/");
-    } catch (error) {
-      // Error handling without console
+    } catch (err) {
+      console.error("Logout error:", err);
     }
   };
 
