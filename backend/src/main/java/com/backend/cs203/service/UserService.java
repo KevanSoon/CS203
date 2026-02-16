@@ -76,4 +76,21 @@ public class UserService {
 
         return new UserResponse(user.getUsername(), user.getProfilePictureUrl());
     }
+
+    @Transactional
+    public void deleteMyAccount() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth required");
+        }
+
+        String username = auth.getName();
+        User user = userRepository.findById(username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setDeactivatedAt(Instant.now());
+        userRepository.save(user);
+
+    }
+
 }

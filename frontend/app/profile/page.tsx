@@ -104,6 +104,9 @@ export default function ProfilePage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState("");
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   useEffect(() => {
     const loadProfile = async () => {
       setProfileError("");
@@ -123,7 +126,7 @@ export default function ProfilePage() {
           profilePictureUrl: data?.profilePictureUrl ?? "",
         });
       } catch (e: any) {
-        setProfileError(e?.message || "Failed to load profile");
+        setProfileError(e?.message || "Something went wrong 💀");
       } finally {
         setIsLoadingProfile(false);
       }
@@ -134,6 +137,35 @@ export default function ProfilePage() {
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
   const profilePic = profile.profilePictureUrl || "";
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo.\n\nStill sending it?"
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      const res = await fetch("/api/profile/delete", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to delete account");
+      }
+
+      // success → kick user out
+      router.replace("/");
+    } catch (err: any) {
+      setDeleteError(err?.message || "Delete failed. L.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#F2F0FF] via-white to-white font-sans text-slate-900">
@@ -301,6 +333,32 @@ export default function ProfilePage() {
                   ))}
                 </div>
               </CollapsibleCard>
+              <CollapsibleCard
+                title="Danger Zone (no jokes)"
+                icon={<span className="font-black text-red-600">!</span>}
+                defaultOpen={false}
+              >
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-600">
+                    If you delete your account, it’s actually gone. Like gone-gone.
+                  </p>
+
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                    className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {isDeleting ? "Deleting… rip 💀" : "Delete my account"}
+                  </button>
+
+                  {deleteError && (
+                    <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {deleteError}
+                    </div>
+                  )}
+                </div>
+              </CollapsibleCard>
+
             </div>
           </div>
         </div>
