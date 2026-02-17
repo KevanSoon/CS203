@@ -35,7 +35,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full">
       <div className="flex w-full bg-background text-foreground">
         <Sidebar selected={selected} setSelected={setSelected} />
-        <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="flex-1 px-6 py-12">
           
           <h1 className="text-3xl md:text-4xl font-black mb-2">
             Your Daily Grind 🔥
