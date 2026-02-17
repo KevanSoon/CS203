@@ -22,8 +22,12 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
 
   const handleOptionSelect = (title: string, route: string) => {
     setSelected(title);
-    router.push(route);
-    
+
+    // Only navigate if we're not already on the target route
+    if (pathname !== route) {
+      router.push(route);
+    }
+
     // Only close sidebar on mobile (< 768px)
     if (window.innerWidth < 768) {
       setOpen(false);
@@ -48,8 +52,8 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
       case 'admin':
         return [
           { Icon: FileText, title: "Manage Lessons", route: "/admin" },
-          { Icon: BarChart3, title: "View Alerts", route: "/admin/alerts" },
-          { Icon: BookOpen, title: "Lesson Application", route: "/admin/lesson" },
+          { Icon: BarChart3, title: "View Alerts", route: "/admin" },
+          { Icon: BookOpen, title: "Lesson Application", route: "/admin" },
         ];
       case 'root':
         return [
