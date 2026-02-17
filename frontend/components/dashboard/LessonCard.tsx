@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 type LessonCardProps = {
   image: string;
   title: string;
-  description: string; // truncated preview
+  description: string;
   progress: number;
   rating: number;
 };
@@ -34,35 +34,49 @@ export default function LessonCard({
 
   return (
     <>
-      <div className="group bg-card border border-border rounded-3xl overflow-hidden shadow-sm 
-                      hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-
+      <div
+        className="
+          group bg-card border border-border rounded-2xl overflow-hidden
+          shadow-sm transition-all duration-300
+          md:hover:shadow-xl md:hover:-translate-y-1
+        "
+      >
         <div className="overflow-hidden">
           <img
             src={image}
             alt={title}
-            className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-500"
+            className="
+              w-full object-cover
+              h-32 sm:h-40
+              transition-transform duration-500
+              md:group-hover:scale-105
+            "
           />
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-3 sm:p-4 space-y-3 flex flex-col">
           <div>
-            <h3 className="text-lg font-bold">{title}</h3>
+            <h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">
+              {title}
+            </h3>
 
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
               {description}
             </p>
 
             <button
               onClick={openModal}
-              className="text-xs text-primary font-semibold mt-1 hover:underline transition"
+              className="
+                mt-1 text-xs sm:text-sm text-primary font-semibold
+                hover:underline cursor-pointer
+              "
             >
               See full description
             </button>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+          <div className="space-y-2 mt-auto">
+            <div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
               <span>Completion</span>
               <span>{progress}%</span>
             </div>
@@ -74,7 +88,7 @@ export default function LessonCard({
               />
             </div>
 
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="text-[11px] sm:text-xs text-muted-foreground">
               Rating: {rating} ★
             </div>
           </div>
@@ -83,22 +97,34 @@ export default function LessonCard({
 
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn"
+          className="
+            fixed inset-0 z-50 bg-black/40 backdrop-blur-sm
+            flex items-end sm:items-center justify-center
+          "
           onClick={closeModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-card rounded-2xl p-6 max-w-md w-full shadow-xl relative animate-scaleIn"
+            className="
+              bg-card w-full sm:max-w-md
+              rounded-t-2xl sm:rounded-2xl
+              p-5 sm:p-6 shadow-xl
+              animate-scaleIn relative
+            "
           >
             <button
               onClick={closeModal}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition"
+              className="absolute top-3 right-3 p-2 rounded-md hover:bg-muted"
+              aria-label="Close"
             >
               <X size={18} />
             </button>
 
-            <h3 className="text-xl font-bold mb-3">{title}</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <h3 className="text-lg sm:text-xl font-bold mb-3">
+              {title}
+            </h3>
+
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {description}
             </p>
           </div>
