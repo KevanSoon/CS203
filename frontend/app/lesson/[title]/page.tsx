@@ -145,7 +145,7 @@ export default function LessonRoadmapPage({
 
       <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-auto pb-20">
         {/* Lesson Title */}
-        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4">
+        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4 text-center">
           <h1 className="text-3xl md:text-4xl font-black text-foreground">
             {lessonTitle}
           </h1>
@@ -156,7 +156,7 @@ export default function LessonRoadmapPage({
 
         {/* Chapter Selector */}
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
             {chapters.map((chapter, index) => (
               <button
                 key={chapter.id}
