@@ -12,8 +12,8 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
   
-  // Hide header for dashboard, admin, and webadmin routes
-  const hideHeader = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/webadmin') || pathname?.startsWith('/profile');
+  // Hide header for dashboard, admin, webadmin, profile, and lesson routes
+  const hideHeader = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/webadmin') || pathname?.startsWith('/profile') || pathname?.startsWith('/lesson');
 
   // Hide header for dashboard, admin, and webadmin routes
   const hideFooter = false;
