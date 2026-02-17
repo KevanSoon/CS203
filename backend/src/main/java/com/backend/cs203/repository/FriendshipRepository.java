@@ -8,9 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.backend.cs203.entity.Friendship;
+import com.backend.cs203.entity.FriendshipId;
 
 @Repository
-public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
+public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
 
     @Query("""
         SELECT f FROM Friendship f
@@ -18,9 +19,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
         AND (f.requester = :username OR f.acceptor = :username)
     """)
     
-    List<Friendship> findConfirmedFriendships(
-            @Param("username") String username
-    );
+    List<Friendship> findConfirmedFriendships(@Param("username") String username);
 }
 
 

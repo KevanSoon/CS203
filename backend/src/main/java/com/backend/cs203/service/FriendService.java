@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.dto.profile.FriendDto;
+import com.backend.cs203.entity.Friendship;
 
 @Service
 public class FriendService {
@@ -18,9 +19,9 @@ public class FriendService {
 
     public List<FriendDto> getFriends(String username) {
 
-        return friendshipRepository
-                .findConfirmedFriendships(username)
-                .stream()
+        List<Friendship> friendships = friendshipRepository.findConfirmedFriendships(username);
+
+        return friendships.stream()
                 .map(f -> {
                     if (f.getRequester().equals(username)) {
                         return new FriendDto(f.getAcceptor());

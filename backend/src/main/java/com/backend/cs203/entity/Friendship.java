@@ -3,21 +3,15 @@ package com.backend.cs203.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(
-    name = "friendship",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"username1", "username2"})
-    }
-)
+@Table(name = "friendship")
+@IdClass(FriendshipId.class)
 public class Friendship {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(name = "username1", nullable = false)
     private String requester;
 
+    @Id
     @Column(name = "username2", nullable = false)
     private String acceptor;
 
@@ -31,10 +25,6 @@ public class Friendship {
         this.requester = requester;
         this.acceptor = acceptor;
         this.status = status;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getRequester() {
