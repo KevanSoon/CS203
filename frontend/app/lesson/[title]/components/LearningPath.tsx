@@ -1,6 +1,8 @@
 "use client";
 
-import { Star, Crown, Lock, Check, Circle } from "lucide-react";
+import Lottie from "lottie-react";
+import dancingAnimation from "@/public/Dancing_Pallbearers.json";
+import { Star, Crown, Lock, Check } from "lucide-react";
 
 interface Node {
   id: number;
@@ -15,18 +17,68 @@ interface Node {
 interface LearningPathProps {
   nodes: Node[];
   onNodeClick: (node: Node) => void;
+  showMascot?: boolean;
 }
 
-export const LearningPath = ({ nodes, onNodeClick }: LearningPathProps) => {
+// Generate S-curve positions for nodes
+function getNodePositions(count: number) {
+  const positions: { x: number; y: number }[] = [];
+  const verticalSpacing = 140;
+  const amplitude = 100;
+  const nodesPerCurve = 3;
+
+  for (let i = 0; i < count; i++) {
+    const curveIndex = Math.floor(i / nodesPerCurve);
+    const posInCurve = i % nodesPerCurve;
+    const goingRight = curveIndex % 2 === 0;
+
+    const t = posInCurve / (nodesPerCurve - 1 || 1);
+
+    let x: number;
+    if (goingRight) {
+      x = -amplitude + t * 2 * amplitude;
+    } else {
+      x = amplitude - t * 2 * amplitude;
+    }
+
+    positions.push({ x, y: i * verticalSpacing });
+  }
+
+  return positions;
+}
+
+// Generate smooth SVG path through node positions
+function generateSmoothPath(positions: { x: number; y: number }[]): string {
+  if (positions.length < 2) return "";
+
+  const centerX = 200;
+  let path = `M ${centerX + positions[0].x} ${positions[0].y + 40}`;
+
+  for (let i = 1; i < positions.length; i++) {
+    const prev = positions[i - 1];
+    const curr = positions[i];
+    const midY = (prev.y + curr.y) / 2;
+
+    path += ` C ${centerX + prev.x} ${midY + 40}, ${centerX + curr.x} ${midY + 40}, ${centerX + curr.x} ${curr.y + 40}`;
+  }
+
+  return path;
+}
+
+export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: LearningPathProps) => {
+  const positions = getNodePositions(nodes.length);
+  const totalHeight =
+    positions.length > 0 ? positions[positions.length - 1].y + 160 : 400;
+
   return (
-    <div className="relative py-8">
+    <div className="relative py-8" style={{ height: totalHeight }}>
       {/* SVG Path Background */}
       <svg
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-full pointer-events-none"
-        style={{ zIndex: 0 }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] pointer-events-none"
+        style={{ zIndex: 0, height: totalHeight }}
       >
         <path
-          d={generateSVGPath(nodes.length)}
+          d={generateSmoothPath(positions)}
           fill="none"
           stroke="currentColor"
           strokeWidth="4"
@@ -36,38 +88,58 @@ export const LearningPath = ({ nodes, onNodeClick }: LearningPathProps) => {
         />
       </svg>
 
-      {/* Nodes */}
-      <div className="relative flex flex-col items-center gap-4" style={{ zIndex: 1 }}>
-        {nodes.map((node, index) => (
-          <PathNode
+      {/* Nodes positioned along the S-curve */}
+      {nodes.map((node, index) => {
+        const pos = positions[index];
+        const isActive = node.status === "available";
+
+        return (
+          <div
             key={node.id}
-            node={node}
-            index={index}
-            onClick={() => onNodeClick(node)}
-          />
-        ))}
-      </div>
+            className="absolute left-1/2"
+            style={{
+              transform: `translateX(calc(-50% + ${pos.x}px))`,
+              top: pos.y,
+              zIndex: isActive ? 2 : 1,
+            }}
+          >
+            <PathNode
+              node={node}
+              onClick={() => onNodeClick(node)}
+            />
+
+            {/* Lottie mascot next to the active node */}
+            {showMascot && isActive && (
+              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-5 md:mr-20">
+                <Lottie
+                  animationData={dancingAnimation}
+                  loop
+                  className="w-50 h-50 lg:w-100 lg:h-100"
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 interface PathNodeProps {
   node: Node;
-  index: number;
   onClick: () => void;
 }
 
-const PathNode = ({ node, index, onClick }: PathNodeProps) => {
+const PathNode = ({ node, onClick }: PathNodeProps) => {
   const isQuiz = node.type === "quiz";
   const isLocked = node.status === "locked";
   const isCompleted = node.status === "completed";
   const isAvailable = node.status === "available";
 
-  // Alternate left and right positioning
-  const position = index % 2 === 0 ? "translate-x-[-40px]" : "translate-x-[40px]";
+  const label = isQuiz ? "Quiz" : node.content?.front || "";
 
   return (
-    <div className={`relative ${position} transition-transform`}>
+    <div className="relative flex flex-col items-center">
       <button
         onClick={onClick}
         disabled={isLocked}
@@ -113,7 +185,7 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
           />
         )}
 
-        {/* Highlight effect on hover (like CartoonButton) */}
+        {/* Highlight effect on hover */}
         {!isLocked && (
           <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
         )}
@@ -124,33 +196,16 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
         )}
       </button>
 
-      {/* Label */}
-      <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
+      {/* Label below node */}
+      <div className="mt-3 max-w-[140px] text-center">
         <span
-          className={`text-xs font-bold ${
+          className={`text-xs font-bold leading-tight ${
             isLocked ? "text-muted-foreground" : "text-foreground"
           }`}
         >
-          {isQuiz ? "Quiz" : `Lesson ${index + 1}`}
+          {label}
         </span>
       </div>
     </div>
   );
 };
-
-// Generate a wavy SVG path for the nodes
-function generateSVGPath(nodeCount: number): string {
-  const spacing = 100; // Reduced spacing between nodes
-  const amplitude = 40; // How far left/right the wave goes
-  const frequency = 1; // Wave frequency
-
-  let path = `M 250 40`; // Start point (center)
-
-  for (let i = 1; i < nodeCount; i++) {
-    const y = i * spacing;
-    const x = 250 + Math.sin(i * frequency) * amplitude;
-    path += ` Q ${x} ${y - spacing / 2}, ${x} ${y}`;
-  }
-
-  return path;
-}
