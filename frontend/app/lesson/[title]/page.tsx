@@ -87,7 +87,7 @@ export default function LessonRoadmapPage({
         {
           id: 6,
           type: "lesson",
-          status: "locked",
+          status: "completed",
           content: {
             front: "What is OOP?",
             back: "Object-Oriented Programming is a programming paradigm based on objects containing data and methods.",
@@ -96,7 +96,7 @@ export default function LessonRoadmapPage({
         {
           id: 7,
           type: "lesson",
-          status: "locked",
+          status: "completed",
           content: {
             front: "What are classes?",
             back: "Classes are blueprints for creating objects. They define properties and methods that objects will have.",
@@ -104,8 +104,44 @@ export default function LessonRoadmapPage({
         },
         {
           id: 8,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is inheritance?",
+            back: "Inheritance allows a class to inherit properties and methods from another class, promoting code reuse.",
+          },
+        },
+        {
+          id: 9,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is polymorphism?",
+            back: "Polymorphism allows objects of different classes to be treated as objects of a common superclass.",
+          },
+        },
+        {
+          id: 10,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is encapsulation?",
+            back: "Encapsulation is the bundling of data and methods that operate on that data within a single unit, restricting direct access.",
+          },
+        },
+        {
+          id: 11,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What are interfaces?",
+            back: "Interfaces define a contract that classes must follow, specifying methods without implementing them.",
+          },
+        },
+        {
+          id: 12,
           type: "quiz",
-          status: "locked",
+          status: "available",
         },
       ],
     },
@@ -114,16 +150,70 @@ export default function LessonRoadmapPage({
       title: "Chapter 3: Expert",
       nodes: [
         {
-          id: 9,
+          id: 13,
           type: "lesson",
-          status: "locked",
+          status: "completed",
           content: {
             front: "What are design patterns?",
             back: "Design patterns are reusable solutions to commonly occurring problems in software design.",
           },
         },
         {
-          id: 10,
+          id: 14,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is the Singleton pattern?",
+            back: "Singleton ensures a class has only one instance and provides a global point of access to it.",
+          },
+        },
+        {
+          id: 15,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is the Observer pattern?",
+            back: "Observer defines a one-to-many dependency so that when one object changes state, all dependents are notified.",
+          },
+        },
+        {
+          id: 16,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is the Factory pattern?",
+            back: "Factory provides an interface for creating objects without specifying their concrete classes.",
+          },
+        },
+        {
+          id: 17,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is the Strategy pattern?",
+            back: "Strategy defines a family of algorithms, encapsulates each one, and makes them interchangeable at runtime.",
+          },
+        },
+        {
+          id: 18,
+          type: "lesson",
+          status: "completed",
+          content: {
+            front: "What is dependency injection?",
+            back: "Dependency injection is a technique where an object receives its dependencies from external sources rather than creating them.",
+          },
+        },
+        {
+          id: 19,
+          type: "lesson",
+          status: "available",
+          content: {
+            front: "What is SOLID?",
+            back: "SOLID is a set of five design principles that help developers create more maintainable and flexible software.",
+          },
+        },
+        {
+          id: 20,
           type: "quiz",
           status: "locked",
         },
@@ -156,12 +246,12 @@ export default function LessonRoadmapPage({
 
         {/* Chapter Selector */}
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
+          <div className="flex gap-2 overflow-x-auto pb-2 justify-center md:flex-row flex-col items-center">
             {chapters.map((chapter, index) => (
               <button
                 key={chapter.id}
                 onClick={() => setSelectedChapter(index)}
-                className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap transition-all ${
+                className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap transition-all w-full md:w-auto ${
                   selectedChapter === index
                     ? "bg-primary text-white shadow-lg scale-105"
                     : "bg-card text-muted-foreground hover:bg-primary/10 border border-border"

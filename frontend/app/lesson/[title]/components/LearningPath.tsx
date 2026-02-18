@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Trophy, Lock, CheckCircle2, Circle } from "lucide-react";
+import { Star, Crown, Lock, Check, Circle } from "lucide-react";
 
 interface Node {
   id: number;
@@ -81,7 +81,7 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
             isLocked
               ? "bg-muted cursor-not-allowed opacity-50 translate-y-0 shadow-none"
               : isCompleted
-              ? "bg-success shadow-[0_8px_0_0_#065f46] active:translate-y-0 active:shadow-none"
+              ? "bg-success shadow-[0_8px_0_0_#15803d] active:translate-y-0 active:shadow-none"
               : isAvailable
               ? "bg-primary shadow-[0_8px_0_0_#7c7dc9] active:translate-y-0 active:shadow-none animate-pulse"
               : "bg-card shadow-[0_8px_0_0_#c4bfaf]"
@@ -90,8 +90,9 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
       >
         {/* Icon */}
         {isQuiz ? (
-          <Trophy
+          <Crown
             size={32}
+            fill="currentColor"
             className={`relative z-10 ${
               isLocked
                 ? "text-muted-foreground"
@@ -101,12 +102,13 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
             }`}
           />
         ) : isCompleted ? (
-          <CheckCircle2 size={32} className="text-white relative z-10" />
+          <Check size={32} strokeWidth={3} className="text-white relative z-10" />
         ) : isLocked ? (
           <Lock size={28} className="text-muted-foreground relative z-10" />
         ) : (
           <Star
             size={32}
+            fill="currentColor"
             className={`relative z-10 ${isAvailable ? "text-white" : "text-muted-foreground"}`}
           />
         )}
