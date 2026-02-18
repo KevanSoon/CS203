@@ -42,8 +42,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is a variable?",
-            back: "A variable is a container for storing data values. It has a name and can hold different types of data.",
+            front: "What does 'Rizz' mean?",
+            back: "Eh, Rizz is like charisma lah. Means the person damn smooth, can attract people one. Like that friend who talk cock also can make people like them. Confirm got rizz.",
           },
         },
         {
@@ -51,8 +51,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What are data types?",
-            back: "Data types specify what kind of data a variable can hold, such as numbers, strings, booleans, etc.",
+            front: "What does 'Skibidi' mean?",
+            back: "Wah this one come from some viral YouTube video lah. Basically it's like a nonsense word, you use it when something damn weird or funny. Like 'alamak so skibidi' — means very siao lah.",
           },
         },
         {
@@ -60,8 +60,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "available",
           content: {
-            front: "What is a function?",
-            back: "A function is a reusable block of code that performs a specific task. It can take inputs and return outputs.",
+            front: "What does 'Ohio' mean in slang?",
+            back: "Ohio means something damn weird or cursed lah. If you say 'wah this one so Ohio', it's like saying 'walao eh, this one damn jialat and strange sia'.",
           },
         },
         {
@@ -69,8 +69,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "locked",
           content: {
-            front: "What are loops?",
-            back: "Loops allow you to execute a block of code repeatedly based on a condition.",
+            front: "What does 'Gyatt' mean?",
+            back: "Gyatt is like when you see someone and you go 'walao eh!' It's short for 'god dayum'. Basically you tio stunned by how someone look lah. Confirm say until cannot close mouth.",
           },
         },
         {
@@ -82,15 +82,15 @@ export default function LessonRoadmapPage({
     },
     {
       id: 2,
-      title: "Chapter 2: Advanced",
+      title: "Chapter 2: Intermediate",
       nodes: [
         {
           id: 6,
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is OOP?",
-            back: "Object-Oriented Programming is a programming paradigm based on objects containing data and methods.",
+            front: "What does 'Sigma' mean?",
+            back: "Sigma is that one person who lone ranger one lah. Don't follow the crowd, do their own thing. Like that uncle at hawker centre eat alone, don't care what people think. Very ownself boss ownself.",
           },
         },
         {
@@ -98,8 +98,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What are classes?",
-            back: "Classes are blueprints for creating objects. They define properties and methods that objects will have.",
+            front: "What does 'Mewing' mean?",
+            back: "Mewing ah, is when you press your tongue on the top of your mouth, supposed to make your jawline more sharp. All the kids doing it now lah. Like doing exercise for your face liddat. Got use or not, who knows sia.",
           },
         },
         {
@@ -107,8 +107,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is inheritance?",
-            back: "Inheritance allows a class to inherit properties and methods from another class, promoting code reuse.",
+            front: "What does 'Fanum Tax' mean?",
+            back: "Fanum Tax is when your friend come and chope your food without asking lah! Like you buy chicken rice, then kena tax — they just take one piece. Named after some streamer who always curi his friend's food. Damn jialat right.",
           },
         },
         {
@@ -116,8 +116,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is polymorphism?",
-            back: "Polymorphism allows objects of different classes to be treated as objects of a common superclass.",
+            front: "What does 'Cap / No Cap' mean?",
+            back: "Cap means you bluffing lah. Like 'don't cap leh' means 'don't bluff'. No cap means you speaking the truth, confirm plus chop. Same as saying 'seriously ah, I not lying one'.",
           },
         },
         {
@@ -125,8 +125,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is encapsulation?",
-            back: "Encapsulation is the bundling of data and methods that operate on that data within a single unit, restricting direct access.",
+            front: "What does 'Slay' mean?",
+            back: "Slay means you damn power lah, you nailed it! Like if your friend wear new outfit and look damn chio, you say 'wah you slay sia'. Means they confirm on point, shiok to the max.",
           },
         },
         {
@@ -134,8 +134,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What are interfaces?",
-            back: "Interfaces define a contract that classes must follow, specifying methods without implementing them.",
+            front: "What does 'Skibidi Ohio Rizz' mean?",
+            back: "Wah if someone call you 'Skibidi Ohio Rizz', means you damn weird lah. It's like stacking all the siao words together to say you very the strange. Confirm plus guarantee chop — you acting damn paiseh sia.",
           },
         },
         {
@@ -147,15 +147,15 @@ export default function LessonRoadmapPage({
     },
     {
       id: 3,
-      title: "Chapter 3: Expert",
+      title: "Chapter 3: Advanced",
       nodes: [
         {
           id: 13,
           type: "lesson",
           status: "completed",
           content: {
-            front: "What are design patterns?",
-            back: "Design patterns are reusable solutions to commonly occurring problems in software design.",
+            front: "What does 'Bussin' mean?",
+            back: "Bussin means damn shiok lah, especially when talking about food. Like you eat laksa and it's so good you say 'wah this one bussin sia'. Same energy as 'sedap gila'.",
           },
         },
         {
@@ -163,8 +163,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is the Singleton pattern?",
-            back: "Singleton ensures a class has only one instance and provides a global point of access to it.",
+            front: "What does 'Bet' mean?",
+            back: "Bet is like saying 'can' or 'on lah'. Your friend ask 'want go makan?' you just reply 'bet' — means confirm going. Same same as 'okay steady, let's go'.",
           },
         },
         {
@@ -172,8 +172,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is the Observer pattern?",
-            back: "Observer defines a one-to-many dependency so that when one object changes state, all dependents are notified.",
+            front: "What does 'Sus' mean?",
+            back: "Sus means suspicious lah, like the person damn fishy. Come from that Among Us game one. If your friend acting weird you say 'eh you damn sus sia'. Same as saying 'wah this one got something to hide ah'.",
           },
         },
         {
@@ -181,8 +181,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is the Factory pattern?",
-            back: "Factory provides an interface for creating objects without specifying their concrete classes.",
+            front: "What does 'W / L' mean?",
+            back: "W is Win, L is Loss lah. If something good happen, you say 'big W sia'. If jialat, then it's an L. Like you get A for exam — that's a W. Kena caught by teacher — confirm L already.",
           },
         },
         {
@@ -190,8 +190,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is the Strategy pattern?",
-            back: "Strategy defines a family of algorithms, encapsulates each one, and makes them interchangeable at runtime.",
+            front: "What does 'Brainrot' mean?",
+            back: "Brainrot is when you scroll TikTok until your brain rosak already lah. You watch so much meme content until you talk like the internet. Everything also 'skibidi' this, 'sigma' that. Your parents confirm don't understand what you saying.",
           },
         },
         {
@@ -199,8 +199,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is dependency injection?",
-            back: "Dependency injection is a technique where an object receives its dependencies from external sources rather than creating them.",
+            front: "What does 'Aura' mean?",
+            back: "Aura is like your swag level lah. You do something cool, you gain aura points. You do something paiseh, minus aura already. Like if you trip and fall in front of your crush — wah that one lose 1000 aura sia.",
           },
         },
         {
@@ -208,8 +208,8 @@ export default function LessonRoadmapPage({
           type: "lesson",
           status: "completed",
           content: {
-            front: "What is SOLID?",
-            back: "SOLID is a set of five design principles that help developers create more maintainable and flexible software.",
+            front: "What does 'GOAT' mean?",
+            back: "GOAT means Greatest Of All Time lah. Like the best of the best. If your friend always score well, you say 'you the GOAT sia'. Confirm number one, no one can fight.",
           },
         },
         {

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, RotateCw, ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { X, ArrowRight, Code2, Rocket, Zap } from "lucide-react";
 
 interface Node {
   id: number;
@@ -21,7 +20,6 @@ interface FlippableCardProps {
 
 export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -64,7 +62,6 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
 
             <button
               onClick={() => {
-                // Navigate to quiz page - you can implement this
                 alert("Quiz page coming soon!");
                 onClose();
               }}
@@ -79,7 +76,7 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
     );
   }
 
-  // Regular lesson card
+  // Regular lesson card with new flip style
   return (
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn px-4"
@@ -87,8 +84,7 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg"
-        style={{ perspective: "1000px" }}
+        className="relative w-full max-w-[300px]"
       >
         <button
           onClick={onClose}
@@ -98,62 +94,149 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
         </button>
 
         <div
-          className={`relative w-full transition-transform duration-500 cursor-pointer`}
-          style={{
-            transformStyle: "preserve-3d",
-            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          }}
+          className="group relative h-[360px] w-full"
+          style={{ perspective: "2000px" }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          {/* Front of card */}
           <div
-            className="absolute w-full bg-card rounded-3xl p-8 shadow-2xl border-4 border-primary"
+            className="relative h-full w-full transition-all duration-700 cursor-pointer"
             style={{
-              backfaceVisibility: "hidden",
-              minHeight: "300px",
+              transformStyle: "preserve-3d",
+              transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
             }}
           >
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 mb-6 bg-primary/20 rounded-full flex items-center justify-center">
-                <span className="text-3xl">❓</span>
+            {/* Front of card */}
+            <div
+              className={`
+                absolute inset-0 h-full w-full rounded-2xl overflow-hidden
+                bg-gradient-to-br from-white via-slate-50 to-slate-100
+                dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800
+                border border-slate-200 dark:border-zinc-800/50
+                shadow-lg dark:shadow-xl
+                transition-all duration-700
+                ${isFlipped ? "opacity-0" : "opacity-100"}
+              `}
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              {/* Background gradient effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 dark:from-primary/10 via-transparent to-blue-500/5 dark:to-blue-500/10" />
+
+              {/* Top content */}
+              <div className="relative z-10 p-5 flex-1 space-y-5">
+                <div className="space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+                      <Zap className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-lg leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                      Question
+                    </h3>
+                  </div>
+                  <p className="text-sm tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {node.content?.front}
+                  </p>
+                </div>
               </div>
 
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                {node.content?.front}
-              </h3>
+              {/* Animated code blocks */}
+              <div className="absolute bottom-24 left-0 right-0 flex items-center justify-center">
+                <div className="relative flex h-[80px] w-[200px] flex-col items-center justify-center gap-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-3 w-full rounded-sm bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 animate-[slideIn_2s_ease-in-out_infinite] opacity-0"
+                      style={{
+                        width: `${60 + Math.random() * 40}%`,
+                        animationDelay: `${i * 0.2}s`,
+                        marginLeft: `${Math.random() * 20}%`,
+                      }}
+                    />
+                  ))}
 
-              <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                <RotateCw size={16} />
-                <span>Click to reveal answer</span>
+                  {/* Central rocket icon */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 animate-pulse transition-all duration-500">
+                      <Rocket className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom hint */}
+              <div className="absolute right-0 bottom-0 left-0 border-t border-slate-200 dark:border-zinc-800 p-4">
+                <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    Click to reveal answer
+                  </span>
+                  <ArrowRight className="text-primary h-4 w-4" />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Back of card */}
-          <div
-            className="absolute w-full bg-card rounded-3xl p-8 shadow-2xl border-4 border-success"
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-              minHeight: "300px",
-            }}
-          >
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 mb-6 bg-success/20 rounded-full flex items-center justify-center">
-                <span className="text-3xl">✅</span>
+            {/* Back of card */}
+            <div
+              className={`
+                absolute inset-0 h-full w-full rounded-2xl p-5 overflow-hidden
+                bg-gradient-to-br from-white via-slate-50 to-slate-100
+                dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800
+                border border-slate-200 dark:border-zinc-800
+                shadow-lg dark:shadow-xl
+                flex flex-col
+                transition-all duration-700
+                ${!isFlipped ? "opacity-0" : "opacity-100"}
+              `}
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            >
+              {/* Background gradient */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 dark:from-primary/10 via-transparent to-blue-500/5 dark:to-blue-500/10" />
+
+              <div className="relative z-10 flex-1 space-y-5">
+                <div className="space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+                      <Code2 className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-lg leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                      Answer
+                    </h3>
+                  </div>
+                  <p className="text-sm tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {node.content?.back}
+                  </p>
+                </div>
               </div>
 
-              <p className="text-lg text-foreground leading-relaxed">
-                {node.content?.back}
-              </p>
-
-              <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                <RotateCw size={16} />
-                <span>Click to flip back</span>
+              <div className="relative z-10 mt-auto border-t border-slate-200 dark:border-zinc-800 pt-4">
+                <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    Click to flip back
+                  </span>
+                  <ArrowRight className="text-primary h-4 w-4" />
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <style jsx>{`
+          @keyframes slideIn {
+            0% {
+              transform: translateX(-100px);
+              opacity: 0;
+            }
+            50% {
+              transform: translateX(0);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translateX(100px);
+              opacity: 0;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
