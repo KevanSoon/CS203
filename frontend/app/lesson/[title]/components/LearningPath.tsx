@@ -73,7 +73,7 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
         disabled={isLocked}
         className={`
           relative group overflow-hidden
-          w-20 h-20 rounded-full
+          w-20 h-19 rounded-full
           flex items-center justify-center
           transition-all duration-150
           -translate-y-2
