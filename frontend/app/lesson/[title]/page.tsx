@@ -206,7 +206,7 @@ export default function LessonRoadmapPage({
         {
           id: 19,
           type: "lesson",
-          status: "available",
+          status: "completed",
           content: {
             front: "What is SOLID?",
             back: "SOLID is a set of five design principles that help developers create more maintainable and flexible software.",
@@ -215,7 +215,7 @@ export default function LessonRoadmapPage({
         {
           id: 20,
           type: "quiz",
-          status: "locked",
+          status: "completed",
         },
       ],
     },

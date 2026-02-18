@@ -98,7 +98,7 @@ const PathNode = ({ node, index, onClick }: PathNodeProps) => {
                 ? "text-muted-foreground"
                 : isCompleted
                 ? "text-white"
-                : "text-warning"
+                : "text-white"
             }`}
           />
         ) : isCompleted ? (
