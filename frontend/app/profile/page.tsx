@@ -337,6 +337,39 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </CollapsibleCard>
+                <CollapsibleCard
+                  title="Danger Zone"
+                  icon={<Flame size={20} className="text-red-500" />}
+                  defaultOpen={false}
+                >
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-red-700">
+                          Delete your account
+                        </h3>
+                        <p className="mt-1 text-sm text-red-600">
+                          This action is permanent. Your data will be erased forever.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting ? "Deleting..." : "Delete Account"}
+                      </button>
+                    </div>
+
+                    {deleteError && (
+                      <div className="mt-4 rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600">
+                        {deleteError}
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleCard>
               </div>
             </div>
           </div>
