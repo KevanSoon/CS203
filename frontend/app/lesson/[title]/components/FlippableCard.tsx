@@ -84,7 +84,7 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[300px]"
+        className="relative w-full max-w-[300px] lg:max-w-[420px]"
       >
         <button
           onClick={onClose}
@@ -94,7 +94,7 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
         </button>
 
         <div
-          className="group relative h-[360px] w-full"
+          className="group relative h-[360px] lg:h-[480px] w-full"
           style={{ perspective: "2000px" }}
           onClick={() => setIsFlipped(!isFlipped)}
         >

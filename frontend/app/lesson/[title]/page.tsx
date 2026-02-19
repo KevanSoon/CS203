@@ -29,7 +29,7 @@ export default function LessonRoadmapPage({
   params: Promise<{ title: string }>;
 }) {
   const { title } = use(params);
-  const [selected, setSelected] = useState("View Lessons");
+  const [selected, setSelected] = useState("");
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
