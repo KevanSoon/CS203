@@ -29,23 +29,24 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
 
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 h-14 md:h-20 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 h-12 md:h-20 flex items-center justify-between">
         <Link href="/">
           <Image
             src="/navbar_logo.png"
             alt="Simi Slang"
             width={150}
             height={150}
-            className="h-[80px] md:h-[200px] w-auto -my-4 md:-my-8"
+            className="h-[120px] md:h-[200px] w-auto -my-4 md:-my-8"
           />
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {user ? (
             <CartoonButton
               label="Logout"
               color="bg-foreground"
               textColor="text-white"
+              size="sm"
               onClick={handleLogout}
             />
           ) : (
@@ -55,10 +56,11 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
                   label="Log In"
                   color="bg-foreground"
                   textColor="text-white"
+                  size="sm"
                 />
               </Link>
               <Link href="/signup">
-                <CartoonButton label="Sign Up" />
+                <CartoonButton label="Sign Up" size="sm" />
               </Link>
             </>
           )}

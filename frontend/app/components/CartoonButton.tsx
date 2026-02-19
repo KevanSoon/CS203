@@ -4,6 +4,7 @@ interface CartoonButtonProps {
   textColor?: string;
   hasHighlight?: boolean;
   disabled?: boolean;
+  size?: 'sm' | 'default';
   onClick?: () => void;
 }
 
@@ -13,12 +14,15 @@ export function CartoonButton({
   textColor = 'text-neutral-800',
   hasHighlight = true,
   disabled = false,
+  size = 'default',
   onClick,
 }: CartoonButtonProps) {
   const handleClick = () => {
     if (disabled) return;
     onClick?.();
   };
+
+  const sizeClasses = size === 'sm' ? 'h-9 px-4 text-sm' : 'h-12 px-6 text-xl';
 
   return (
     <div
@@ -27,7 +31,7 @@ export function CartoonButton({
       <button
         disabled={disabled}
         onClick={handleClick}
-        className={`relative h-12 px-6 text-xl rounded-full font-bold ${textColor} border-2 border-neutral-800 transition-all duration-150 overflow-hidden group
+        className={`relative ${sizeClasses} rounded-full font-bold ${textColor} border-2 border-neutral-800 transition-all duration-150 overflow-hidden group
         ${color} hover:shadow-[0_4px_0_0_#262626]
         ${disabled ? 'opacity-50 pointer-events-none' : 'hover:-translate-y-1 active:translate-y-0 active:shadow-none'}`}
       >
