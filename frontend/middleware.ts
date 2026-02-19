@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 
 	let url = "/";
 	if (isLoggedIn) {
-		url = redirectMap[userType];
+		url = redirectMap[userType!];
 	}
 
 	const publicRoutes = ["/", "/login", "/signup"];
