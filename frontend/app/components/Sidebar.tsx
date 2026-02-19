@@ -38,7 +38,7 @@ export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
     try {
       await logout();
       clearUser();
-      router.push("/");
+      window.location.href = "/"
     } catch (err) {
       console.error("Logout error:", err);
     }
