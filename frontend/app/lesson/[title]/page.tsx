@@ -265,7 +265,7 @@ export default function LessonRoadmapPage({
 
         {/* Chapter Toast Banner */}
         <div className="px-4 pt-4 pb-8 flex justify-center">
-          <div className="relative w-full max-w-md rounded-xl bg-[#a5a6f6] border-2 border-[#7c7dc9] px-6 py-3 shadow-[0_4px_0_0_#7c7dc9] overflow-hidden group">
+          <div className="relative w-full max-w-md rounded-xl bg-primary border-2 border-primary-dark px-6 py-3 shadow-[0_4px_0_0_var(--color-primary-dark)] overflow-hidden group">
             <div className="relative z-10">
               <p className="text-xs font-bold text-white/80 uppercase tracking-wider">
                 {`Chapter ${selectedChapter + 1}`}

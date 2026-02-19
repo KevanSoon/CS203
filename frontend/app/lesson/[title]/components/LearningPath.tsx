@@ -153,10 +153,10 @@ const PathNode = ({ node, onClick }: PathNodeProps) => {
             isLocked
               ? "bg-muted cursor-not-allowed opacity-50 translate-y-0 shadow-none"
               : isCompleted
-              ? "bg-success shadow-[0_8px_0_0_#15803d] active:translate-y-0 active:shadow-none"
+              ? "bg-success shadow-[0_8px_0_0_var(--color-success-shadow)] active:translate-y-0 active:shadow-none"
               : isAvailable
-              ? "bg-primary shadow-[0_8px_0_0_#7c7dc9] active:translate-y-0 active:shadow-none animate-pulse"
-              : "bg-card shadow-[0_8px_0_0_#c4bfaf]"
+              ? "bg-primary shadow-[0_8px_0_0_var(--color-primary-dark)] active:translate-y-0 active:shadow-none animate-pulse"
+              : "bg-card shadow-[0_8px_0_0_var(--color-locked-shadow)]"
           }
         `}
       >
