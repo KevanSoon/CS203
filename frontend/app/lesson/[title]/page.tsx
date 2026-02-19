@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { Sidebar } from "@/app/components/Sidebar";
 import { LearningPath } from "./components/LearningPath";
 import { FlippableCard } from "./components/FlippableCard";
+import { AIChatAssistant } from "./components/AIChatAssistant";
 
 interface Chapter {
   id: number;
@@ -233,9 +234,10 @@ export default function LessonRoadmapPage({
     <div className="flex min-h-screen w-full">
       <Sidebar selected={selected} setSelected={setSelected} defaultOpen />
 
+      {/* Left: Roadmap */}
       <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-auto pb-20">
         {/* Lesson Title */}
-        <div className="max-w-4xl mx-auto px-4 pt-8 pb-4 text-center">
+        <div className="px-4 pt-8 pb-4 text-center">
           <h1 className="text-3xl md:text-4xl font-black text-foreground">
             {lessonTitle}
           </h1>
@@ -245,7 +247,7 @@ export default function LessonRoadmapPage({
         </div>
 
         {/* Chapter Selector */}
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="px-4 py-6">
           <div className="flex gap-2 flex-col md:flex-row md:justify-center">
             {chapters.map((chapter, index) => (
               <button
@@ -264,7 +266,7 @@ export default function LessonRoadmapPage({
         </div>
 
         {/* Learning Path */}
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="px-4 flex justify-center">
           <LearningPath
             nodes={currentChapter.nodes}
             onNodeClick={handleNodeClick}
@@ -279,6 +281,11 @@ export default function LessonRoadmapPage({
             onClose={() => setSelectedNode(null)}
           />
         )}
+      </div>
+
+      {/* Right: AI Chat Assistant */}
+      <div className="hidden lg:block w-96 shrink-0 p-4">
+        <AIChatAssistant />
       </div>
     </div>
   );
