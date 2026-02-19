@@ -11,10 +11,11 @@ import { useSiteState } from "@/app/store/SiteStore";
 export interface SidebarProps {
   selected: string;
   setSelected: (selected: string) => void;
+  defaultOpen?: boolean;
 }
 
-export const Sidebar = ({ selected, setSelected }: SidebarProps) => {
-  const [open, setOpen] = useState(false);
+export const Sidebar = ({ selected, setSelected, defaultOpen = false }: SidebarProps) => {
+  const [open, setOpen] = useState(defaultOpen);
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);

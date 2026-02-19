@@ -231,7 +231,7 @@ export default function LessonRoadmapPage({
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar selected={selected} setSelected={setSelected} />
+      <Sidebar selected={selected} setSelected={setSelected} defaultOpen />
 
       <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-auto pb-20">
         {/* Lesson Title */}
