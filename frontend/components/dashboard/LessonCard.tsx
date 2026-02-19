@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 type LessonCardProps = {
@@ -18,7 +19,12 @@ export default function LessonCard({
   progress,
   rating,
 }: LessonCardProps) {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
+
+  const handleCardClick = () => {
+    router.push(`/lesson/${encodeURIComponent(title)}`);
+  };
 
   const openModal = () => setShowModal(true);
   const closeModal = () => setShowModal(false);
@@ -35,9 +41,10 @@ export default function LessonCard({
   return (
     <>
       <div
+        onClick={handleCardClick}
         className="
           group bg-card border border-border rounded-2xl overflow-hidden
-          shadow-sm transition-all duration-300
+          shadow-sm transition-all duration-300 cursor-pointer
           md:hover:shadow-xl md:hover:-translate-y-1
         "
       >
@@ -65,7 +72,10 @@ export default function LessonCard({
             </p>
 
             <button
-              onClick={openModal}
+              onClick={(e) => {
+                e.stopPropagation();
+                openModal();
+              }}
               className="
                 mt-1 text-xs sm:text-sm text-primary font-semibold
                 hover:underline cursor-pointer
