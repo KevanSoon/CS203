@@ -1,7 +1,7 @@
 "use client";
 
 import Lottie from "lottie-react";
-import dancingAnimation from "@/public/Dancing_Pallbearers.json";
+import shibaAnimation from "@/public/shiba.json";
 import { Star, Crown, Lock, Check } from "lucide-react";
 
 interface Node {
@@ -110,11 +110,11 @@ export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: Learnin
 
             {/* Lottie mascot next to the active node */}
             {showMascot && isActive && (
-              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-5 md:mr-20">
+              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-10 md:mr-20">
                 <Lottie
-                  animationData={dancingAnimation}
+                  animationData={shibaAnimation}
                   loop
-                  className="w-50 h-50 lg:w-100 lg:h-100"
+                  className="w-35 h-35 lg:w-40 lg:h-40"
                 />
               </div>
             )}
