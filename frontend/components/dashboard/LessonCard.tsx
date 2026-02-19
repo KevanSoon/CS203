@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 type LessonCardProps = {
   image: string;
@@ -18,17 +20,31 @@ export default function LessonCard({
   rating,
 }: LessonCardProps) {
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
 
   const handleCardClick = () => {
     router.push(`/lesson/${encodeURIComponent(title)}`);
   };
 
+  const openModal = () => setShowModal(true);
+  const closeModal = () => setShowModal(false);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+
+    if (showModal) window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [showModal]);
+
   return (
     <>
       <div
+        onClick={handleCardClick}
         className="
           group bg-card border border-border rounded-2xl overflow-hidden
-          shadow-sm transition-all duration-300
+          shadow-sm transition-all duration-300 cursor-pointer
           md:hover:shadow-xl md:hover:-translate-y-1
         "
       >
@@ -56,7 +72,10 @@ export default function LessonCard({
             </p>
 
             <button
-              onClick={openModal}
+              onClick={(e) => {
+                e.stopPropagation();
+                openModal();
+              }}
               className="
                 mt-1 text-xs sm:text-sm text-primary font-semibold
                 hover:underline cursor-pointer
@@ -72,12 +91,12 @@ export default function LessonCard({
               <span>{progress}%</span>
             </div>
 
-          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-700 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-700 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
 
             <div className="text-[11px] sm:text-xs text-muted-foreground">
               Rating: {rating} ★
