@@ -34,9 +34,9 @@ export const LessonContent = ({ selected, lessons }: LessonContentProps) => {
 
       {/* Content Grid */}
       <div>
-        {selected === "My Lessons" ? (
+        {selected === "Manage Lessons" ? (
           <MyLessonsCard lessons={lessons} />
-        ) : selected === "Feedbacks and Alerts" ? (
+        ) : selected === "View Alerts" ? (
           <FeedbacksCard />
         ) : null}
       </div>

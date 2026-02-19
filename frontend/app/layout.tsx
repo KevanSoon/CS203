@@ -1,16 +1,24 @@
+"use client";
 import "./globals.css";
 import Header from "@/components/general/Header";
 import Footer from "@/components/general/Footer";
+import { usePathname } from "next/navigation";
+
 
 export default function RootLayout({
   children,
-  hideHeader = false,
-  hideFooter = false,
 }: {
   children: React.ReactNode;
-  hideHeader?: boolean;
-  hideFooter?: boolean;
 }) {
+  const pathname = usePathname();
+  
+  // Hide header for dashboard, admin, and webadmin routes
+  const hideHeader = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/webadmin') || pathname?.startsWith('/profile');
+
+  // Hide header for dashboard, admin, and webadmin routes
+  const hideFooter = false;
+
+
   return (
     <html lang="en">
       <body className="bg-background text-foreground">
