@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from "zustand/middleware"; 
+import { persist, devtools } from "zustand/middleware"; 
 
 interface UserInfo {
     username: string;
@@ -17,18 +17,21 @@ interface SiteState {
 }
 
 export const useSiteState = create<SiteState>()(
-  persist(
-    (set) => ({
-      isLoading: false,
-      error: null,
-      user: null,
-      setUser: (user) => set({ user }),
-      clearUser: () => set({ user: null }),
-    }),
-    {
-      name: 'site-storage', // storage key
-      //  persist the user object
-      partialize: (state) => ({ user: state.user })
-    }
+  devtools(
+    persist(
+      (set) => ({
+        isLoading: false,
+        error: null,
+        user: null,
+        setUser: (user) => set({ user }),
+        clearUser: () => set({ user: null }),
+      }),
+      {
+        name: 'site-storage', // storage key
+        //  persist the user object
+        partialize: (state) => ({ user: state.user }),
+
+      }
+    )
   )
 );
