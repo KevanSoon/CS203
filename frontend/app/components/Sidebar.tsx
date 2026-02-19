@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, MessageSquare, Menu, LogOut, Settings, Users, BarChart3, FileText } from "lucide-react";
 import { SidebarOption } from "@/app/components/SidebarOption";
 import { SidebarTitleSection } from "@/app/components/SidebarTitleSection";
@@ -16,6 +16,7 @@ export interface SidebarProps {
 
 export const Sidebar = ({ selected, setSelected, defaultOpen = false }: SidebarProps) => {
   const [open, setOpen] = useState(defaultOpen);
+  useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);

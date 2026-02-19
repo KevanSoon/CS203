@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { CartoonButton } from "@/app/components/CartoonButton";
-import { Bot, User } from "lucide-react";
+import { Bot, User, X } from "lucide-react";
 
 interface Message {
   id: number;
@@ -10,7 +10,11 @@ interface Message {
   content: string;
 }
 
-export const AIChatAssistant = () => {
+interface AIChatAssistantProps {
+  onClose?: () => void;
+}
+
+export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -55,12 +59,20 @@ export const AIChatAssistant = () => {
   };
 
   return (
-    <div className="border border-border rounded-2xl bg-card flex flex-col h-[calc(100vh-2rem)] sticky top-4">
+    <div className="border border-border rounded-2xl bg-card flex flex-col h-full">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h2 className="font-bold text-foreground">AI Study Buddy</h2>
+          <h2 className="font-bold text-foreground flex-1">AI Study Buddy</h2>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
           Ask me anything about this lesson

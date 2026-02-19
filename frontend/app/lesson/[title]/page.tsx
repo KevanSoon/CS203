@@ -1,10 +1,11 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { Sidebar } from "@/app/components/Sidebar";
 import { LearningPath } from "./components/LearningPath";
 import { FlippableCard } from "./components/FlippableCard";
 import { AIChatAssistant } from "./components/AIChatAssistant";
+import { MessageCircle } from "lucide-react";
 
 interface Chapter {
   id: number;
@@ -31,6 +32,15 @@ export default function LessonRoadmapPage({
   const [selected, setSelected] = useState("View Lessons");
   const [selectedChapter, setSelectedChapter] = useState(0);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Mock data - replace with API call
   const chapters: Chapter[] = [
@@ -232,7 +242,7 @@ export default function LessonRoadmapPage({
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar selected={selected} setSelected={setSelected} defaultOpen />
+      <Sidebar selected={selected} setSelected={setSelected} defaultOpen={isDesktop} />
 
       {/* Left: Roadmap */}
       <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-auto pb-20">
@@ -283,10 +293,31 @@ export default function LessonRoadmapPage({
         )}
       </div>
 
-      {/* Right: AI Chat Assistant */}
+      {/* Right: AI Chat Assistant - Desktop */}
       <div className="hidden lg:block w-96 shrink-0 p-4">
-        <AIChatAssistant />
+        <div className="sticky top-4 h-[calc(100vh-2rem)]">
+          <AIChatAssistant />
+        </div>
       </div>
+
+      {/* Mobile Chat Bubble */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-50 lg:hidden w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
+      )}
+
+      {/* Mobile Chat Overlay */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md h-[70vh]">
+            <AIChatAssistant onClose={() => setChatOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
