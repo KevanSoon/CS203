@@ -36,6 +36,10 @@ export default function LessonRoadmapPage({
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 768);
     check();
     window.addEventListener("resize", check);
