@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { BookOpen, MessageSquare, Menu, LogOut, Settings, Users, BarChart3, FileText } from "lucide-react";
+import { BookOpen, MessageSquare, Menu, LogOut, Settings, Users, BarChart3, FileText, BookMarked } from "lucide-react";
 import { SidebarOption } from "@/app/components/SidebarOption";
 import { SidebarTitleSection } from "@/app/components/SidebarTitleSection";
 import { SidebarToggle } from "@/app/components/SidebarToggle";
@@ -8,13 +8,21 @@ import { logout } from "@/app/api/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
 
+export interface ChapterItem {
+  id: number;
+  title: string;
+}
+
 export interface SidebarProps {
   selected: string;
   setSelected: (selected: string) => void;
   defaultOpen?: boolean;
+  chapters?: ChapterItem[];
+  selectedChapter?: number;
+  onChapterSelect?: (index: number) => void;
 }
 
-export const Sidebar = ({ selected, setSelected, defaultOpen = false }: SidebarProps) => {
+export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect }: SidebarProps) => {
   const [open, setOpen] = useState(defaultOpen);
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   const router = useRouter();
@@ -105,7 +113,7 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false }: SidebarP
         <SidebarToggle open={open} setOpen={setOpen} />
         <SidebarTitleSection open={open} user={user}  selected={selected}/>
 
-        <div className="space-y-1 mb-8 flex-1">
+        <div className="space-y-1 flex-1">
           {menuOptions.map((option) => (
             <SidebarOption
               key={option.title}
@@ -117,6 +125,41 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false }: SidebarP
               onSelect={() => handleOptionSelect(option.title, option.route)}
             />
           ))}
+
+          {/* Chapter options */}
+          {chapters && chapters.length > 0 && (
+            <>
+              {open && (
+                <p className="px-3 pt-4 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Chapters
+                </p>
+              )}
+              {!open && <hr className="my-2 border-border" />}
+              {chapters.map((chapter, index) => (
+                <button
+                  key={chapter.id}
+                  onClick={() => {
+                    onChapterSelect?.(index);
+                    if (window.innerWidth < 768) setOpen(false);
+                  }}
+                  className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${
+                    selectedChapter === index
+                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+                      : "text-muted-foreground hover:bg-border hover:text-foreground"
+                  }`}
+                >
+                  <div className="grid h-full w-12 place-content-center">
+                    <BookMarked className="h-4 w-4" />
+                  </div>
+                  {open && (
+                    <span className="text-sm font-medium truncate pr-2">
+                      {chapter.title}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </>
+          )}
         </div>
         
         {/* Logout button at the bottom - only show if user is logged in */}

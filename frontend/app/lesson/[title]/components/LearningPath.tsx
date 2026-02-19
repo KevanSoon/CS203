@@ -23,7 +23,7 @@ interface LearningPathProps {
 // Generate S-curve positions for nodes
 function getNodePositions(count: number) {
   const positions: { x: number; y: number }[] = [];
-  const verticalSpacing = 140;
+  const verticalSpacing = 200;
   const amplitude = 100;
   const nodesPerCurve = 3;
 
@@ -110,7 +110,7 @@ export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: Learnin
 
             {/* Lottie mascot next to the active node */}
             {showMascot && isActive && (
-              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-10 md:mr-20">
+              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-20 md:mr-20">
                 <Lottie
                   animationData={shibaAnimation}
                   loop

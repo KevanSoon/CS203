@@ -242,10 +242,17 @@ export default function LessonRoadmapPage({
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar selected={selected} setSelected={setSelected} defaultOpen={isDesktop} />
+      <Sidebar
+        selected={selected}
+        setSelected={setSelected}
+        defaultOpen={isDesktop}
+        chapters={chapters.map((c) => ({ id: c.id, title: c.title }))}
+        selectedChapter={selectedChapter}
+        onChapterSelect={setSelectedChapter}
+      />
 
       {/* Left: Roadmap */}
-      <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-auto pb-20">
+      <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-x-hidden overflow-y-auto pb-20">
         {/* Lesson Title */}
         <div className="px-4 pt-8 pb-4 text-center">
           <h1 className="text-3xl md:text-4xl font-black text-foreground">
@@ -256,22 +263,18 @@ export default function LessonRoadmapPage({
           </p>
         </div>
 
-        {/* Chapter Selector */}
-        <div className="px-4 py-6">
-          <div className="flex gap-2 flex-col md:flex-row md:justify-center">
-            {chapters.map((chapter, index) => (
-              <button
-                key={chapter.id}
-                onClick={() => setSelectedChapter(index)}
-                className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap transition-all ${
-                  selectedChapter === index
-                    ? "bg-primary text-white shadow-lg"
-                    : "bg-card text-muted-foreground hover:bg-primary/10 border border-border"
-                }`}
-              >
-                {chapter.title}
-              </button>
-            ))}
+        {/* Chapter Toast Banner */}
+        <div className="px-4 pt-4 pb-8 flex justify-center">
+          <div className="relative w-full max-w-md rounded-xl bg-[#a5a6f6] border-2 border-[#7c7dc9] px-6 py-3 shadow-[0_4px_0_0_#7c7dc9] overflow-hidden group">
+            <div className="relative z-10">
+              <p className="text-xs font-bold text-white/80 uppercase tracking-wider">
+                {`Chapter ${selectedChapter + 1}`}
+              </p>
+              <p className="text-lg font-bold text-white">
+                {currentChapter.title}
+              </p>
+            </div>
+            <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
           </div>
         </div>
 
