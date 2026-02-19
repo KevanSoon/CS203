@@ -22,7 +22,9 @@ export function CartoonButton({
     onClick?.();
   };
 
-  const sizeClasses = size === 'sm' ? 'h-9 px-4 text-sm' : 'h-12 px-6 text-xl';
+  const sizeClasses = size === 'sm'
+    ? 'h-9 px-4 text-sm md:h-12 md:px-6 md:text-xl'
+    : 'h-12 px-6 text-xl';
 
   return (
     <div

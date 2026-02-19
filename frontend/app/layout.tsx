@@ -1,7 +1,7 @@
 "use client";
 import "./globals.css";
-import Header from "@/components/general/Header";
-import Footer from "@/components/general/Footer";
+import Header from "@/app/components/Header";
+import Footer from "@/app/components/Footer";
 import Loader from "@/app/components/Spinner";
 import { usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";

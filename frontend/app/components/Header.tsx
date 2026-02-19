@@ -36,7 +36,7 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
             alt="Simi Slang"
             width={150}
             height={150}
-            className="h-[120px] md:h-[200px] w-auto -my-4 md:-my-8"
+            className="h-[110px] md:h-[200px] w-auto -my-4 md:-my-8"
           />
         </Link>
 
