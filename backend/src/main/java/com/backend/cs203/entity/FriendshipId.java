@@ -5,21 +5,27 @@ import java.util.Objects;
 
 public class FriendshipId implements Serializable {
 
-    private String username1;
-    private String username2;
+    private String requester;
+    private String acceptor;
+
+    public FriendshipId() {}
+
+    public FriendshipId(String requester, String acceptor) {
+        this.requester = requester;
+        this.acceptor = acceptor;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FriendshipId)) return false;
         FriendshipId that = (FriendshipId) o;
-        return Objects.equals(username1, that.username1)
-            && Objects.equals(username2, that.username2);
+        return Objects.equals(requester, that.requester) &&
+               Objects.equals(acceptor, that.acceptor);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username1, username2);
+        return Objects.hash(requester, acceptor);
     }
 }
-
