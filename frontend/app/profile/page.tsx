@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import {
   Award,
   BookOpen,
@@ -142,7 +143,7 @@ export default function ProfilePage() {
 
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
-      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo.\n\nStill sending it?"
+      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo."
     );
     if (!confirmed) return;
 
@@ -150,24 +151,24 @@ export default function ProfilePage() {
       setIsDeleting(true);
       setDeleteError("");
 
-      const res = await fetch("/api/profile/delete", {
-        method: "DELETE",
-      });
+      const res = await axios.delete("/api/profile/delete");
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || "Failed to delete account");
+      if (res.data?.success) {
+        router.replace("/");
+      } else {
+        throw new Error("Delete failed. L.");
       }
-
-      // success → kick user out
-      router.replace("/");
     } catch (err: any) {
-      setDeleteError(err?.message || "Delete failed. L.");
+      setDeleteError(
+        err?.response?.data?.error ||
+        err?.response?.data?.detail ||
+        "Delete failed. L."
+      );
     } finally {
       setIsDeleting(false);
     }
-  };
 
+  };
 
   return (
     <div className="flex min-h-screen bg-background">

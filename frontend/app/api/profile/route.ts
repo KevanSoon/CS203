@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL!; // e.g. http://localhost:8080
+export const runtime = "nodejs";
+
+const BACKEND_URL = process.env.BACKEND_URL!; 
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
+    const jwt = (await cookies()).get("jwt")?.value;
 
     if (!jwt) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,7 @@ export async function GET() {
     const res = await fetch(`${BACKEND_URL}/api/profile`, {
       method: "GET",
       headers: {
-        Cookie: `jwt=${jwt}`, // forward jwt cookie to Spring Boot
+        Authorization: `Bearer ${jwt}`,
         Accept: "application/json",
       },
       cache: "no-store",

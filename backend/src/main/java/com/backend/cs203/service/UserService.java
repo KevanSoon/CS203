@@ -3,6 +3,7 @@ package com.backend.cs203.service;
 import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -80,17 +81,22 @@ public class UserService {
     @Transactional
     public void deleteMyAccount() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
+
+        if (
+            auth == null ||
+            !auth.isAuthenticated() ||
+            auth instanceof AnonymousAuthenticationToken
+        ) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth required");
         }
 
         String username = auth.getName();
         User user = userRepository.findById(username)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            .orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+            );
 
         user.setDeactivatedAt(Instant.now());
         userRepository.save(user);
-
     }
-
 }
