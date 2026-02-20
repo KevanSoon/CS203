@@ -20,28 +20,16 @@ type Profile = {
   profilePictureUrl?: string;
 };
 
-// ✅ Mock learning progress
+type FriendDto = {
+  username: string;
+};
+
+// ✅ Mock learning progress (still mock)
 const MOCK_PROGRESS = {
   overallProgress: 65,
   lessonsCompleted: 12,
   totalHours: 24,
 };
-
-// ✅ Mock friends (with avatar + streak)
-type Friend = {
-  id: string;
-  name: string;
-  streakDays: number;
-  avatarUrl: string;
-};
-
-const MOCK_FRIENDS: Friend[] = [
-  { id: "1", name: "Alicia", streakDays: 12, avatarUrl: "https://i.pravatar.cc/120?img=32" },
-  { id: "2", name: "Bryan", streakDays: 3, avatarUrl: "https://i.pravatar.cc/120?img=12" },
-  { id: "3", name: "Cheryl", streakDays: 27, avatarUrl: "https://i.pravatar.cc/120?img=47" },
-  { id: "4", name: "Darren", streakDays: 8, avatarUrl: "https://i.pravatar.cc/120?img=22" },
-  { id: "5", name: "Eunice", streakDays: 1, avatarUrl: "https://i.pravatar.cc/120?img=5" },
-];
 
 function CollapsibleCard({
   title,
@@ -86,7 +74,9 @@ function CollapsibleCard({
 
       <div
         className={`grid transition-[grid-template-rows,opacity,margin-top] duration-300 ease-out ${
-          open ? "grid-rows-[1fr] opacity-100 mt-5" : "grid-rows-[0fr] opacity-0 mt-0"
+          open
+            ? "grid-rows-[1fr] opacity-100 mt-5"
+            : "grid-rows-[0fr] opacity-0 mt-0"
         }`}
       >
         <div className="overflow-hidden">{children}</div>
@@ -99,7 +89,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const [selected, setSelected] = useState("Profile");
 
-  // ✅ profile from backend now
   const [profile, setProfile] = useState<Profile>({
     username: "",
     profilePictureUrl: "",
@@ -109,6 +98,9 @@ export default function ProfilePage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [friends, setFriends] = useState<FriendDto[]>([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(true);
+  const [friendsError, setFriendsError] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -117,11 +109,12 @@ export default function ProfilePage() {
 
       try {
         const res = await fetch("/api/profile", { cache: "no-store" });
-
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          throw new Error(data?.message || data?.error || "Failed to load profile");
+          throw new Error(
+            data?.message || data?.error || "Failed to load profile"
+          );
         }
 
         setProfile({
@@ -135,7 +128,31 @@ export default function ProfilePage() {
       }
     };
 
+    const loadFriends = async () => {
+      setFriendsError("");
+      setIsLoadingFriends(true);
+
+      try {
+        const res = await fetch("/api/friendship", { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(
+            data?.message || data?.error || "Failed to load friends"
+          );
+        }
+
+        setFriends(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        setFriendsError(e?.message || "Failed to load friends");
+        setFriends([]);
+      } finally {
+        setIsLoadingFriends(false);
+      }
+    };
+
     loadProfile();
+    loadFriends();
   }, []);
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
@@ -173,6 +190,7 @@ export default function ProfilePage() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar selected={selected} setSelected={setSelected} />
+
       <div className="flex-1 overflow-auto bg-linear-to-b from-[#F2F0FF] via-white to-white font-sans text-slate-900">
         {/* Hero */}
         <div className="relative h-52 overflow-hidden">
@@ -208,7 +226,9 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <h1 className="text-2xl font-extrabold tracking-tight">{name}</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight">
+                      {name}
+                    </h1>
                     <p className="mt-1 text-sm text-slate-500">Your profile</p>
 
                     <button
@@ -230,7 +250,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* RIGHT — Progress + Friends (mock) */}
+              {/* RIGHT */}
               <div className="md:col-span-2 space-y-6">
                 <CollapsibleCard
                   title="Learning Progress"
@@ -300,43 +320,57 @@ export default function ProfilePage() {
                   icon={<Users size={20} className="text-[#6C63FF]" />}
                   rightBadge={
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                      {MOCK_FRIENDS.length}
+                      {isLoadingFriends ? "..." : friends.length}
                     </span>
                   }
                   defaultOpen={true}
                 >
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {MOCK_FRIENDS.map((friend) => (
-                      <div
-                        key={friend.id}
-                        className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-slate-200 flex-shrink-0">
-                            <Image
-                              src={friend.avatarUrl}
-                              alt={`${friend.name} avatar`}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          </div>
+                  {friendsError && (
+                    <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {friendsError}
+                    </div>
+                  )}
 
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-extrabold text-slate-900">
-                              {friend.name}
-                            </p>
-                            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                              <Flame size={14} />
-                              {friend.streakDays} day streak
+                  {isLoadingFriends ? (
+                    <div className="text-sm text-slate-500">
+                      Loading friends...
+                    </div>
+                  ) : friends.length === 0 ? (
+                    <div className="text-sm text-slate-500">No friends yet.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {friends.map((friend) => {
+                        const initial = (
+                          friend.username?.[0] || "?"
+                        ).toUpperCase();
+
+                        return (
+                          <div
+                            key={friend.username}
+                            className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {/* simple initial avatar (backend only gives username) */}
+                              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
+                                {initial}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-slate-900">
+                                  {friend.username}
+                                </p>
+
+                                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
+                                  <Flame size={14} />
+                                  Friend
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-
-                        <span className="text-slate-300 text-xl leading-none">›</span>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CollapsibleCard>
                 <CollapsibleCard
                   title="Danger Zone"
