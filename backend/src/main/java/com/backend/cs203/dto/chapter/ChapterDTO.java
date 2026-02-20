@@ -1,12 +1,19 @@
 package com.backend.cs203.dto.chapter;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
-public interface ChapterDTO {
-    String getTitle();
-    String getDescription();
-    LocalDateTime getCreatedAt();
-    Integer getLessonId();
+import com.backend.cs203.dto.card.CardDTO;
+import com.backend.cs203.dto.quiz.QuizDTO;
 
-    
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class ChapterDTO {
+    private Integer id;
+    private String title;
+    private String description;
+    private List<CardDTO> cards;
+    private List<QuizDTO> quizQuestions;
 }

@@ -37,8 +37,8 @@ public class Quiz {
     private String correctAnswer;
 
     @ManyToOne
-    @JoinColumn(name = "card_id", nullable = false)
-    private Card card;
+    @JoinColumn(name = "chapter_id", nullable = false)
+    private Chapter chapter;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

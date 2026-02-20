@@ -1,11 +1,13 @@
 package com.backend.cs203.dto.card;
 
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-public interface CardDTO {
-    String getFront();
-    String getBack();
-    String getDisplayOrder();
-    Integer getChapterId();
-    LocalDateTime getCreatedAt();
+@Data
+@AllArgsConstructor
+public class CardDTO {
+    private Integer id;
+    private String front;
+    private String back;
+    private Integer displayOrder;
 }

@@ -1,13 +1,14 @@
 package com.backend.cs203.dto.quiz;
 
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-public interface QuizDTO {
-    String getTitle();
-    String getQuestion();
-    String getOptions();
-    String getCorrectAnswer();
-    Integer getCardId();
-    LocalDateTime getCreatedAt();
-    
+@Data
+@AllArgsConstructor
+public class QuizDTO {
+    private Integer id;
+    private String title;
+    private String question;
+    private String options;
+    private String correctAnswer;
 }
