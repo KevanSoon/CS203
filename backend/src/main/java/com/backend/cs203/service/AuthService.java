@@ -29,21 +29,16 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AuthException("Invalid username or password"));
 
-        // Check if account is deactivated (soft delete)
         if (user.getDeactivatedAt() != null) {
             throw new AuthException("Account is deactivated");
         }
 
-        // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AuthException("Invalid username or password");
         }
 
-        // Update lastLogin and persist
         user.setLastLogin(Instant.now());
         userRepository.save(user);
-
-        // Generate JWT token
         String token = jwtUtil.generateToken(user);
 
         return AuthResponse.builder()

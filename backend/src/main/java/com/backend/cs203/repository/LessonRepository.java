@@ -10,12 +10,12 @@ import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.entity.Lesson;
 
-public interface LessonRepository extends JpaRepository<Lesson, Long> {
+public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     @Query(value = "SELECT title, description, created_by, created_at FROM lesson WHERE status='approved' AND deleted_at IS NULL ORDER BY created_at DESC", nativeQuery = true)
     List<LessonSummaryDTO> findAllLessons();
 
-    @Query(value = "SELECT title, description, created_by, created_at FROM lesson WHERE created_by=:createdBy AND status='approved' AND deleted_at IS NULL ORDER BY created_at DESC", nativeQuery = true)
-    List<LessonSummaryDTO> findUserCreatedLessons(@Param("createdBy") String createdBy);
+    @Query(value = " SELECT l.title AS title, l.description AS description, u.username AS createdBy, l.created_at AS createdAt FROM lesson l JOIN user u ON l.created_by = u.id WHERE l.created_by = :userId AND l.status = 'approved' AND l.deleted_at IS NULL ORDER BY l.created_at DESC", nativeQuery = true)
+    List<LessonSummaryDTO> findUserCreatedLessons(@Param("userId") Integer userId);
 
     @Query(value = "SELECT title, description, status, created_by, created_at FROM lesson WHERE status IN ('rejected','approved') AND deleted_at IS NULL ORDER BY created_at DESC", nativeQuery = true)
     List<LessonApplicationDTO> findAllLessonApplications();

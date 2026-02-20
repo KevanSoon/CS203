@@ -4,33 +4,44 @@ export const runtime = "nodejs";
 const BACKEND_URL = process.env.BACKEND_URL;
 
 export async function POST(req: Request) {
-  try {
-    if (!BACKEND_URL) {
-      return Response.json(
-        { error: "Server misconfiguration" },
-        { status: 500 }
-      );
-    }
+  if (!BACKEND_URL) {
+    return Response.json(
+      { error: "Server misconfiguration" },
+      { status: 500 }
+    );
+  }
 
+  try {
     const body = await req.json();
     const response = await axios.post(
       `${BACKEND_URL}/api/auth/login`,
       body,
       { withCredentials: true }
     );
-    const cookie = response.headers["set-cookie"];
+
+    const cookies = response.headers["set-cookie"] ?? [];
+
+    const headers = new Headers({
+      "Content-Type": "application/json",
+    });
+
+    cookies.forEach((cookie: string) => {
+      headers.append("Set-Cookie", cookie);
+    });
 
     return new Response(JSON.stringify(response.data), {
       status: response.status,
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookie ? { "Set-Cookie": cookie[0] } : {}),
-      },
+      headers,
     });
+
   } catch (err: any) {
-    return Response.json(
-      { error: err?.response?.data?.message || "Authentication failed" },
-      { status: err?.response?.status || 500 }
-    );
-  }
+  console.error("AXIOS ERROR STATUS:", err?.response?.status);
+  console.error("AXIOS ERROR DATA:", err?.response?.data);
+  console.error("AXIOS ERROR HEADERS:", err?.response?.headers);
+
+  return Response.json(
+    err?.response?.data || { error: "Authentication failed" },
+    { status: err?.response?.status || 500 }
+  );
+}
 }
