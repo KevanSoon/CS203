@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import LessonCard from "@/components/dashboard/LessonCard";
+import LessonCard from "@/app/dashboard/components/LessonCard";
 import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
 

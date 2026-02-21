@@ -1,0 +1,264 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { X, ArrowRight, Code2, Rocket, Zap, Check } from "lucide-react";
+
+interface Node {
+  id: number;
+  type: "lesson" | "quiz";
+  status: "locked" | "available" | "completed";
+  content?: {
+    front: string;
+    back: string;
+  };
+}
+
+interface FlippableCardProps {
+  node: Node;
+  onClose: () => void;
+  onComplete?: () => void;
+}
+
+export const FlippableCard = ({ node, onClose, onComplete }: FlippableCardProps) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  // If it's a quiz, navigate to quiz page
+  if (node.type === "quiz") {
+    return (
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn px-4"
+        onClick={onClose}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-card rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-scaleIn border-4 border-warning"
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-6 bg-warning/20 rounded-full flex items-center justify-center">
+              <span className="text-4xl">🏆</span>
+            </div>
+
+            <h3 className="text-2xl font-bold mb-3 text-foreground">
+              Chapter Quiz
+            </h3>
+
+            <p className="text-muted-foreground mb-8">
+              Test your knowledge and complete this chapter!
+            </p>
+
+            <button
+              onClick={() => {
+                alert("Quiz page coming soon!");
+                onClose();
+              }}
+              className="w-full bg-warning hover:bg-warning-dark text-white font-bold py-4 px-6 rounded-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+            >
+              Start Quiz
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular lesson card with new flip style
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-[300px] lg:max-w-[420px]"
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 text-white hover:text-gray-200 transition z-50"
+        >
+          <X size={32} />
+        </button>
+
+        <div
+          className="group relative h-[360px] lg:h-[480px] w-full"
+          style={{ perspective: "2000px" }}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          <div
+            className="relative h-full w-full transition-all duration-700 cursor-pointer"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            }}
+          >
+            {/* Front of card */}
+            <div
+              className={`
+                absolute inset-0 h-full w-full rounded-2xl overflow-hidden
+                bg-gradient-to-br from-white via-slate-50 to-slate-100
+                dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800
+                border border-slate-200 dark:border-zinc-800/50
+                shadow-lg dark:shadow-xl
+                transition-all duration-700
+                ${isFlipped ? "opacity-0" : "opacity-100"}
+              `}
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              {/* Background gradient effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 dark:from-primary/10 via-transparent to-blue-500/5 dark:to-blue-500/10" />
+
+              {/* Top content */}
+              <div className="relative z-10 p-5 flex-1 space-y-5">
+                <div className="space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+                      <Zap className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-xl lg:text-2xl leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                      Question
+                    </h3>
+                  </div>
+                  <p className="text-base lg:text-lg tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {node.content?.front}
+                  </p>
+                </div>
+              </div>
+
+              {/* Animated code blocks */}
+              <div className="absolute bottom-24 left-0 right-0 flex items-center justify-center">
+                <div className="relative flex h-[80px] w-[200px] flex-col items-center justify-center gap-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-3 w-full rounded-sm bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 animate-[slideIn_2s_ease-in-out_infinite] opacity-0"
+                      style={{
+                        width: `${60 + Math.random() * 40}%`,
+                        animationDelay: `${i * 0.2}s`,
+                        marginLeft: `${Math.random() * 20}%`,
+                      }}
+                    />
+                  ))}
+
+                  {/* Central rocket icon */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 animate-pulse transition-all duration-500">
+                      <Rocket className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom hint */}
+              <div className="absolute right-0 bottom-0 left-0 border-t border-slate-200 dark:border-zinc-800 p-4">
+                <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                  <span className="text-base font-semibold text-zinc-900 dark:text-white">
+                    Click to reveal answer
+                  </span>
+                  <ArrowRight className="text-primary h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Back of card */}
+            <div
+              className={`
+                absolute inset-0 h-full w-full rounded-2xl p-5 overflow-hidden
+                bg-gradient-to-br from-white via-slate-50 to-slate-100
+                dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800
+                border border-slate-200 dark:border-zinc-800
+                shadow-lg dark:shadow-xl
+                flex flex-col
+                transition-all duration-700
+                ${!isFlipped ? "opacity-0" : "opacity-100"}
+              `}
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            >
+              {/* Background gradient */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 dark:from-primary/10 via-transparent to-blue-500/5 dark:to-blue-500/10" />
+
+              <div className="relative z-10 flex-1 space-y-5">
+                <div className="space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+                      <Code2 className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-xl lg:text-2xl leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                      Answer
+                    </h3>
+                  </div>
+                  <p className="text-base lg:text-lg tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {node.content?.back}
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-auto border-t border-slate-200 dark:border-zinc-800 pt-4">
+                {node.status === "completed" ? (
+                  <div className="flex items-center justify-center rounded-lg p-2.5 bg-success/10 border border-success/20">
+                    <Check className="text-success h-4 w-4 mr-2" />
+                    <span className="text-base font-semibold text-success">
+                      Completed
+                    </span>
+                  </div>
+                ) : onComplete ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onComplete();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg p-2.5 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-semibold text-base transition-all hover:scale-[1.02]"
+                  >
+                    Mark Complete
+                    <Check className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                    <span className="text-base font-semibold text-zinc-900 dark:text-white">
+                      Click to flip back
+                    </span>
+                    <ArrowRight className="text-primary h-5 w-5" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style jsx>{`
+          @keyframes slideIn {
+            0% {
+              transform: translateX(-100px);
+              opacity: 0;
+            }
+            50% {
+              transform: translateX(0);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translateX(100px);
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+};

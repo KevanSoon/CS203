@@ -9,10 +9,10 @@ import { CartoonButton } from "@/app/components/CartoonButton";
 
 const HeroSection = () => {
   return (
-    <section className="max-w-6xl mx-auto px-4 py-12">
+    <section className="max-w-6xl mx-auto px-4  md:py-12">
       <div className="grid md:grid-cols-2 gap-12 items-center">
         {/* 3D Model */}
-        <div className="w-full h-[500px] rounded-2xl overflow-hidden">
+        <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden">
           <Canvas camera={{ position: [0, 10, 20], fov: 60 }}>
             <ambientLight intensity={1.5} />
             <directionalLight position={[5, 5, 5]} intensity={2} />

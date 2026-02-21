@@ -5,8 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class UserResponse {
-    private String username;
+public class UpdateProfileRequest {
     private String email;
-    private String profilePictureUrl;
+    private String password;
 }

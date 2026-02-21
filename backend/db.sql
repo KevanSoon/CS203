@@ -1,33 +1,36 @@
 USE defaultdb;
 
-CREATE TABLE IF NOT EXISTS user(
-  username varchar(50) UNIQUE NOT NULL PRIMARY KEY,
-  email varchar(100) NOT NULL,
-  password varchar(100) NOT NULL,
+CREATE TABLE IF NOT EXISTS user (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL,
+  password VARCHAR(100) NOT NULL,
   usertype ENUM('user','admin','root') NOT NULL,
   streak TINYINT NULL,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP NULL DEFAULT NULL,
-  deactivated_at TIMESTAMP NULL
+  deactivated_at TIMESTAMP NULL,
+  profile_picture_url VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS lesson(
-  id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS lesson (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) UNIQUE NOT NULL,
   description TEXT,
-  status ENUM('saved','pending', 'approved', 'rejected'),
+  status ENUM('saved','pending', 'approved', 'rejected') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
-  created_by varchar(50) NOT NULL,
-  FOREIGN KEY (`created_by`) references user(`username`)
+  created_by_id INT NOT NULL,
+  FOREIGN KEY (created_by_id) REFERENCES user(id)
 );
-
 
 CREATE TABLE IF NOT EXISTS chapter(
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    lesson_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
 );
 
 CREATE TABLE IF NOT EXISTS card(
@@ -35,45 +38,44 @@ CREATE TABLE IF NOT EXISTS card(
     front TEXT,
     back TEXT,
     display_order TINYINT,
-    lesson_id INT NOT NULL,
     chapter_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_lesson_chapter (`lesson_id`, `chapter_id`),
-    FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`),
     FOREIGN KEY (`chapter_id`) REFERENCES chapter(`id`)
 );
 
-CREATE TABLE IF NOT EXISTS quiz(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    question TEXT,
-    options TEXT,
-    correct_answer VARCHAR(255),
-    card_id INT NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`card_id`) REFERENCES card(`id`)
+CREATE TABLE IF NOT EXISTS quiz (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  question TEXT,
+  options TEXT,
+  correct_answer VARCHAR(255),
+  card_id INT NOT NULL,  
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  chapter_id INT NOT NULL,
+  FOREIGN KEY (card_id) REFERENCES card(id),
+  FOREIGN KEY (chapter_id) REFERENCES chapter(id)
 );
 
-CREATE TABLE IF NOT EXISTS tag(
-  name varchar(45) UNIQUE NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS tag (
+  name VARCHAR(45) UNIQUE NOT NULL PRIMARY KEY,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL
 );
 
-CREATE TABLE IF NOT EXISTS lesson_tagging(
-  tag_name varchar(45) NOT NULL,
+CREATE TABLE IF NOT EXISTS lesson_tagging (
+  tag_name VARCHAR(45) NOT NULL,
   lesson_id INT NOT NULL,
   deleted_at TIMESTAMP NULL,
-  PRIMARY KEY (`tag_name`, `lesson_id`),
-  FOREIGN KEY (`tag_name`) REFERENCES tag(`name`),
-  FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
+  PRIMARY KEY (tag_name, lesson_id),
+  FOREIGN KEY (tag_name) REFERENCES tag(name),
+  FOREIGN KEY (lesson_id) REFERENCES lesson(id)
 );
 
-CREATE TABLE IF NOT EXISTS friendship(
-  username1 varchar(45) NOT NULL,
-  username2 varchar(45) NOT NULL,
-  status ENUM('pending', 'confirmed'),
-  PRIMARY KEY (`username1`, `username2`),
-  FOREIGN KEY (`username1`) REFERENCES user(`username`),
-  FOREIGN KEY (`username2`) REFERENCES user(`username`)
+CREATE TABLE IF NOT EXISTS friendship (
+  user_id1 INT NOT NULL,
+  user_id2 INT NOT NULL,
+  status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending',
+  PRIMARY KEY (user_id1, user_id2),
+  FOREIGN KEY (user_id1) REFERENCES user(id),
+  FOREIGN KEY (user_id2) REFERENCES user(id)
 );
