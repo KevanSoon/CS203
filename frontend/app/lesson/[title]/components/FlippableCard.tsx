@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ArrowRight, Code2, Rocket, Zap } from "lucide-react";
+import { X, ArrowRight, Code2, Rocket, Zap, Check } from "lucide-react";
 
 interface Node {
   id: number;
@@ -16,9 +16,10 @@ interface Node {
 interface FlippableCardProps {
   node: Node;
   onClose: () => void;
+  onComplete?: () => void;
 }
 
-export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
+export const FlippableCard = ({ node, onClose, onComplete }: FlippableCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
@@ -128,11 +129,11 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
                       <Zap className="h-4 w-4 text-white" />
                     </div>
-                    <h3 className="text-lg leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                    <h3 className="text-xl lg:text-2xl leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
                       Question
                     </h3>
                   </div>
-                  <p className="text-sm tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-base lg:text-lg tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {node.content?.front}
                   </p>
                 </div>
@@ -165,10 +166,10 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
               {/* Bottom hint */}
               <div className="absolute right-0 bottom-0 left-0 border-t border-slate-200 dark:border-zinc-800 p-4">
                 <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  <span className="text-base font-semibold text-zinc-900 dark:text-white">
                     Click to reveal answer
                   </span>
-                  <ArrowRight className="text-primary h-4 w-4" />
+                  <ArrowRight className="text-primary h-5 w-5" />
                 </div>
               </div>
             </div>
@@ -199,23 +200,43 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
                       <Code2 className="h-4 w-4 text-white" />
                     </div>
-                    <h3 className="text-lg leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
+                    <h3 className="text-xl lg:text-2xl leading-snug font-semibold tracking-tight text-zinc-900 dark:text-white">
                       Answer
                     </h3>
                   </div>
-                  <p className="text-sm tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-base lg:text-lg tracking-tight text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {node.content?.back}
                   </p>
                 </div>
               </div>
 
               <div className="relative z-10 mt-auto border-t border-slate-200 dark:border-zinc-800 pt-4">
-                <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    Click to flip back
-                  </span>
-                  <ArrowRight className="text-primary h-4 w-4" />
-                </div>
+                {node.status === "completed" ? (
+                  <div className="flex items-center justify-center rounded-lg p-2.5 bg-success/10 border border-success/20">
+                    <Check className="text-success h-4 w-4 mr-2" />
+                    <span className="text-base font-semibold text-success">
+                      Completed
+                    </span>
+                  </div>
+                ) : onComplete ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onComplete();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg p-2.5 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-semibold text-base transition-all hover:scale-[1.02]"
+                  >
+                    Mark Complete
+                    <Check className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                    <span className="text-base font-semibold text-zinc-900 dark:text-white">
+                      Click to flip back
+                    </span>
+                    <ArrowRight className="text-primary h-5 w-5" />
+                  </div>
+                )}
               </div>
             </div>
           </div>

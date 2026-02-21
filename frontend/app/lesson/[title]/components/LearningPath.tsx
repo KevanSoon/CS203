@@ -2,7 +2,11 @@
 
 import Lottie from "lottie-react";
 import shibaAnimation from "@/public/shiba.json";
+import catAnimation from "@/public/cat.json";
+import pandaAnimation from "@/public/panda.json";
 import { Star, Crown, Lock, Check } from "lucide-react";
+
+const chapterMascots = [shibaAnimation, catAnimation, pandaAnimation];
 
 interface Node {
   id: number;
@@ -17,7 +21,7 @@ interface Node {
 interface LearningPathProps {
   nodes: Node[];
   onNodeClick: (node: Node) => void;
-  showMascot?: boolean;
+  chapterIndex?: number;
 }
 
 // Generate S-curve positions for nodes
@@ -65,10 +69,14 @@ function generateSmoothPath(positions: { x: number; y: number }[]): string {
   return path;
 }
 
-export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: LearningPathProps) => {
+export const LearningPath = ({ nodes, onNodeClick, chapterIndex = 0 }: LearningPathProps) => {
   const positions = getNodePositions(nodes.length);
   const totalHeight =
     positions.length > 0 ? positions[positions.length - 1].y + 160 : 400;
+  // Place mascot near the 3rd node (index 2), or last node if fewer than 3
+  const mascotNodeIndex = Math.min(2, positions.length - 1);
+  const mascotPos = positions[mascotNodeIndex];
+  const mascotData = chapterMascots[chapterIndex % chapterMascots.length];
 
   return (
     <div className="relative py-8" style={{ height: totalHeight }}>
@@ -88,6 +96,24 @@ export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: Learnin
         />
       </svg>
 
+      {/* Standalone mascot positioned near the 3rd node */}
+      {mascotPos && (
+        <div
+          className="absolute left-1/2 pointer-events-none"
+          style={{
+            transform: `translateX(calc(-50% + ${mascotPos.x - 160}px))`,
+            top: mascotPos.y + 20,
+            zIndex: 3,
+          }}
+        >
+          <Lottie
+            animationData={mascotData}
+            loop
+            className="w-35 h-35 lg:w-40 lg:h-40"
+          />
+        </div>
+      )}
+
       {/* Nodes positioned along the S-curve */}
       {nodes.map((node, index) => {
         const pos = positions[index];
@@ -95,7 +121,7 @@ export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: Learnin
 
         return (
           <div
-            key={node.id}
+            key={`${node.type}-${node.id}`}
             className="absolute left-1/2"
             style={{
               transform: `translateX(calc(-50% + ${pos.x}px))`,
@@ -107,17 +133,6 @@ export const LearningPath = ({ nodes, onNodeClick, showMascot = false }: Learnin
               node={node}
               onClick={() => onNodeClick(node)}
             />
-
-            {/* Lottie mascot next to the active node */}
-            {showMascot && isActive && (
-              <div className="absolute top-1/2 -translate-y-1/2 right-full mr-20 md:mr-20">
-                <Lottie
-                  animationData={shibaAnimation}
-                  loop
-                  className="w-35 h-35 lg:w-40 lg:h-40"
-                />
-              </div>
-            )}
           </div>
         );
       })}
