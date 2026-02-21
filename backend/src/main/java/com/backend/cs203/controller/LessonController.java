@@ -49,4 +49,10 @@ public class LessonController {
     public ResponseEntity<List<LessonSummaryDTO>> getPendingLessonApplications() {
             return ResponseEntity.ok(lessonService.getPendingLessonApplications());
     }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/page")
+    public ResponseEntity<LessonPageDTO> getLessonPage(@RequestParam String title) {
+            return ResponseEntity.ok(lessonService.getLessonPage(title));
+    }
 }

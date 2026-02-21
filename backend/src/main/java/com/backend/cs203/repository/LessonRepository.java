@@ -1,6 +1,7 @@
 package com.backend.cs203.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,10 @@ import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.entity.Lesson;
 
-public interface LessonRepository extends JpaRepository<Lesson, Integer> {
+public interface LessonRepository extends JpaRepository<Lesson, Long> {
+    @Query(value = "SELECT * FROM lesson WHERE title = :title AND status = 'approved' AND deleted_at IS NULL", nativeQuery = true)
+    Optional<Lesson> findByTitle(@Param("title") String title);
+
     @Query(value = "SELECT title, description, created_by, created_at FROM lesson WHERE status='approved' AND deleted_at IS NULL ORDER BY created_at DESC", nativeQuery = true)
     List<LessonSummaryDTO> findAllLessons();
 

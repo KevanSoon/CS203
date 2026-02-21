@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
@@ -97,6 +98,7 @@ public class UserService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        return new UserResponse(user.getUsername(), user.getEmail(),user.getProfilePictureUrl());
         if (user.getDeactivatedAt() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated");
         }
@@ -109,5 +111,72 @@ public class UserService {
         userRepository.save(user);
         SecurityContextHolder.clearContext();
     }
+
+    // -----------------------
+    // Profile (GET /api/profile)
+    // -----------------------
+    @Transactional
+    public UserResponse updateMyProfile(UpdateProfileRequest request) {
+        String username = requireUsername();
+
+        User user = userRepository.findById(username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // ✅ validate email (required)
+        String email = request.getEmail();
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        email = email.trim();
+        if (email.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email too long (max 100)");
+        }
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        }
+
+        user.setEmail(email);
+
+        // ✅ password optional
+        String password = request.getPassword();
+        if (password != null && !password.isBlank()) {
+            validatePassword(password);
+            user.setPassword(passwordEncoder.encode(password));
+        }
+
+        User saved = userRepository.save(user);
+        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
+    }
+
+    // -----------------------
+    // Helpers
+    // -----------------------
+    private String requireUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        return auth.getName();
+    }
+
+    private void validatePassword(String password) {
+        if (password.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too short (min 8)");
+        }
+        if (password.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too long (max 100)");
+        }
+        if (!password.matches(".*[a-z].*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one lowercase letter");
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one uppercase letter");
+        }
+        if (!password.matches(".*\\d.*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one number");
+        }
+    }
+
 
 }
