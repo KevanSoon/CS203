@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
+import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.LessonService;

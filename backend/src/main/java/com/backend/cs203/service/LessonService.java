@@ -71,7 +71,7 @@ public class LessonService {
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
-                lesson.getCreatedBy(),
+                lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails
         );

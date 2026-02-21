@@ -82,6 +82,7 @@ public class UserService {
 
         return new UserResponse(
             user.getUsername(),
+            user.getEmail(),
             user.getProfilePictureUrl()
         );
     }
@@ -98,7 +99,6 @@ public class UserService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        return new UserResponse(user.getUsername(), user.getEmail(),user.getProfilePictureUrl());
         if (user.getDeactivatedAt() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated");
         }
@@ -119,7 +119,7 @@ public class UserService {
     public UserResponse updateMyProfile(UpdateProfileRequest request) {
         String username = requireUsername();
 
-        User user = userRepository.findById(username)
+        User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // ✅ validate email (required)
