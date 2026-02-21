@@ -3,32 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CartoonButton } from "@/app/components/CartoonButton";
-import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useSiteState } from "@/app/store/SiteStore";
-import { logout } from "@/app/api/api";
 
-type HeaderProps = {
-  isAuthenticated?: boolean;
-};
-
-export default function Header({ isAuthenticated = false }: HeaderProps) {
-  const user = useSiteState((s) => s.user);
-  const clearUser = useSiteState((s) => s.clearUser);
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      clearUser();
-      router.push("/");
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-  };
-
+export default function Header() {
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">      
       <div className="max-w-6xl mx-auto px-4 h-12 md:h-20 flex items-center justify-between">
         <Link href="/">
           <Image
@@ -41,29 +19,18 @@ export default function Header({ isAuthenticated = false }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-2 md:gap-3">
-          {user ? (
+          <Link href="/login">
             <CartoonButton
-              label="Logout"
+              label="Log In"
               color="bg-foreground"
               textColor="text-white"
               size="sm"
-              onClick={handleLogout}
             />
-          ) : (
-            <>
-              <Link href="/login">
-                <CartoonButton
-                  label="Log In"
-                  color="bg-foreground"
-                  textColor="text-white"
-                  size="sm"
-                />
-              </Link>
-              <Link href="/signup">
-                <CartoonButton label="Sign Up" size="sm" />
-              </Link>
-            </>
-          )}
+          </Link>
+
+          <Link href="/signup">
+            <CartoonButton label="Sign Up" size="sm" />
+          </Link>
         </div>
       </div>
     </header>
