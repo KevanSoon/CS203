@@ -31,8 +31,8 @@ public class LessonService {
     public List<LessonSummaryDTO> getAllLessons() {
         return lessonRepository.findAllLessons();
     }
-    public List<LessonSummaryDTO> getUserCreatedLessons(String username) {
-        return lessonRepository.findUserCreatedLessons(username);
+    public List<LessonSummaryDTO> getUserCreatedLessons(int id) {
+        return lessonRepository.findUserCreatedLessons(id);
     }
     public List<LessonApplicationDTO> getAllLessonApplications() {
         return lessonRepository.findAllLessonApplications();
@@ -71,7 +71,7 @@ public class LessonService {
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
-                lesson.getCreatedBy(),
+                lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails
         );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import {
   Award,
   BookOpen,
@@ -95,6 +96,8 @@ export default function ProfilePage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState("");
 
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState("");
@@ -119,7 +122,7 @@ export default function ProfilePage() {
           profilePictureUrl: data?.profilePictureUrl ?? "",
         });
       } catch (e: any) {
-        setProfileError(e?.message || "Failed to load profile");
+        setProfileError(e?.message || "Something went wrong 💀");
       } finally {
         setIsLoadingProfile(false);
       }
@@ -154,6 +157,35 @@ export default function ProfilePage() {
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
   const profilePic = profile.profilePictureUrl || "";
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo."
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      const res = await axios.delete("/api/profile/delete");
+
+      if (res.data?.success) {
+        router.replace("/");
+      } else {
+        throw new Error("Delete failed. L.");
+      }
+    } catch (err: any) {
+      setDeleteError(
+        err?.response?.data?.error ||
+        err?.response?.data?.detail ||
+        "Delete failed. L."
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -339,6 +371,39 @@ export default function ProfilePage() {
                       })}
                     </div>
                   )}
+                </CollapsibleCard>
+                <CollapsibleCard
+                  title="Danger Zone"
+                  icon={<Flame size={20} className="text-red-500" />}
+                  defaultOpen={false}
+                >
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-red-700">
+                          Delete your account
+                        </h3>
+                        <p className="mt-1 text-sm text-red-600">
+                          This action is permanent. Your data will be erased forever.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting ? "Deleting..." : "Delete Account"}
+                      </button>
+                    </div>
+
+                    {deleteError && (
+                      <div className="mt-4 rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600">
+                        {deleteError}
+                      </div>
+                    )}
+                  </div>
                 </CollapsibleCard>
               </div>
             </div>

@@ -5,8 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL!; // http://localhost:8080
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
+    const jwt = (await cookies()).get("jwt")?.value;
 
     if (!jwt) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
