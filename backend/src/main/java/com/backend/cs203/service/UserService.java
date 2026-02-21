@@ -31,18 +31,18 @@ public class UserService {
     public RegisterResponse registerUser(RegisterRequest request) {
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            return new RegisterResponse(false, "Username already exists", null);
+            return new RegisterResponse(false, "Username already in use. Try another", null);
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new RegisterResponse(false, "Email already exists", null);
+            return new RegisterResponse(false, "Email already in use. Try another", null);
         }
 
         User.UserType userType;
         try {
             userType = User.UserType.valueOf(request.getUsertype());
         } catch (IllegalArgumentException e) {
-            return new RegisterResponse(false, "Invalid user type", null);
+            return new RegisterResponse(false, "Invalid user type. Try again", null);
         }
 
         User user = User.builder()

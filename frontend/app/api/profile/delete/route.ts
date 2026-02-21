@@ -5,13 +5,18 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 
 export async function DELETE() {
   try {
-    const jwt = (await cookies()).get("jwt")?.value;
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
 
+    //throw error
     if (!jwt) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+        return Response.json(
+            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
+            { status: 401 }
+    );
     }
 
-    const backendRes = await fetch(`${BACKEND_URL}/api/profile/delete`, {
+    const response = await fetch(`${BACKEND_URL}/api/profile/delete`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${jwt}`,
@@ -19,25 +24,24 @@ export async function DELETE() {
       cache: "no-store",
     });
 
-    if (!backendRes.ok) {
-      const text = await backendRes.text();
+    if(!response.ok){
       return Response.json(
-        { error: "Delete failed", detail: text },
-        { status: backendRes.status }
-      );
+      { error: response.statusText || "Internal Server Error", message: "Profile deletion failed. Please try again later" },
+      { status: response.status }
+    );
     }
 
-    const response = Response.json({ success: true });
-    response.headers.set(
+    const BFFResponse = Response.json({ success: true });
+    BFFResponse.headers.set(
       "Set-Cookie",
       "jwt=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax"
     );
 
-    return response;
+    return BFFResponse
   } catch (err: any) {
     return Response.json(
-      { error: "BFF internal error", message: err?.message },
-      { status: 500 }
+      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Profile deletion failed. Please try again later" },
+      { status: err?.response?.status || 500 }
     );
   }
 }

@@ -35,7 +35,7 @@ public class LessonController {
     public ResponseEntity<List<LessonSummaryDTO>> getUserCreatedLessons(Authentication authentication) {  
             String username = authentication.getName();
             User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
             return ResponseEntity.ok(lessonService.getUserCreatedLessons(user.getId()));
     }
 

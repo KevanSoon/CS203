@@ -34,14 +34,28 @@ export function middleware(request: NextRequest) {
 	const publicRoutes = ["/", "/login", "/signup"];
 	if (publicRoutes.includes(pathname)) {
 		if (isLoggedIn) {
-			return NextResponse.redirect(new URL(url, request.url));
+			const res = NextResponse.redirect(new URL(url, request.url));
+			res.cookies.set("flash_toast", "already_authenticated", {
+				path: "/",
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: "lax",
+			});
+			return res;
 		}
 		return NextResponse.next();
 	}
 
 	// Not logged in - redirect to /
 	if (!isLoggedIn) {
-		return NextResponse.redirect(new URL("/", request.url));
+        const res = NextResponse.redirect(new URL("/", request.url));
+        res.cookies.set("flash_toast", "unauthenticated", {
+            path: "/",
+            maxAge: 10,
+            httpOnly: false,
+            sameSite: "lax",
+        });
+        return res;
 	}
 
 	// Role-based redirects
@@ -51,19 +65,40 @@ export function middleware(request: NextRequest) {
 
 	if (userRoutes.some((route) => pathname.startsWith(route))) {
 		if (userType !== "user") {
-			return NextResponse.redirect(new URL(url, request.url));
+			const res = NextResponse.redirect(new URL(url, request.url));
+			res.cookies.set("flash_toast", "unauthorized", {
+				path: "/",
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: "lax",
+			});
+			return res;
 		}
 	}
 
 	if (adminRoutes.some((route) => pathname.startsWith(route))) {
 		if (userType !== "admin") {
-			return NextResponse.redirect(new URL(url, request.url));
+			const res = NextResponse.redirect(new URL(url, request.url));
+			res.cookies.set("flash_toast", "unauthorized", {
+				path: "/",
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: "lax",
+			});
+			return res;
 		}
 	}
 
 	if (rootRoutes.some((route) => pathname.startsWith(route))) {
 		if (userType !== "root") {
-			return NextResponse.redirect(new URL(url, request.url));
+			const res = NextResponse.redirect(new URL(url, request.url));
+			res.cookies.set("flash_toast", "unauthorized", {
+				path: "/",
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: "lax",
+			});
+			return res;
 		}
 	}
 
