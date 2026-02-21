@@ -109,6 +109,7 @@ export default function LessonRoadmapPage({
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lessonDescription, setLessonDescription] = useState<string>("");
 
   const lessonTitle = decodeURIComponent(title);
 
@@ -131,6 +132,7 @@ export default function LessonRoadmapPage({
           params: { title: lessonTitle },
         });
         setChapters(mapChaptersFromDTO(data.chapters));
+        setLessonDescription(data.description || "");
       } catch (err: any) {
         console.error("Failed to fetch lesson page:", err);
         setError(err.response?.data?.error || "Failed to load lesson");
@@ -189,7 +191,7 @@ export default function LessonRoadmapPage({
             {lessonTitle}
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Follow the learning path to master this topic
+            {lessonDescription || ""}
           </p>
         </div>
 
