@@ -102,7 +102,7 @@ export const LearningPath = ({ nodes, onNodeClick, chapterIndex = 0 }: LearningP
           className="absolute left-1/2 pointer-events-none"
           style={{
             transform: `translateX(calc(-50% + ${mascotPos.x - 160}px))`,
-            top: mascotPos.y - 20,
+            top: mascotPos.y + 20,
             zIndex: 3,
           }}
         >

@@ -11,6 +11,7 @@ import { useSiteState } from "@/app/store/SiteStore";
 export interface ChapterItem {
   id: number;
   title: string;
+  description?: string;
 }
 
 export interface SidebarProps {
@@ -153,7 +154,7 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
                   </div>
                   {open && (
                     <span className="text-sm font-medium truncate pr-2">
-                      {chapter.title}
+                      {chapter.description || chapter.title}
                     </span>
                   )}
                 </button>

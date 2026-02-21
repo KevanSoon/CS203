@@ -45,6 +45,7 @@ interface LessonPageDTO {
 interface Chapter {
   id: number;
   title: string;
+  description: string;
   nodes: Node[];
 }
 
@@ -88,6 +89,7 @@ function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
     return {
       id: chapter.id,
       title: chapter.title,
+      description: chapter.description,
       nodes: allNodes,
     };
   });
@@ -174,7 +176,7 @@ export default function LessonRoadmapPage({
         selected={selected}
         setSelected={setSelected}
         defaultOpen={isDesktop}
-        chapters={chapters.map((c) => ({ id: c.id, title: c.title }))}
+        chapters={chapters.map((c) => ({ id: c.id, title: c.title, description: c.description }))}
         selectedChapter={selectedChapter}
         onChapterSelect={setSelectedChapter}
       />
@@ -216,12 +218,14 @@ export default function LessonRoadmapPage({
             <div className="px-4 pt-4 pb-8 flex justify-center">
               <div className="relative w-full max-w-md rounded-xl bg-primary border-2 border-primary-dark px-6 py-3 shadow-[0_4px_0_0_var(--color-primary-dark)] overflow-hidden group">
                 <div className="relative z-10">
-                  <p className="text-xs font-bold text-white/80 uppercase tracking-wider">
-                    {`Chapter ${selectedChapter + 1}`}
-                  </p>
-                  <p className="text-lg font-bold text-white">
+                  <p className="text-sm text-white/70">
                     {currentChapter.title}
                   </p>
+                  {currentChapter.description && (
+                    <p className="text-lg font-bold text-white mt-1">
+                      {currentChapter.description}
+                    </p>
+                  )}
                 </div>
                 <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
               </div>
