@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     if (!BACKEND_URL) {
       
       return Response.json(
-        { error: "Server unavailable" },
+        { error: "Internal Server Error", message: "Server not responding. Please try again later" },
         { status: 500 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
   } catch (err: any) {
     return Response.json(
-      { error: err?.response?.data?.message || err?.message || "Registration failed" },
+      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Registration failed. Please try again later" },
       { status: err?.response?.status || 500 }
     );
   }

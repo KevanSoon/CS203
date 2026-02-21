@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { api } from "@/app/api/api";
 import { useSiteState } from "@/app/store/SiteStore";
 
@@ -79,6 +82,7 @@ export default function SignUp() {
   
   // Get loading state from store
   const isLoading = useSiteState((state) => state.isLoading);
+  const router = useRouter();
 
   // Check if all required fields are filled
   const isFormComplete = 
@@ -172,7 +176,7 @@ export default function SignUp() {
       try {
         // Call registration API route using the api instance
         // The api interceptors will automatically set isLoading to true
-        const response = await api.post('/api/auth/register', {
+        await api.post('/api/auth/register', {
           username: form.username,
           email: form.email,
           usertype: form.usertype,
@@ -180,7 +184,8 @@ export default function SignUp() {
         });
 
         // Success! Redirect to login page
-        window.location.href = '/login';
+        toast.success("Register Successful")
+        router.push("/login");
         
       } catch (error: any) {
         // Handle errors from the backend
@@ -316,7 +321,7 @@ export default function SignUp() {
             />
 
             {!errors.password && (
-              <p className="text-xs text-slate-500 ml-1 mt-1">8-100 characters. Must have uppercase, lowercase, and number.</p>
+              <p className="text-xs text-slate-500 ml-1 mt-1">At least 8 characters. Must have uppercase, lowercase, and number.</p>
             )}
 
             {errors.password && (

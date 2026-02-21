@@ -27,14 +27,14 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new AuthException("Invalid username or password"));
+                .orElseThrow(() -> new AuthException("Invalid username or password. Please try again"));
 
         if (user.getDeactivatedAt() != null) {
-            throw new AuthException("Account is deactivated");
+            throw new AuthException("Account has been deactivated. Please contact the support team");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new AuthException("Invalid username or password");
+            throw new AuthException("Invalid username or password. Please try again");
         }
 
         user.setLastLogin(Instant.now());
@@ -51,7 +51,7 @@ public class AuthService {
 
     public UserInfoResponse getCurrentUser(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AuthException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
 
         return UserInfoResponse.builder()
                 .username(user.getUsername())

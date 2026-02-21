@@ -79,7 +79,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> me(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AuthException("Unauthorized");
+            throw new AuthException("Unauthorized Access. Refresh and try again");
         }
 
         String username = authentication.getName();

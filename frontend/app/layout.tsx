@@ -3,6 +3,7 @@
 import "./globals.css";
 import Footer from "@/app/components/Footer";
 import Loader from "@/app/components/Spinner";
+import Toaster from "@/app/components/Toaster";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
@@ -12,6 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					{children}
 					{<Footer />}
 				</Loader>
+
+				<Toaster />
 			</body>
 		</html>
 	);
