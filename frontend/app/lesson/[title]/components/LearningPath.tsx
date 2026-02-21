@@ -121,7 +121,7 @@ export const LearningPath = ({ nodes, onNodeClick, chapterIndex = 0 }: LearningP
 
         return (
           <div
-            key={node.id}
+            key={`${node.type}-${node.id}`}
             className="absolute left-1/2"
             style={{
               transform: `translateX(calc(-50% + ${pos.x}px))`,

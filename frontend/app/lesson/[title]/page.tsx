@@ -65,7 +65,7 @@ function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
       .map((card) => ({
         id: card.id,
         type: "lesson" as const,
-        status: "completed" as const,
+        status: "locked" as const,
         content: {
           front: card.front,
           back: card.back,
@@ -75,13 +75,20 @@ function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
     const quizNodes: Node[] = chapter.quizQuestions.map((quiz) => ({
       id: quiz.id,
       type: "quiz" as const,
-      status: "available" as const,
+      status: "locked" as const,
     }));
+
+    const allNodes = [...cardNodes, ...quizNodes];
+
+    // First node starts as available
+    if (allNodes.length > 0) {
+      allNodes[0].status = "available";
+    }
 
     return {
       id: chapter.id,
       title: chapter.title,
-      nodes: [...cardNodes, ...quizNodes],
+      nodes: allNodes,
     };
   });
 }
@@ -138,6 +145,27 @@ export default function LessonRoadmapPage({
   const handleNodeClick = (node: Node) => {
     if (node.status === "locked") return;
     setSelectedNode(node);
+  };
+
+  const handleNodeComplete = (nodeId: number) => {
+    setChapters((prev) =>
+      prev.map((chapter, chIdx) => {
+        if (chIdx !== selectedChapter) return chapter;
+
+        const nodeIndex = chapter.nodes.findIndex((n) => n.id === nodeId);
+        if (nodeIndex === -1) return chapter;
+
+        const updatedNodes = chapter.nodes.map((node, i) => {
+          if (i === nodeIndex) return { ...node, status: "completed" as const };
+          if (i === nodeIndex + 1 && node.status === "locked")
+            return { ...node, status: "available" as const };
+          return node;
+        });
+
+        return { ...chapter, nodes: updatedNodes };
+      })
+    );
+    setSelectedNode(null);
   };
 
   return (
@@ -213,6 +241,7 @@ export default function LessonRoadmapPage({
               <FlippableCard
                 node={selectedNode}
                 onClose={() => setSelectedNode(null)}
+                onComplete={() => handleNodeComplete(selectedNode.id)}
               />
             )}
           </>

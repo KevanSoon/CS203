@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ArrowRight, Code2, Rocket, Zap } from "lucide-react";
+import { X, ArrowRight, Code2, Rocket, Zap, Check } from "lucide-react";
 
 interface Node {
   id: number;
@@ -16,9 +16,10 @@ interface Node {
 interface FlippableCardProps {
   node: Node;
   onClose: () => void;
+  onComplete?: () => void;
 }
 
-export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
+export const FlippableCard = ({ node, onClose, onComplete }: FlippableCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
@@ -210,12 +211,32 @@ export const FlippableCard = ({ node, onClose }: FlippableCardProps) => {
               </div>
 
               <div className="relative z-10 mt-auto border-t border-slate-200 dark:border-zinc-800 pt-4">
-                <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    Click to flip back
-                  </span>
-                  <ArrowRight className="text-primary h-4 w-4" />
-                </div>
+                {node.status === "completed" ? (
+                  <div className="flex items-center justify-center rounded-lg p-2.5 bg-success/10 border border-success/20">
+                    <Check className="text-success h-4 w-4 mr-2" />
+                    <span className="text-sm font-semibold text-success">
+                      Completed
+                    </span>
+                  </div>
+                ) : onComplete ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onComplete();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg p-2.5 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-semibold text-sm transition-all hover:scale-[1.02]"
+                  >
+                    Mark Complete
+                    <Check className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg p-2.5 bg-gradient-to-r from-slate-100 dark:from-zinc-800 to-slate-100 dark:to-zinc-800 border border-transparent">
+                    <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                      Click to flip back
+                    </span>
+                    <ArrowRight className="text-primary h-4 w-4" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
