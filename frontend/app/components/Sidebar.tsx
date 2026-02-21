@@ -4,7 +4,7 @@ import { BookOpen, MessageSquare, Menu, LogOut, Settings, Users, BarChart3, File
 import { SidebarOption } from "@/app/components/SidebarOption";
 import { SidebarTitleSection } from "@/app/components/SidebarTitleSection";
 import { SidebarToggle } from "@/app/components/SidebarToggle";
-import { logout } from "@/app/api/api";
+import { api } from "@/app/api/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
 
@@ -29,7 +29,6 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);
-  const clearUser = useSiteState((s) => s.clearUser);
 
   const handleOptionSelect = (title: string, route: string) => {
     setSelected(title);
@@ -47,9 +46,9 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
 
   const handleLogout = async () => {
     try {
-      await logout();
-      clearUser();
-      window.location.href = "/"
+      await api.post("/api/auth/logout");
+      useSiteState.getState().clearUser();
+      window.location.href = "/";
     } catch (err) {
       console.error("Logout error:", err);
     }

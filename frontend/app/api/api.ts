@@ -38,15 +38,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Auth API functions
-export const logout = async () => {
-  try {
-    await api.post("/api/auth/logout");
-    useSiteState.getState().clearUser();
-    return { success: true };
-  } catch (error) {
-    console.error("Logout failed:", error);
-    throw error;
-  }
-};
