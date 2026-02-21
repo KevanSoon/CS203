@@ -38,6 +38,12 @@ export default function LessonCard({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [showModal]);
 
+
+function getRatingStars() {
+  const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+  return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
+}
+
   return (
     <>
       <div
@@ -71,7 +77,7 @@ export default function LessonCard({
               {description}
             </p>
 
-            <button
+            {description.length > 200 && <button
               onClick={(e) => {
                 e.stopPropagation();
                 openModal();
@@ -82,7 +88,7 @@ export default function LessonCard({
               "
             >
               See full description
-            </button>
+            </button>}
           </div>
 
           <div className="space-y-2 mt-auto">
@@ -98,8 +104,8 @@ export default function LessonCard({
               />
             </div>
 
-            <div className="text-[11px] sm:text-xs text-muted-foreground">
-              Rating: {rating} ★
+            <div className="text-[11px] sm:text-xs text-muted-foreground text">
+              Rating: <span className="text-yellow-500">{getRatingStars()}</span>
             </div>
           </div>
         </div>

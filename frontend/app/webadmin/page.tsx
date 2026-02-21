@@ -55,7 +55,6 @@ export default function DashboardPage() {
         ])
         const pendingLessons = pendingRes.data.map((l: Omit<Lesson, "status">) => ({ ...l, status: "pending" as const }))
         const allLessons = [...pendingLessons, ...applicationsRes.data]
-        console.log(allLessons)
         setLessons(allLessons)
       } catch (err) {
         console.error("Failed to fetch lessons:", err)
