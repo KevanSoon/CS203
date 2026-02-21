@@ -24,24 +24,23 @@ CREATE TABLE IF NOT EXISTS lesson (
   FOREIGN KEY (created_by_id) REFERENCES user(id)
 );
 
-CREATE TABLE IF NOT EXISTS chapter (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS chapter(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    lesson_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
 );
 
-CREATE TABLE IF NOT EXISTS card (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  front TEXT,
-  back TEXT,
-  display_order TINYINT,
-  lesson_id INT NOT NULL,
-  chapter_id INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_lesson_chapter (lesson_id, chapter_id),
-  FOREIGN KEY (lesson_id) REFERENCES lesson(id),
-  FOREIGN KEY (chapter_id) REFERENCES chapter(id)
+CREATE TABLE IF NOT EXISTS card(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    front TEXT,
+    back TEXT,
+    display_order TINYINT,
+    chapter_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`chapter_id`) REFERENCES chapter(`id`)
 );
 
 CREATE TABLE IF NOT EXISTS quiz (
