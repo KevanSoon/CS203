@@ -13,7 +13,6 @@ export const AdminLessonPage = () => {
       try {
         //calls route.ts
         const result = await api.get("/api/lesson/user-lessons/");
-        console.log(result.data)
         setLessons(result.data);
       }
       catch (err) {

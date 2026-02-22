@@ -40,6 +40,12 @@ export default function LessonCard({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [showModal]);
 
+
+function getRatingStars() {
+  const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+  return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
+}
+
   return (
     <>
       <div
@@ -92,7 +98,26 @@ export default function LessonCard({
               </div>
             )}
 
-            <button
+            {/* Tag badges — max 8 visible, overflow shown as +N */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 overflow-hidden max-h-[72px]">
+                {tags.slice(0, 8).map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-semibold whitespace-nowrap border border-primary/20"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {tags.length > 8 && (
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+                    +{tags.length - 8}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {description.length > 200 && <button
               onClick={(e) => {
                 e.stopPropagation();
                 openModal();
@@ -103,7 +128,7 @@ export default function LessonCard({
               "
             >
               See full description
-            </button>
+            </button>}
           </div>
 
           <div className="space-y-2 mt-auto">
@@ -119,8 +144,8 @@ export default function LessonCard({
               />
             </div>
 
-            <div className="text-[11px] sm:text-xs text-muted-foreground">
-              Rating: {rating} ★
+            <div className="text-[11px] sm:text-xs text-muted-foreground text">
+              Rating: <span className="text-yellow-500">{getRatingStars()}</span>
             </div>
           </div>
         </div>
