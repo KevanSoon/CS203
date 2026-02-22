@@ -183,10 +183,14 @@ public class UserService {
 
     public List<UserSearchResult> searchUsers(String username) {
         String currentUsername = requireUsername();
-        
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         return userRepository.findTop3ByUsernameContainingIgnoreCase(username)
                 .stream()
                 .filter(user -> !user.getUsername().equals(currentUsername))
+                .filter(user -> user.getUsertype() == currentUser.getUsertype())
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
     }
