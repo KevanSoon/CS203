@@ -46,7 +46,10 @@ export async function PATCH(req: Request) {
     const jwt = cookieStore.get("jwt")?.value;
 
     if (!jwt) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     // ✅ receive form data from frontend
