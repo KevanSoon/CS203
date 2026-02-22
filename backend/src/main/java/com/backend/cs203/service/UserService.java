@@ -1,6 +1,8 @@
 package com.backend.cs203.service;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -15,6 +17,7 @@ import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
+import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 
@@ -178,5 +181,13 @@ public class UserService {
         }
     }
 
-
+    public List<UserSearchResult> searchUsers(String username) {
+        String currentUsername = requireUsername();
+        
+        return userRepository.findTop3ByUsernameContainingIgnoreCase(username)
+                .stream()
+                .filter(user -> !user.getUsername().equals(currentUsername))
+                .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
+                .collect(Collectors.toList());
+    }
 }
