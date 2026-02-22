@@ -12,6 +12,7 @@ interface Lesson {
   createdBy: string
   createdAt: string
   status: LessonStatus
+  tags?: string[] | string | null
 }
 
 function formatDate(dateStr: string): string {
@@ -59,6 +60,36 @@ export function LessonRow({
               </p>
               <div className="flex flex-wrap items-center gap-1 mb-2">
                 <StatusBadge status={lesson.status} />
+                {lesson.tags && (
+                  (() => {
+                    const tagsArr = Array.isArray(lesson.tags)
+                      ? lesson.tags
+                      : String(lesson.tags)
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                    const visible = tagsArr.slice(0, 8)
+                    const rem = Math.max(0, tagsArr.length - visible.length)
+
+                    return (
+                      <div className="flex flex-wrap gap-1">
+                        {visible.map((t) => (
+                          <span
+                            key={t}
+                            className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                        {rem > 0 && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+                            +{rem}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })()
+                )}
               </div>
             </div>
             <div className="relative shrink-0" ref={menuRef}>
