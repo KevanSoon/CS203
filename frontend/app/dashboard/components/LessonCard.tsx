@@ -79,24 +79,6 @@ function getRatingStars() {
               {description}
             </p>
 
-            {/* Tag badges — max 8 visible, overflow shown as +N */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2 overflow-hidden max-h-[72px]">
-                {tags.slice(0, 8).map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-semibold whitespace-nowrap border border-primary/20"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {tags.length > 8 && (
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
-                    +{tags.length - 8}
-                  </span>
-                )}
-              </div>
-            )}
 
             {/* Tag badges — max 8 visible, overflow shown as +N */}
             {tags.length > 0 && (
