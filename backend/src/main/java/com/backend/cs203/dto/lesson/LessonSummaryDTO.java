@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 
 public interface LessonSummaryDTO {
     String getTitle();
-    String getDescription(); 
+    String getDescription();
     String getCreatedBy();
     LocalDateTime getCreatedAt();
+    String getTags();
 }
