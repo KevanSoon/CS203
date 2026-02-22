@@ -10,6 +10,7 @@ type LessonCardProps = {
   description: string;
   progress: number;
   rating: number;
+  tags?: string[];
 };
 
 export default function LessonCard({
@@ -18,6 +19,7 @@ export default function LessonCard({
   description,
   progress,
   rating,
+  tags = [],
 }: LessonCardProps) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
@@ -76,6 +78,26 @@ function getRatingStars() {
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
               {description}
             </p>
+
+
+            {/* Tag badges — max 8 visible, overflow shown as +N */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 overflow-hidden max-h-[72px]">
+                {tags.slice(0, 8).map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-semibold whitespace-nowrap border border-primary/20"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {tags.length > 8 && (
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+                    +{tags.length - 8}
+                  </span>
+                )}
+              </div>
+            )}
 
             {description.length > 200 && <button
               onClick={(e) => {
