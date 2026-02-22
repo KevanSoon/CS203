@@ -175,8 +175,8 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
             `}
             title="Logout"
           >
-            <LogOut className="h-5 w-5 shrink-0" />
-            {open && <span className="font-medium">Logout</span>}
+            <LogOut className="h-5 w-5 shrink-0  text-red-600" />
+            {open && <span className="font-medium text-red-600">Logout</span>}
           </button>
         </div>
 
