@@ -7,6 +7,7 @@ export interface Lesson {
   createdAt: string;
   title: string;
   description: string;
+  tags?: string[] | string | null;
 }
 
 export interface LessonContentProps {
