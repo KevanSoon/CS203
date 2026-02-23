@@ -28,7 +28,7 @@ export function LessonsTable({
   onApprove,
   onReject,
 }: LessonsTableProps) {
-  const [filter, setFilter] = useState<FilterValue>("all")
+  const [filter, setFilter] = useState<FilterValue>("pending")
   const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null)
 
   // Filter by status and sort by most recent submission first
