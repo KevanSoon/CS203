@@ -12,7 +12,6 @@ import {
   Users,
   ChevronDown,
   PencilLine,
-  UserPlus,
   Search,
   X
 } from "lucide-react";
@@ -358,61 +357,8 @@ export default function ProfilePage() {
                   }
                   defaultOpen={true}
                 >
-                  {friendsError && (
-                    <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                      {friendsError}
-                    </div>
-                  )}
-
-                  {isLoadingFriends ? (
-                    <div className="text-sm text-slate-500">
-                      Loading friends...
-                    </div>
-                  ) : friends.length === 0 ? (
-                    <div className="text-sm text-slate-500">No friends yet.</div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {friends.map((friend) => {
-                        const initial = (
-                          friend.username?.[0] || "?"
-                        ).toUpperCase();
-
-                        return (
-                          <div
-                            key={friend.username}
-                            className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {/* simple initial avatar (backend only gives username) */}
-                              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
-                                {initial}
-                              </div>
-
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-extrabold text-slate-900">
-                                  {friend.username}
-                                </p>
-
-                                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                                  <Flame size={14} />
-                                  Friend
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CollapsibleCard>
-
-                <CollapsibleCard
-                  title="Add Friends"
-                  icon={<UserPlus size={20} className="text-[#6C63FF]" />}
-                  defaultOpen={false}
-                >
-                  {/* Search bar — only fires on submit */}
-                  <div className="flex gap-2">
+                  {/* Search bar*/}
+                  <div className="flex gap-2 mb-5">
                     <div className="relative flex-1">
                       <Search
                         size={16}
@@ -439,33 +385,85 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  {/* Error */}
+                  {/* Search error */}
                   {searchError && (
-                    <div className="mt-3 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       <X size={15} className="flex-shrink-0" />
                       {searchError}
                     </div>
                   )}
 
-                  {/* Top 3 results */}
+                  {/* Search results section */}
                   {searchResults.length > 0 && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      {searchResults.map((user) => (
-                        <div
-                          key={user.username}
-                          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                        >
-                          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
-                            {user.username[0]?.toUpperCase() ?? "?"}
+                    <div className="mb-5">
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
+                        Search Results
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {searchResults.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center gap-3 rounded-2xl border border-[#6C63FF]/20 bg-[#F6F5FF] px-4 py-3"
+                          >
+                            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white border border-[#6C63FF]/20 flex-shrink-0 font-extrabold text-[#6C63FF]">
+                              {user.username[0]?.toUpperCase() ?? "?"}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-extrabold text-slate-900">
+                                {user.username}
+                              </p>
+                              <p className="text-xs text-slate-400 mt-0.5">Simi Slang user</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-extrabold text-slate-900">
-                              {user.username}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-0.5">Simi Slang user</p>
+                        ))}
+                      </div>
+                      <div className="mt-4 border-t border-slate-200" />
+                    </div>
+                  )}
+
+                  {/* Friends list section */}
+                  {friendsError && (
+                    <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {friendsError}
+                    </div>
+                  )}
+
+                  {searchResults.length > 0 && (
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Your Friends
+                    </p>
+                  )}
+
+                  {isLoadingFriends ? (
+                    <div className="text-sm text-slate-500">Loading friends...</div>
+                  ) : friends.length === 0 ? (
+                    <div className="text-sm text-slate-500">No friends yet.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {friends.map((friend) => {
+                        const initial = (friend.username?.[0] || "?").toUpperCase();
+                        return (
+                          <div
+                            key={friend.username}
+                            className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
+                                {initial}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-slate-900">
+                                  {friend.username}
+                                </p>
+                                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
+                                  <Flame size={14} />
+                                  Friend
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CollapsibleCard>
