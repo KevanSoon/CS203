@@ -8,25 +8,33 @@ export async function GET(request: NextRequest) {
     const title = request.nextUrl.searchParams.get("title");
 
     if (!title) {
-        return Response.json({ error: "Missing title parameter" }, { status: 400 });
+        return Response.json({ error: "Missing title parameter","message":"Oops! Something went wrong. Please try again later" }, { status: 404 });
     }
 
-    const token = (await cookies()).get("jwt")?.value;
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
 
-    if (!token) {
-        return Response.json({ error: "Unauthorized" }, { status: 401 });
+    //throw error
+    if (!jwt) {
+        return Response.json(
+            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
+            { status: 401 }
+    );
     }
+
 
     try {
         const { data } = await axios.get(`${BACKEND_URL}/api/lesson/page`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${jwt}` },
             params: { title },
         });
 
         return Response.json(data);
     } catch (err: any) {
         console.error("Backend request failed:", err.message);
-        const status = err.response?.status || 500;
-        return Response.json({ error: "Failed to fetch lesson page from backend" }, { status });
+        return Response.json(
+            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Lesson Content Retrieval failed. Please try again later" },
+            { status: err?.response?.status || 500 }
+        );
     }
 }

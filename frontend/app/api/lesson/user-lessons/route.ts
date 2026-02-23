@@ -5,22 +5,28 @@ const BACKEND_URL = process.env.BACKEND_URL;
 
 export async function GET() {
     //get jwt from cookies
-    const token = (await cookies()).get("jwt")?.value;
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
 
     //throw error
-    if (!token) {
-        return Response.json({error: "Unauthorized"},{status: 401});
+    if (!jwt) {
+        return Response.json(
+            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
+            { status: 401 }
+    );
     }
 
     try {
         const {data} = await axios.get(`${BACKEND_URL}/api/lesson/user-lessons/`, {
-            headers: {Authorization: `Bearer ${token}`},
+            headers: {Authorization: `Bearer ${jwt}`},
         });
 
         return Response.json(data);
     } catch (err: any) {
         console.error("Backend request failed:", err.message);
-        const status = err.response?.status || 500;
-        return Response.json({error: "Failed to fetch lessons from backend"}, {status});
+        return Response.json(
+            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Lesson Retrieval Failed. Please try again later" },
+            { status: err?.response?.status || 500 }
+        );
     }
 }

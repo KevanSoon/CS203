@@ -9,7 +9,7 @@ export async function GET() {
 
     if (!jwt) {
       return Response.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
         { status: 401 }
       );
     }
@@ -27,11 +27,11 @@ export async function GET() {
 
     return Response.json(data, { status: res.status });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("BFF GET /api/friendship failed:", err);
     return Response.json(
-      { error: "Server error" },
-      { status: 500 }
+      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Friend list retrieval failed. Please try again" },
+      { status: err?.response?.status || 500 }
     );
   }
 }

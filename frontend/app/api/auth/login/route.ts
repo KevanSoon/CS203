@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 export async function POST(req: Request) {
   if (!BACKEND_URL) {
     return Response.json(
-      { error: "Server misconfiguration" },
+      { error: "Internal Server Error", message: "Server not responding. Please try again later" },
       { status: 500 }
     );
   }
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   console.error("AXIOS ERROR HEADERS:", err?.response?.headers);
 
   return Response.json(
-    err?.response?.data || { error: "Authentication failed" },
+    { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Login failed. Please try again later" },
     { status: err?.response?.status || 500 }
   );
 }

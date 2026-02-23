@@ -5,10 +5,15 @@ const BACKEND_URL = process.env.BACKEND_URL!; // http://localhost:8080
 
 export async function GET() {
   try {
-    const jwt = (await cookies()).get("jwt")?.value;
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
 
+    //throw error
     if (!jwt) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+        return Response.json(
+            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
+            { status: 401 }
+    );
     }
 
     const response = await axios.get(
@@ -26,9 +31,12 @@ export async function GET() {
       status: response.status,
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("BFF GET /api/profile failed:", err);
-    return Response.json({ error: "Server error" }, { status: 500 });
+    return Response.json(
+      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Profile retrieval failed. Please try again later" },
+      { status: err?.response?.status || 500 }
+    );
   }
 }
 
@@ -45,11 +53,12 @@ export async function PATCH(req: Request) {
     const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
+    //throw error
     if (!jwt) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+        return Response.json(
+            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
+            { status: 401 }
+    );
     }
 
     // ✅ receive form data from frontend
@@ -73,8 +82,11 @@ export async function PATCH(req: Request) {
       status: response.status,
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("BFF PATCH /api/profile failed:", err);
-    return Response.json({ error: "Server error" }, { status: 500 });
+    return Response.json(
+      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Profile update failed. Please try again later" },
+      { status: err?.response?.status || 500 }
+    );
   }
 }

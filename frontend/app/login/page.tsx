@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useSiteState } from "@/app/store/SiteStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/app/api/api";
+import toast from "react-hot-toast";
+
+import { api } from "@/app/api/api"; 
+import { useSiteState } from "@/app/store/SiteStore";
+
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -49,6 +52,7 @@ export default function LoginPage() {
         usertype: data.usertype,
       });
 
+      toast.success("Login Successful")
       if (data.usertype === "user") {
         router.push("/dashboard");
       } else if (data.usertype === "admin") {
