@@ -8,12 +8,14 @@ import jakarta.persistence.*;
 public class Friendship {
 
     @Id
-    @Column(name = "username1", nullable = false)
-    private String requester;
+    @ManyToOne
+    @JoinColumn(name = "user1_id", nullable = false)
+    private User user1;
 
     @Id
-    @Column(name = "username2", nullable = false)
-    private String acceptor;
+    @ManyToOne
+    @JoinColumn(name = "user2_id", nullable = false)
+    private User user2;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -21,25 +23,14 @@ public class Friendship {
 
     protected Friendship() {}
 
-    public Friendship(String requester, String acceptor, FriendshipStatus status) {
-        this.requester = requester;
-        this.acceptor = acceptor;
+    public Friendship(User user1, User user2, FriendshipStatus status) {
+        this.user1 = user1;
+        this.user2 = user2;
         this.status = status;
     }
 
-    public String getRequester() {
-        return requester;
-    }
-
-    public String getAcceptor() {
-        return acceptor;
-    }
-
-    public FriendshipStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(FriendshipStatus status) {
-        this.status = status;
-    }
+    public User getUser1() { return user1; }
+    public User getUser2() { return user2; }
+    public FriendshipStatus getStatus() { return status; }
+    public void setStatus(FriendshipStatus status) { this.status = status; }
 }
