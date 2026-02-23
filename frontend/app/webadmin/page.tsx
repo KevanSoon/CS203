@@ -105,18 +105,24 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {loading ? (
-            <p className="text-muted-foreground">Loading lessons...</p>
-          ) : (
-            <div className="flex flex-col gap-6">
-              <StatsCards stats={stats} />
-              <LessonsTable
-                lessons={lessons}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
+          {selected === "Manage Applications" ? (
+            loading ? (
+              <p className="text-muted-foreground">Loading lessons...</p>
+            ) : (
+              <div className="flex flex-col gap-6">
+                <StatsCards stats={stats} />
+                <LessonsTable
+                  lessons={lessons}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </div>
+            )
+          ) : selected === "Manage Reports" ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <p>No reports to display.</p>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
 

@@ -68,7 +68,7 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
       case 'root':
         return [
           { Icon: FileText, title: "Manage Applications", route: "/webadmin" },
-          { Icon: BarChart3, title: "Manage Reports", route: "/webadmin/reports" },
+          { Icon: BarChart3, title: "Manage Reports", route: "/webadmin" },
         ];
       
       case 'user':
