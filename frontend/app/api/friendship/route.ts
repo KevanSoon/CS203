@@ -4,8 +4,8 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
+    const cookieStore = cookies();
+    const jwt = (await cookieStore).get("jwt")?.value;
 
     if (!jwt) {
       return Response.json(

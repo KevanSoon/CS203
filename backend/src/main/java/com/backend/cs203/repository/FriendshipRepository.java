@@ -9,17 +9,20 @@ import org.springframework.stereotype.Repository;
 
 import com.backend.cs203.entity.Friendship;
 import com.backend.cs203.entity.FriendshipId;
+import com.backend.cs203.entity.FriendshipStatus;
 
 @Repository
 public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
 
     @Query("""
         SELECT f FROM Friendship f
-        WHERE f.status = 'confirmed'
-        AND (f.requester = :username OR f.acceptor = :username)
+        WHERE f.status = :status
+        AND (f.user1.id = :userId OR f.user2.id = :userId)
     """)
-    
-    List<Friendship> findConfirmedFriendships(@Param("username") String username);
+    List<Friendship> findFriendshipsByUserId(
+            @Param("userId") Integer userId,
+            @Param("status") FriendshipStatus status
+);
 }
 
 
