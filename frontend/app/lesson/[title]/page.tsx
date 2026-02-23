@@ -255,8 +255,8 @@ export default function LessonRoadmapPage({
       </div>
 
       {/* Right: AI Chat Assistant - Desktop */}
-      <div className="hidden lg:block w-96 shrink-0 p-4">
-        <div className="sticky top-4 h-[calc(100vh-2rem)]">
+      <div className="hidden lg:block w-96 shrink-0">
+        <div className="sticky top-0 h-screen">
           <AIChatAssistant />
         </div>
       </div>
