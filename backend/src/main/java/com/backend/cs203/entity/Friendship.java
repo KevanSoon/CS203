@@ -9,12 +9,12 @@ public class Friendship {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "user_id1", nullable = false)
+    @JoinColumn(name = "user1_id", nullable = false)
     private User user1;
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "user_id2", nullable = false)
+    @JoinColumn(name = "user2_id", nullable = false)
     private User user2;
 
     @Enumerated(EnumType.STRING)
@@ -29,19 +29,8 @@ public class Friendship {
         this.status = status;
     }
 
-    public User getUser1() {
-        return user1;
-    }
-
-    public User getUser2() {
-        return user2;
-    }
-
-    public FriendshipStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(FriendshipStatus status) {
-        this.status = status;
-    }
+    public User getUser1() { return user1; }
+    public User getUser2() { return user2; }
+    public FriendshipStatus getStatus() { return status; }
+    public void setStatus(FriendshipStatus status) { this.status = status; }
 }

@@ -72,10 +72,10 @@ CREATE TABLE IF NOT EXISTS lesson_tagging (
 );
 
 CREATE TABLE IF NOT EXISTS friendship (
-  user_id1 INT NOT NULL,
-  user_id2 INT NOT NULL,
+  user1_id INT NOT NULL,
+  user2_id INT NOT NULL,
   status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending',
-  PRIMARY KEY (user_id1, user_id2),
-  FOREIGN KEY (user_id1) REFERENCES user(id),
-  FOREIGN KEY (user_id2) REFERENCES user(id)
+  PRIMARY KEY (user1_id, user2_id),
+  FOREIGN KEY (user1_id) REFERENCES user(id),
+  FOREIGN KEY (user2_id) REFERENCES user(id)
 );
