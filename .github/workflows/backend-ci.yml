@@ -12,6 +12,8 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
 
+permissions: {}
+
 concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: true
@@ -31,6 +33,8 @@ jobs:
   compile:
     name: Compile
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,6 +57,9 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: [compile]
+    permissions:
+      contents: read
+      checks: write
     services:
       mysql:
         image: mysql:8.0
@@ -111,6 +118,8 @@ jobs:
     name: Build & Package
     runs-on: ubuntu-latest
     needs: [unit-tests]
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -152,6 +161,7 @@ jobs:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
     steps:
       - name: Checkout code
