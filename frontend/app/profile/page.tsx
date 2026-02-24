@@ -110,6 +110,7 @@ export default function ProfilePage() {
   }>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const isDeleteUnlocked = deletePassword.trim().length > 0;
 
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
@@ -234,7 +235,6 @@ export default function ProfilePage() {
       <Sidebar selected={selected} setSelected={setSelected} />
 
       <div className="flex-1 overflow-auto bg-linear-to-b from-[#F2F0FF] via-white to-white font-sans text-slate-900">
-        {/* Hero */}
         <div className="relative h-52 overflow-hidden">
           <div className="absolute inset-0 bg-linear-to-br from-[#CFCBFF] via-[#DCD8FF] to-[#F2F0FF]" />
           <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-white/25 blur-2xl" />
@@ -244,7 +244,6 @@ export default function ProfilePage() {
         <div className="-mt-16 px-5 pb-12">
           <div className="mx-auto max-w-6xl">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {/* LEFT — Profile */}
               <div className="md:col-span-1">
                 <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
                   <div className="flex flex-col items-center text-center">
@@ -292,7 +291,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* RIGHT */}
               <div className="md:col-span-2 space-y-6">
                 <CollapsibleCard
                   title="Learning Progress"
@@ -505,32 +503,43 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </CollapsibleCard>
+      
                 {showDeleteModal && (
                   <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-                    <div className="bg-white p-8 rounded-3xl w-full max-w-md">
+                    <div className="bg-white p-8 rounded-3xl w-full max-w-md relative">
                       <h2 className="text-2xl font-extrabold text-red-600">
                         Delete you sure or not? 💀
                       </h2>
 
                       <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                        Once delete means delete liao hor.  
+                        Once delete means delete liao hor.
                         All your data confirm gone. No undo, no Ctrl+Z, no comeback season.
                       </p>
 
                       <div className="mt-6 space-y-4">
-                        <label className="text-sm font-semibold ml-1">Password (last warning ah)</label>
+                        <label className="text-sm font-semibold ml-1">
+                          Password (last warning ah)
+                        </label>
+
                         <input
                           type="password"
                           value={deletePassword}
-                          onChange={(e) => setDeletePassword(e.target.value)}
+                          onChange={(e) => {
+                            setDeletePassword(e.target.value);
+                            if (deleteErrors.password) {
+                              setDeleteErrors({});
+                            }
+                          }}
                           className="w-full border rounded-xl px-4 py-3"
                           placeholder="Enter password"
                         />
+
                         {deleteErrors.password && (
                           <p className="text-red-500 text-xs mt-1">
                             {deleteErrors.password}
                           </p>
                         )}
+
                         {deleteErrors.general && (
                           <p className="text-red-500 text-sm mt-2">
                             {deleteErrors.general}
@@ -540,18 +549,33 @@ export default function ProfilePage() {
 
                       <div className="flex gap-3 mt-6">
                         <button
-                          onClick={() => setShowDeleteModal(false)}
+                          onClick={() => {
+                            setShowDeleteModal(false);
+                            setDeletePassword("");
+                            setDeleteErrors({});
+                          }}
                           className="flex-1 border rounded-xl py-2"
                         >
                           Aiya cancel lah 😌
                         </button>
-                        <button
-                          onClick={handleDeleteAccount}
-                          disabled={isDeleting}
-                          className="flex-1 bg-red-600 text-white rounded-xl py-2"
+
+                        <div
+                          className={`flex-1 transition-all duration-300 ${
+                            isDeleteUnlocked
+                              ? "opacity-100 translate-y-0"
+                              : "opacity-0 translate-y-2 pointer-events-none"
+                          }`}
                         >
-                          {isDeleting ? "Deleting… bye bye 👋" : "Confirm Delete 🫠"}
-                        </button>
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            className="w-full bg-red-600 text-white rounded-xl py-2"
+                          >
+                            {isDeleting
+                              ? "Deleting… bye bye 👋"
+                              : "Confirm Delete 🫠"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
@@ -15,7 +16,6 @@ import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.service.UserService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 
 @RestController

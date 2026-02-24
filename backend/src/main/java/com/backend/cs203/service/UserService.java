@@ -100,10 +100,6 @@ public class UserService {
         }
 
         String currentUsername = auth.getName();
-        if (!currentUsername.equals(request.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Username mismatch");
-        }
-
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -112,15 +108,13 @@ public class UserService {
         }
 
         Instant now = Instant.now();
-        user.setUsername(user.getUsername() + "_" + now.toString());
+        user.setUsername(user.getUsername() + "_" + Instant.now().toString());
         user.setDeactivatedAt(now);
         userRepository.save(user);
+
         SecurityContextHolder.clearContext();
     }
 
-    // -----------------------
-    // Profile (GET /api/profile)
-    // -----------------------
     @Transactional
     public UserResponse updateMyProfile(UpdateProfileRequest request) {
         String username = requireUsername();
@@ -154,9 +148,6 @@ public class UserService {
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
     }
 
-    // -----------------------
-    // Helpers
-    // -----------------------
     private String requireUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
