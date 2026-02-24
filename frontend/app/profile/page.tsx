@@ -104,7 +104,13 @@ export default function ProfilePage() {
   const [profileError, setProfileError] = useState("");
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
+  const [deleteErrors, setDeleteErrors] = useState<{
+    password?: string;
+    general?: string;
+  }>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState("");
@@ -171,32 +177,36 @@ export default function ProfilePage() {
   const profilePic = profile.profilePictureUrl || "";
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo."
-    );
-    if (!confirmed) return;
+    setDeleteErrors({});
+
+    if (!deletePassword.trim()) {
+      setDeleteErrors({ password: "Put your password leh." });
+      return;
+    }
 
     try {
       setIsDeleting(true);
-      setDeleteError("");
 
-      const res = await axios.delete("/api/profile/delete");
+      const res = await axios.delete("/api/profile/delete", {
+        data: { password: deletePassword },
+      });
 
-      if (res.data?.success) {
+      if (res.status === 204) {
         router.replace("/");
-      } else {
-        throw new Error("Delete failed. L.");
       }
     } catch (err: any) {
-      setDeleteError(
-        err?.response?.data?.error ||
-        err?.response?.data?.detail ||
-        "Delete failed. L."
-      );
+      setDeletePassword("");
+
+      if (err.response?.status === 400) {
+        setDeleteErrors({ password: "Wrong eh how." });
+      } else {
+        setDeleteErrors({
+          general: "Something went wrong. Try again later.",
+        });
+      }
     } finally {
       setIsDeleting(false);
     }
-
   };
 
   const handleSearchUser = async () => {
@@ -357,7 +367,6 @@ export default function ProfilePage() {
                   }
                   defaultOpen={true}
                 >
-                  {/* Search bar*/}
                   <div className="flex gap-2 mb-5">
                     <div className="relative flex-1">
                       <Search
@@ -385,7 +394,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  {/* Search error */}
                   {searchError && (
                     <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       <X size={15} className="flex-shrink-0" />
@@ -393,7 +401,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* Search results section */}
                   {searchResults.length > 0 && (
                     <div className="mb-5">
                       <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
@@ -421,7 +428,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* Friends list section */}
                   {friendsError && (
                     <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       {friendsError}
@@ -486,23 +492,70 @@ export default function ProfilePage() {
 
                       <button
                         type="button"
-                        onClick={handleDeleteAccount}
+                        onClick={() => {
+                          setDeleteErrors({});
+                          setDeletePassword("");
+                          setShowDeleteModal(true);
+                        }}
                         disabled={isDeleting}
                         className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </button>
                     </div>
-
-                    {deleteError && (
-                      <div className="mt-4 rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600">
-                        {deleteError}
-                      </div>
-                    )}
                   </div>
                 </CollapsibleCard>
+                {showDeleteModal && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+                    <div className="bg-white p-8 rounded-3xl w-full max-w-md">
+                      <h2 className="text-2xl font-extrabold text-red-600">
+                        Delete you sure or not? 💀
+                      </h2>
 
-              
+                      <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                        Once delete means delete liao hor.  
+                        All your data confirm gone. No undo, no Ctrl+Z, no comeback season.
+                      </p>
+
+                      <div className="mt-6 space-y-4">
+                        <label className="text-sm font-semibold ml-1">Password (last warning ah)</label>
+                        <input
+                          type="password"
+                          value={deletePassword}
+                          onChange={(e) => setDeletePassword(e.target.value)}
+                          className="w-full border rounded-xl px-4 py-3"
+                          placeholder="Enter password"
+                        />
+                        {deleteErrors.password && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {deleteErrors.password}
+                          </p>
+                        )}
+                        {deleteErrors.general && (
+                          <p className="text-red-500 text-sm mt-2">
+                            {deleteErrors.general}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3 mt-6">
+                        <button
+                          onClick={() => setShowDeleteModal(false)}
+                          className="flex-1 border rounded-xl py-2"
+                        >
+                          Aiya cancel lah 😌
+                        </button>
+                        <button
+                          onClick={handleDeleteAccount}
+                          disabled={isDeleting}
+                          className="flex-1 bg-red-600 text-white rounded-xl py-2"
+                        >
+                          {isDeleting ? "Deleting… bye bye 👋" : "Confirm Delete 🫠"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

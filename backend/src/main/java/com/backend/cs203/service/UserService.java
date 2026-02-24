@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
@@ -91,7 +92,7 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteMyAccount() {
+    public void deleteMyAccount(DeleteAccountRequest request) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
@@ -99,17 +100,19 @@ public class UserService {
         }
 
         String currentUsername = auth.getName();
+        if (!currentUsername.equals(request.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Username mismatch");
+        }
+
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (user.getDeactivatedAt() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
         }
 
         Instant now = Instant.now();
-        String timestamp = String.valueOf(now.toString());
-        String newUsername = user.getUsername() + "_" + timestamp;
-        user.setUsername(newUsername);
+        user.setUsername(user.getUsername() + "_" + now.toString());
         user.setDeactivatedAt(now);
         userRepository.save(user);
         SecurityContextHolder.clearContext();
