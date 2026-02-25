@@ -110,7 +110,9 @@ export default function ProfilePage() {
   }>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
-  const isDeleteUnlocked = deletePassword.trim().length > 0;
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const isDeleteUnlocked = isPasswordValid;
 
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
@@ -179,7 +181,6 @@ export default function ProfilePage() {
 
   const handleDeleteAccount = async () => {
     setDeleteErrors({});
-
     if (!deletePassword.trim()) {
       setDeleteErrors({ password: "Put your password leh." });
       return;
@@ -188,18 +189,20 @@ export default function ProfilePage() {
     try {
       setIsDeleting(true);
 
-      const res = await axios.delete("/api/profile/delete", {
+      await axios.delete("/api/profile/delete", {
         data: { password: deletePassword },
       });
 
-      if (res.status === 204) {
-        router.replace("/");
-      }
+      setShowDeleteModal(false);
+      router.replace("/");
+      router.refresh();
     } catch (err: any) {
       setDeletePassword("");
 
       if (err.response?.status === 400) {
         setDeleteErrors({ password: "Wrong eh how." });
+      } else if (err.response?.status === 401) {
+        router.replace("/");
       } else {
         setDeleteErrors({
           general: "Something went wrong. Try again later.",
@@ -207,6 +210,34 @@ export default function ProfilePage() {
       }
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const verifyPassword = async (password: string) => {
+    if (!password.trim()) {
+      setIsPasswordValid(false);
+      return;
+    }
+
+    try {
+      setIsVerifyingPassword(true);
+
+      const res = await axios.post("/api/profile/verify-password", {
+        password,
+      });
+
+      if (res.status === 200) {
+        setIsPasswordValid(true);
+        setDeleteErrors({});
+      }
+    } catch (err: any) {
+      setIsPasswordValid(false);
+
+      if (err.response?.status === 400) {
+        setDeleteErrors({ password: "Wrong eh how." });
+      }
+    } finally {
+      setIsVerifyingPassword(false);
     }
   };
 
@@ -525,10 +556,18 @@ export default function ProfilePage() {
                           type="password"
                           value={deletePassword}
                           onChange={(e) => {
-                            setDeletePassword(e.target.value);
+                            const value = e.target.value;
+                            setDeletePassword(value);
+                            setIsPasswordValid(false);
+
                             if (deleteErrors.password) {
                               setDeleteErrors({});
                             }
+
+                            clearTimeout((window as any).verifyTimeout);
+                            (window as any).verifyTimeout = setTimeout(() => {
+                              verifyPassword(value);
+                            }, 500);
                           }}
                           className="w-full border rounded-xl px-4 py-3"
                           placeholder="Enter password"
@@ -568,11 +607,17 @@ export default function ProfilePage() {
                         >
                           <button
                             onClick={handleDeleteAccount}
-                            disabled={isDeleting}
-                            className="w-full bg-red-600 text-white rounded-xl py-2"
+                            disabled={!isDeleteUnlocked || isDeleting}
+                            className={`flex-1 rounded-xl py-2 font-semibold transition-all duration-300 ${
+                              isDeleteUnlocked
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            }`}
                           >
                             {isDeleting
                               ? "Deleting… bye bye 👋"
+                              : isVerifyingPassword
+                              ? "Checking password..."
                               : "Confirm Delete 🫠"}
                           </button>
                         </div>
