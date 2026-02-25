@@ -1,6 +1,7 @@
 package com.backend.cs203.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,9 +43,9 @@ public class UserController {
     }
 
     @PostMapping("/api/profile/verify-password")
-    public ResponseEntity<Void> verifyPassword(@RequestBody DeleteAccountRequest request) {
-        userService.verifyMyPassword(request.getPassword());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> verifyPassword(@RequestBody DeleteAccountRequest request) {
+        boolean valid = userService.verifyMyPassword(request.getPassword());
+        return ResponseEntity.ok().body(Map.of("valid", valid));
     }
 
     @GetMapping("/api/users/search")

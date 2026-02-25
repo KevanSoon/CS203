@@ -213,7 +213,7 @@ export default function ProfilePage() {
       setDeletePassword("");
 
       if (err.response?.status === 400) {
-        setDeleteErrors({ password: "Wrong eh how." });
+        setDeleteErrors({ password: "Wrong password eh how." });
       } else if (err.response?.status === 401) {
         router.replace("/");
       } else {
@@ -234,21 +234,22 @@ export default function ProfilePage() {
 
     try {
       setIsVerifyingPassword(true);
-
       const res = await axios.post("/api/profile/verify-password", {
         password,
       });
 
-      if (res.status === 200) {
+      if (res.data?.valid) {
         setIsPasswordValid(true);
         setDeleteErrors({});
-      }
-    } catch (err: any) {
-      setIsPasswordValid(false);
-
-      if (err.response?.status === 400) {
+      } else {
+        setIsPasswordValid(false);
         setDeleteErrors({ password: "Wrong eh how." });
       }
+    } catch (err) {
+      setIsPasswordValid(false);
+      setDeleteErrors({
+        general: "Unable to verify password. Try again.",
+      });
     } finally {
       setIsVerifyingPassword(false);
     }
@@ -549,8 +550,19 @@ export default function ProfilePage() {
                 </CollapsibleCard>
       
                 {showDeleteModal && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-                    <div className="bg-white p-8 rounded-3xl w-full max-w-md relative">
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => {
+                      if (isDeleting) return;
+                      setShowDeleteModal(false);
+                      setDeletePassword("");
+                      setDeleteErrors({});
+                    }}
+                  >
+                    <div
+                      className="bg-white p-8 rounded-3xl w-full max-w-md relative"
+                      onClick={(e) => e.stopPropagation()} 
+                    >
                       <h2 className="text-2xl font-extrabold text-red-600">
                         Delete you sure or not? 💀
                       </h2>
@@ -571,20 +583,21 @@ export default function ProfilePage() {
                           onChange={(e) => {
                             setDeletePassword(e.target.value);
                             setIsPasswordValid(false);
-
-                            if (deleteErrors.password) {
-                              setDeleteErrors({});
-                            }
+                            setDeleteErrors((prev) => ({ ...prev, password: undefined }));
                           }}
                           className="w-full border rounded-xl px-4 py-3"
                           placeholder="Enter password"
                         />
 
-                        {deleteErrors.password && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {deleteErrors.password}
+                        <div className="min-h-[20px] mt-1">
+                          <p
+                            className={`text-red-500 text-xs text-bold transition-opacity duration-200 ${
+                              deleteErrors.password ? "opacity-100" : "opacity-0"
+                            }`}
+                          >
+                            {deleteErrors.password ?? " "}
                           </p>
-                        )}
+                        </div>
 
                         {deleteErrors.general && (
                           <p className="text-red-500 text-sm mt-2">
@@ -606,26 +619,44 @@ export default function ProfilePage() {
                         </button>
 
                         <div
-                          className={`flex-1 transition-all duration-300 ${
+                          className={`flex-1 transition-opacity duration-300 ${
                             isDeleteUnlocked
-                              ? "opacity-100 translate-y-0"
-                              : "opacity-0 translate-y-2 pointer-events-none"
+                              ? "opacity-100"
+                              : "opacity-0 pointer-events-none"
                           }`}
                         >
                           <button
                             onClick={handleDeleteAccount}
                             disabled={!isDeleteUnlocked || isDeleting}
-                            className={`flex-1 rounded-xl py-2 font-semibold transition-all duration-300 ${
-                              isDeleteUnlocked
-                                ? "bg-red-600 text-white hover:bg-red-700"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            }`}
+                            className={`
+                              w-full py-3 rounded-xl font-semibold text-sm
+                              transition-all duration-200 ease-out
+                              ${
+                                isDeleteUnlocked
+                                  ? `
+                                    bg-gradient-to-br from-red-600 to-red-700
+                                    text-white
+                                    shadow-lg shadow-red-600/30
+                                    hover:shadow-red-700/40
+                                    hover:scale-[1.02]
+                                    active:scale-[0.98]
+                                  `
+                                  : `
+                                    bg-gray-200 text-gray-400 cursor-not-allowed
+                                  `
+                              }
+                            `}
                           >
-                            {isDeleting
-                              ? "Deleting… bye bye 👋"
-                              : isVerifyingPassword
-                              ? "Checking password..."
-                              : "Confirm Delete 🫠"}
+                            {isDeleting ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Deleting account...
+                              </span>
+                            ) : isVerifyingPassword ? (
+                              "Wan delete... bye bye 👋"
+                            ) : (
+                              "Confirm Delete 🫠"
+                            )}
                           </button>
                         </div>
                       </div>

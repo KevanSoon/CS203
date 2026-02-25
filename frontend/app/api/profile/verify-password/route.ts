@@ -6,63 +6,50 @@ const BACKEND_URL = process.env.BACKEND_URL;
 export async function POST(req: Request) {
   try {
     if (!BACKEND_URL) {
-      console.error("BACKEND_URL is not defined");
-      return Response.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      return Response.json({ valid: false }, { status: 200 });
     }
 
-    const cookieStore = cookies();
-    const jwt = (await cookieStore).get("jwt")?.value;
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
 
     if (!jwt) {
-      return Response.json(
-        {
-          error: "Unauthorized",
-          message: "Unauthorized access. Please refresh and try again",
-        },
-        { status: 401 }
-      );
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { password } = await req.json();
 
     if (!password || typeof password !== "string") {
-      return Response.json(
-        {
-          error: "Bad Request",
-          message: "Password is required",
-        },
-        { status: 400 }
-      );
+      return Response.json({ valid: false }, { status: 200 });
     }
 
     const response = await axios.post(
       `${BACKEND_URL}/api/profile/verify-password`,
-      { password }, 
+      { password },
       {
         headers: {
           Cookie: `jwt=${jwt}`,
-          Accept: "application/json",
           "Content-Type": "application/json",
         },
-        validateStatus: () => true, 
+        validateStatus: () => true,
       }
     );
 
-    return Response.json(response.data ?? null, {
-      status: response.status,
-    });
-
-  } catch (err: any) {
-    console.error("FULL ERROR:", err);
-    console.error("ERR RESPONSE:", err?.response);
-    console.error("ERR DATA:", err?.response?.data);
-
-    return Response.json(
-        { error: "Debug failure" },
-        { status: 500 }
-    );
+    if (response.status === 200) {
+      return Response.json({ valid: true }, { status: 200 });
     }
+
+    if (response.status === 400) {
+      return Response.json({ valid: false }, { status: 200 });
+    }
+
+    if (response.status === 401) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    return Response.json({ valid: false }, { status: 200 });
+
+  } catch (err) {
+    console.error("VERIFY PASSWORD ERROR:", err);
+    return Response.json({ valid: false }, { status: 200 });
+  }
 }
