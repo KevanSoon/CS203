@@ -248,8 +248,8 @@ export default function LessonRoadmapPage({
         )}
       </div>
 
-      {/* Right: AI Chat Assistant - Desktop */}
-      <div className="hidden lg:block w-96 shrink-0">
+      {/* Right: AI Chat Assistant - Desktop (z-[60] to stay above FlippableCard overlay) */}
+      <div className="hidden lg:block w-96 shrink-0 relative z-[60]">
         <div className="sticky top-0 h-screen">
           <AIChatAssistant />
         </div>
