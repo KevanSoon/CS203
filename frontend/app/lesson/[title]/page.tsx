@@ -109,8 +109,6 @@ export default function LessonRoadmapPage({
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lessonDescription, setLessonDescription] = useState<string>("");
-
   const lessonTitle = decodeURIComponent(title);
 
   useEffect(() => {
@@ -132,7 +130,6 @@ export default function LessonRoadmapPage({
           params: { title: lessonTitle },
         });
         setChapters(mapChaptersFromDTO(data.chapters));
-        setLessonDescription(data.description || "");
       } catch (err: any) {
         console.error("Failed to fetch lesson page:", err);
         setError(err.response?.data?.error || "Failed to load lesson");
@@ -190,9 +187,6 @@ export default function LessonRoadmapPage({
           <h1 className="text-3xl md:text-4xl font-black text-foreground">
             {lessonTitle}
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {lessonDescription || ""}
-          </p>
         </div>
 
         {loading && (
