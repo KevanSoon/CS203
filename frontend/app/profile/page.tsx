@@ -114,6 +114,19 @@ export default function ProfilePage() {
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const isDeleteUnlocked = isPasswordValid;
 
+  useEffect(() => {
+    if (!deletePassword.trim()) {
+      setIsPasswordValid(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      verifyPassword(deletePassword);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [deletePassword]);
+
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState("");
@@ -556,18 +569,12 @@ export default function ProfilePage() {
                           type="password"
                           value={deletePassword}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            setDeletePassword(value);
+                            setDeletePassword(e.target.value);
                             setIsPasswordValid(false);
 
                             if (deleteErrors.password) {
                               setDeleteErrors({});
                             }
-
-                            clearTimeout((window as any).verifyTimeout);
-                            (window as any).verifyTimeout = setTimeout(() => {
-                              verifyPassword(value);
-                            }, 500);
                           }}
                           className="w-full border rounded-xl px-4 py-3"
                           placeholder="Enter password"

@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +39,12 @@ public class UserController {
     public ResponseEntity<Void> deleteMyAccount(@RequestBody DeleteAccountRequest request) {
         userService.deleteMyAccount(request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/api/profile/verify-password")
+    public ResponseEntity<Void> verifyPassword(@RequestBody DeleteAccountRequest request) {
+        userService.verifyMyPassword(request.getPassword());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/api/users/search")
