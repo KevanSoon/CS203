@@ -1,5 +1,6 @@
 import { BookOpen, Pencil, Trash2 } from "lucide-react";
 import { Lesson } from "./LessonContent";
+import { parseTags, getVisibleTags } from "@/app/utils/tags";
 
 interface MyLessonsCardProps {
   lessons: Lesson[];
@@ -13,16 +14,8 @@ export const MyLessonsCard = ({ lessons }: MyLessonsCardProps) => {
       </div>
       <div className="space-y-4">
         {lessons.map((lesson, i) => {
-          const tagsArray = Array.isArray(lesson.tags)
-            ? lesson.tags
-            : lesson.tags
-            ? String(lesson.tags)
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [];
-          const visibleTags = tagsArray.slice(0, 8);
-          const remaining = Math.max(0, tagsArray.length - visibleTags.length);
+          const tagsArray = parseTags(lesson.tags);
+          const { visible: visibleTags, remaining } = getVisibleTags(tagsArray);
           return (
             <div
               key={i}
