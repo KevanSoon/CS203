@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Check, X, Eye, MoreHorizontal, BookOpen } from "lucide-react"
 import { StatusBadge } from "./status-badge"
+import { parseTags, getVisibleTags } from "@/app/utils/tags"
 
 type LessonStatus = "pending" | "approved" | "rejected"
 
@@ -68,14 +69,8 @@ export function LessonRow({
                 <StatusBadge status={lesson.status} />
                 {lesson.tags && (
                   (() => {
-                    const tagsArr = Array.isArray(lesson.tags)
-                      ? lesson.tags
-                      : String(lesson.tags)
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean)
-                    const visible = tagsArr.slice(0, 8)
-                    const rem = Math.max(0, tagsArr.length - visible.length)
+                    const tagsArr = parseTags(lesson.tags)
+                    const { visible, remaining } = getVisibleTags(tagsArr)
 
                     return (
                       <div className="flex flex-wrap gap-1">
@@ -87,9 +82,9 @@ export function LessonRow({
                             {t}
                           </span>
                         ))}
-                        {rem > 0 && (
+                        {remaining > 0 && (
                           <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
-                            +{rem}
+                            +{remaining}
                           </span>
                         )}
                       </div>
