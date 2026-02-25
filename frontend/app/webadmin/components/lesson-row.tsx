@@ -35,7 +35,13 @@ export function LessonRow({
   onPreview,
 }: LessonRowProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [descModalOpen, setDescModalOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const descLimit = 125
+  const isLongDesc = lesson.description.length > descLimit
+  const truncatedDesc = isLongDesc
+    ? lesson.description.slice(0, descLimit) + "..."
+    : lesson.description
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,7 +54,7 @@ export function LessonRow({
   }, [])
 
   return (
-    <div className="px-4 py-4 transition-colors hover:bg-background">
+    <div className="px-4 py-6 transition-colors hover:bg-background">
       <div className="flex items-start gap-3">
         <div className="hidden sm:block p-3 rounded-lg bg-primary/10 shrink-0">
           <BookOpen className="h-5 w-5 text-primary" />
@@ -136,7 +142,43 @@ export function LessonRow({
               )}
             </div>
           </div>
-          <p className="text-sm text-muted-foreground mb-1">{lesson.description}</p>
+          <p className="text-sm text-muted-foreground mb-1">
+            {truncatedDesc}
+            {isLongDesc && (
+              <button
+                onClick={() => setDescModalOpen(true)}
+                className="ml-1 text-primary hover:underline font-medium"
+              >
+                See full description
+              </button>
+            )}
+          </p>
+
+          {descModalOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+              onClick={() => setDescModalOpen(false)}
+            >
+              <div
+                className="mx-4 max-w-lg w-full rounded-lg border border-border bg-card p-6 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">{lesson.title}</h3>
+                  <button
+                    onClick={() => setDescModalOpen(false)}
+                    className="p-1 text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {lesson.description}
+                </p>
+              </div>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {lesson.createdBy} · Created: {formatDate(lesson.createdAt)}
           </p>

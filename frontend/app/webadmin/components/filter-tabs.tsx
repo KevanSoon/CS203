@@ -28,7 +28,7 @@ export function FilterTabs({
   ]
 
   return (
-    <div className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-background p-1">
+    <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-1">
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -40,15 +40,6 @@ export function FilterTabs({
           }`}
         >
           {tab.label}
-          <span
-            className={`rounded-full px-1.5 py-0.5 text-xs ${
-              activeFilter === tab.value
-                ? "bg-white/20 text-white"
-                : "bg-transparent text-muted-foreground"
-            }`}
-          >
-            {counts[tab.value]}
-          </span>
         </button>
       ))}
     </div>
