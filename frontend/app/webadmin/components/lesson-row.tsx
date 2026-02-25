@@ -53,7 +53,7 @@ export function LessonRow({
   }, [])
 
   return (
-    <div className="px-4 py-4 transition-colors hover:bg-background">
+    <div className="px-4 py-6 transition-colors hover:bg-background">
       <div className="flex items-start gap-3">
         <div className="hidden sm:block p-3 rounded-lg bg-primary/10 shrink-0">
           <BookOpen className="h-5 w-5 text-primary" />
