@@ -34,11 +34,11 @@ export async function POST(req: Request) {
       }
     );
 
-    if (response.status === 200) {
+    if (response.status === 200 && response.data === true) {
       return Response.json({ valid: true }, { status: 200 });
     }
 
-    if (response.status === 400) {
+    if (response.status === 200 && response.data === false) {
       return Response.json({ valid: false }, { status: 200 });
     }
 

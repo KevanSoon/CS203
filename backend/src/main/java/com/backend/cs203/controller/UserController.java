@@ -1,16 +1,17 @@
 package com.backend.cs203.controller;
 
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
@@ -31,25 +32,42 @@ public class UserController {
         return userService.getMyProfile();
     }
 
-    @PatchMapping("/api/profile")
-    public UserResponse updateProfile(@RequestBody UpdateProfileRequest request) {
-        return userService.updateMyProfile(request);    
+    @PatchMapping(
+        value = "/api/profile",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public UserResponse updateProfile(
+        @ModelAttribute UpdateProfileRequest request
+    ) {
+        return userService.updateMyProfile(request);
     }
 
-    @DeleteMapping("/api/profile/delete")
-    public ResponseEntity<Void> deleteMyAccount(@RequestBody DeleteAccountRequest request) {
+    @DeleteMapping(
+        value = "/api/profile/delete",
+        consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Void> deleteMyAccount(
+        @RequestBody DeleteAccountRequest request
+    ) {
         userService.deleteMyAccount(request);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/api/profile/verify-password")
-    public ResponseEntity<?> verifyPassword(@RequestBody DeleteAccountRequest request) {
+    @PostMapping(
+        value = "/api/profile/verify-password",
+        consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Boolean> verifyPassword(
+        @RequestBody DeleteAccountRequest request
+    ) {
         boolean valid = userService.verifyMyPassword(request.getPassword());
-        return ResponseEntity.ok().body(Map.of("valid", valid));
+        return ResponseEntity.ok(valid);
     }
 
     @GetMapping("/api/users/search")
-    public List<UserSearchResult> searchUsers(@RequestParam String username) {
+    public List<UserSearchResult> searchUsers(
+        @RequestParam String username
+    ) {
         return userService.searchUsers(username);
     }
 }

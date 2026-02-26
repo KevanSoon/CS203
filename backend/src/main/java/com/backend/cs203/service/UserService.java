@@ -22,6 +22,8 @@ import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -99,6 +101,10 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth required");
         }
 
+        if (request == null || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password required");
+        }
+
         String currentUsername = auth.getName();
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -108,10 +114,10 @@ public class UserService {
         }
 
         Instant now = Instant.now();
-        user.setUsername(user.getUsername() + "_" + Instant.now().toString());
+        user.setUsername(user.getUsername() + "_" + now.toEpochMilli());
         user.setDeactivatedAt(now);
-        userRepository.save(user);
 
+        userRepository.save(user);
         SecurityContextHolder.clearContext();
     }
 
