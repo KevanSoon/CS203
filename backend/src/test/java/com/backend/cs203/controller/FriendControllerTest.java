@@ -1,0 +1,79 @@
+package com.backend.cs203.controller;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.profile.FriendDto;
+import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.security.JwtAuthenticationFilter;
+import com.backend.cs203.security.JwtUtil;
+import com.backend.cs203.service.FriendService;
+
+@WebMvcTest(FriendController.class)
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+class FriendControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private FriendService friendService;
+
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
+
+    // ===== GET /api/friendship =====
+
+    @Test
+    void getMyFriends_authenticated_returns200() throws Exception {
+        List<FriendDto> friends = List.of(new FriendDto("friend1"), new FriendDto("friend2"));
+        when(friendService.getFriends("testuser")).thenReturn(friends);
+
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].username").value("friend1"))
+                .andExpect(jsonPath("$[1].username").value("friend2"));
+    }
+
+    @Test
+    void getMyFriends_noFriends_returnsEmptyList() throws Exception {
+        when(friendService.getFriends("testuser")).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void getMyFriends_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/friendship"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getMyFriends_serviceThrowsException_returns500() throws Exception {
+        when(friendService.getFriends("testuser"))
+                .thenThrow(new RuntimeException("User not found"));
+
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
+                .andExpect(status().isInternalServerError());
+    }
+}
