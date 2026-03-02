@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { api } from "@/app/api/api";
+import toast from "react-hot-toast";
 import {
   Award,
   BookOpen,
@@ -202,10 +203,12 @@ export default function ProfilePage() {
     try {
       setIsDeleting(true);
 
-      await axios.delete("/api/profile/delete", {
+      const res = await api.delete("/api/profile/delete", {
         data: { password: deletePassword },
       });
 
+      toast.success(res.data?.message || "Account deleted successfully.");
+      
       setShowDeleteModal(false);
       router.replace("/");
       router.refresh();
@@ -216,11 +219,7 @@ export default function ProfilePage() {
         setDeleteErrors({ password: "Wrong password eh how." });
       } else if (err.response?.status === 401) {
         router.replace("/");
-      } else {
-        setDeleteErrors({
-          general: "Something went wrong. Try again later.",
-        });
-      }
+      } 
     } finally {
       setIsDeleting(false);
     }
@@ -234,7 +233,7 @@ export default function ProfilePage() {
 
     try {
       setIsVerifyingPassword(true);
-      const res = await axios.post("/api/profile/verify-password", {
+      const res = await api.post("/api/profile/verify-password", {
         password,
       });
 
@@ -243,7 +242,7 @@ export default function ProfilePage() {
         setDeleteErrors({});
       } else {
         setIsPasswordValid(false);
-        setDeleteErrors({ password: "Wrong eh how." });
+        setDeleteErrors({ password: "Wrong password eh how." });
       }
     } catch (err) {
       setIsPasswordValid(false);

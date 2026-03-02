@@ -5,8 +5,8 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 
 export async function DELETE(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
+    const cookieStore = cookies();
+    const jwt = (await cookieStore).get("jwt")?.value;
 
     if (!jwt) {
       return Response.json(
@@ -18,7 +18,12 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const body = await req.json();
+    let body = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
 
     const response = await fetch(`${BACKEND_URL}/api/profile/delete`, {
       method: "DELETE",
@@ -44,7 +49,14 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const BFFResponse = Response.json({ success: true });
+    const BFFResponse = Response.json(
+      {
+        success: true,
+        message: "Account deleted successfully",
+      },
+      { status: 200 }
+    );
+
     BFFResponse.headers.set(
       "Set-Cookie",
       "jwt=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax"
