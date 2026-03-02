@@ -203,18 +203,17 @@ export default function ProfilePage() {
     try {
       setIsDeleting(true);
 
-      const res = await api.delete("/api/profile/delete", {
+      const res = await api.delete("/api/profile", {
         data: { password: deletePassword },
       });
 
-      toast.success(res.data?.message || "Account deleted successfully.");
-      
       setShowDeleteModal(false);
-      router.replace("/");
+      toast.success(res.data?.message || "Account deleted successfully.");
+      router.push("/");
       router.refresh();
+
     } catch (err: any) {
       setDeletePassword("");
-
       if (err.response?.status === 400) {
         setDeleteErrors({ password: "Wrong password eh how." });
       } else if (err.response?.status === 401) {
@@ -233,7 +232,7 @@ export default function ProfilePage() {
 
     try {
       setIsVerifyingPassword(true);
-      const res = await api.post("/api/profile/verify-password", {
+      const res = await api.post("/api/profile", {
         password,
       });
 
@@ -247,7 +246,7 @@ export default function ProfilePage() {
     } catch (err) {
       setIsPasswordValid(false);
       setDeleteErrors({
-        general: "Unable to verify password. Try again.",
+        general: "",
       });
     } finally {
       setIsVerifyingPassword(false);

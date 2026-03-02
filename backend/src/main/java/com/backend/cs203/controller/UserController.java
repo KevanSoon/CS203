@@ -19,6 +19,7 @@ import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -42,26 +43,16 @@ public class UserController {
         return userService.updateMyProfile(request);
     }
 
-    @DeleteMapping(
-        value = "/api/profile/delete",
-        consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<Void> deleteMyAccount(
-        @RequestBody DeleteAccountRequest request
-    ) {
+    @DeleteMapping("/api/profile")
+    public ResponseEntity<Void> deleteMyAccount(@RequestBody DeleteAccountRequest request) {
         userService.deleteMyAccount(request);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(
-        value = "/api/profile/verify-password",
-        consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<Boolean> verifyPassword(
-        @RequestBody DeleteAccountRequest request
-    ) {
-        boolean valid = userService.verifyMyPassword(request.getPassword());
-        return ResponseEntity.ok(valid);
+    @PostMapping("/api/profile")
+    public ResponseEntity<Boolean> verifyPassword(@RequestBody DeleteAccountRequest request) {
+        boolean result = userService.verifyMyPassword(request.getPassword());
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/api/users/search")
