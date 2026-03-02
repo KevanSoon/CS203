@@ -49,10 +49,8 @@ CREATE TABLE IF NOT EXISTS quiz (
   question TEXT,
   options TEXT,
   correct_answer VARCHAR(255),
-  card_id INT NOT NULL,  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   chapter_id INT NOT NULL,
-  FOREIGN KEY (card_id) REFERENCES card(id),
   FOREIGN KEY (chapter_id) REFERENCES chapter(id)
 );
 
