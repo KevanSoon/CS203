@@ -15,11 +15,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
+
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 import lombok.RequiredArgsConstructor;
 
@@ -91,33 +94,54 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteMyAccount() {
+    public void deleteMyAccount(DeleteAccountRequest request) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth required");
         }
 
+        if (request == null || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password required");
+        }
+
         String currentUsername = auth.getName();
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (user.getDeactivatedAt() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
         }
 
         Instant now = Instant.now();
-        String timestamp = String.valueOf(now.toString());
-        String newUsername = user.getUsername() + "_" + timestamp;
-        user.setUsername(newUsername);
+        user.setUsername(user.getUsername() + "_" + now.toEpochMilli());
         user.setDeactivatedAt(now);
+
         userRepository.save(user);
         SecurityContextHolder.clearContext();
     }
 
-    // -----------------------
-    // Profile (GET /api/profile)
-    // -----------------------
+    @Transactional(readOnly = true)
+    public boolean verifyMyPassword(String password) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null ||
+            !auth.isAuthenticated() ||
+            auth instanceof AnonymousAuthenticationToken) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth required");
+        }
+
+        if (password == null || password.isBlank()) {
+            return false;
+        }
+
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
     @Transactional
     public UserResponse updateMyProfile(UpdateProfileRequest request) {
         String username = requireUsername();
@@ -151,9 +175,6 @@ public class UserService {
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
     }
 
-    // -----------------------
-    // Helpers
-    // -----------------------
     private String requireUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 

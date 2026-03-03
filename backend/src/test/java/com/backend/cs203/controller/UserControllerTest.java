@@ -1,30 +1,31 @@
 package com.backend.cs203.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.repository.UserRepository;
@@ -83,7 +84,9 @@ class UserControllerTest {
         UserResponse response = new UserResponse("testuser", "new@example.com", null);
         when(userService.updateMyProfile(any())).thenReturn(response);
 
-        mockMvc.perform(patch("/api/profile")
+        mockMvc.perform(multipart("/api/profile")
+                        .param("email", "new@example.com")
+                        .with(request -> { request.setMethod("PATCH"); return request; })
                         .with(user("testuser").roles("USER"))
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -92,17 +95,21 @@ class UserControllerTest {
 
     @Test
     void updateProfile_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(patch("/api/profile").with(csrf()))
+        mockMvc.perform(multipart("/api/profile")
+                        .with(request -> { request.setMethod("PATCH"); return request; })
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
-    // ===== DELETE /api/profile/delete =====
+    // ===== DELETE /api/profile =====
 
     @Test
     void deleteMyAccount_authenticated_returns204() throws Exception {
-        doNothing().when(userService).deleteMyAccount();
+        doNothing().when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
-        mockMvc.perform(delete("/api/profile/delete")
+        mockMvc.perform(delete("/api/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"testPassword\"}")
                         .with(user("testuser").roles("USER"))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
@@ -110,16 +117,21 @@ class UserControllerTest {
 
     @Test
     void deleteMyAccount_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(delete("/api/profile/delete").with(csrf()))
+        mockMvc.perform(delete("/api/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"testPassword\"}")
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void deleteMyAccount_alreadyDeactivated_returns500() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated"))
-                .when(userService).deleteMyAccount();
+    void deleteMyAccount_incorrectPassword_returns500() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password"))
+                .when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
-        mockMvc.perform(delete("/api/profile/delete")
+        mockMvc.perform(delete("/api/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"wrongPassword\"}")
                         .with(user("testuser").roles("USER"))
                         .with(csrf()))
                 .andExpect(status().isInternalServerError());

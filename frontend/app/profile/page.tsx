@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { api } from "@/app/api/api";
+import toast from "react-hot-toast";
 import {
   Award,
   BookOpen,
@@ -105,7 +106,29 @@ export default function ProfilePage() {
   const [profileError, setProfileError] = useState("");
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
+  const [deleteErrors, setDeleteErrors] = useState<{
+    password?: string;
+    general?: string;
+  }>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const isDeleteUnlocked = isPasswordValid;
+
+  useEffect(() => {
+    if (!deletePassword.trim()) {
+      setIsPasswordValid(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      verifyPassword(deletePassword);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [deletePassword]);
+
   const [friends, setFriends] = useState<FriendDto[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState("");
@@ -172,32 +195,63 @@ export default function ProfilePage() {
   const profilePic = profile.profilePictureUrl || "";
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      "LAST WARNING 🚨\n\nDeleting your account is forever.\nNo undo."
-    );
-    if (!confirmed) return;
+    setDeleteErrors({});
+    if (!deletePassword.trim()) {
+      setDeleteErrors({ password: "Put your password leh." });
+      return;
+    }
 
     try {
       setIsDeleting(true);
-      setDeleteError("");
 
-      const res = await axios.delete("/api/profile/delete");
+      const res = await api.delete("/api/profile", {
+        data: { password: deletePassword },
+      });
 
-      if (res.data?.success) {
-        router.replace("/");
-      } else {
-        throw new Error("Delete failed. L.");
-      }
+      setShowDeleteModal(false);
+      toast.success(res.data?.message || "Account deleted successfully.");
+      router.push("/");
+      router.refresh();
+
     } catch (err: any) {
-      setDeleteError(
-        err?.response?.data?.error ||
-        err?.response?.data?.detail ||
-        "Delete failed. L."
-      );
+      setDeletePassword("");
+      if (err.response?.status === 400) {
+        setDeleteErrors({ password: "Wrong password eh how." });
+      } else if (err.response?.status === 401) {
+        router.replace("/");
+      } 
     } finally {
       setIsDeleting(false);
     }
+  };
 
+  const verifyPassword = async (password: string) => {
+    if (!password.trim()) {
+      setIsPasswordValid(false);
+      return;
+    }
+
+    try {
+      setIsVerifyingPassword(true);
+      const res = await api.post("/api/profile", {
+        password,
+      });
+
+      if (res.data?.valid) {
+        setIsPasswordValid(true);
+        setDeleteErrors({});
+      } else {
+        setIsPasswordValid(false);
+        setDeleteErrors({ password: "Wrong password eh how." });
+      }
+    } catch (err) {
+      setIsPasswordValid(false);
+      setDeleteErrors({
+        general: "",
+      });
+    } finally {
+      setIsVerifyingPassword(false);
+    }
   };
 
   const handleSearchUser = async () => {
@@ -225,7 +279,6 @@ export default function ProfilePage() {
       <Sidebar selected={selected} setSelected={setSelected} />
 
       <div className="flex-1 overflow-auto bg-linear-to-b from-[#F2F0FF] via-white to-white font-sans text-slate-900">
-        {/* Hero */}
         <div className="relative h-52 overflow-hidden">
           <div className="absolute inset-0 bg-linear-to-br from-[#CFCBFF] via-[#DCD8FF] to-[#F2F0FF]" />
           <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-white/25 blur-2xl" />
@@ -235,7 +288,6 @@ export default function ProfilePage() {
         <div className="-mt-16 px-5 pb-12">
           <div className="mx-auto max-w-6xl">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {/* LEFT — Profile */}
               <div className="md:col-span-1">
                 <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
                   <div className="flex flex-col items-center text-center">
@@ -283,7 +335,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* RIGHT */}
               <div className="md:col-span-2 space-y-6">
                 <CollapsibleCard
                   title="Learning Progress"
@@ -358,7 +409,6 @@ export default function ProfilePage() {
                   }
                   defaultOpen={true}
                 >
-                  {/* Search bar*/}
                   <div className="flex gap-2 mb-5">
                     <div className="relative flex-1">
                       <Search
@@ -386,7 +436,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  {/* Search error */}
                   {searchError && (
                     <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       <X size={15} className="flex-shrink-0" />
@@ -394,7 +443,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* Search results section */}
                   {searchResults.length > 0 && (
                     <div className="mb-5">
                       <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
@@ -429,7 +477,6 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* Friends list section */}
                   {friendsError && (
                     <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                       {friendsError}
@@ -494,23 +541,134 @@ export default function ProfilePage() {
 
                       <button
                         type="button"
-                        onClick={handleDeleteAccount}
+                        onClick={() => {
+                          setDeleteErrors({});
+                          setDeletePassword("");
+                          setShowDeleteModal(true);
+                        }}
                         disabled={isDeleting}
                         className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </button>
                     </div>
-
-                    {deleteError && (
-                      <div className="mt-4 rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600">
-                        {deleteError}
-                      </div>
-                    )}
                   </div>
                 </CollapsibleCard>
+      
+                {showDeleteModal && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => {
+                      if (isDeleting) return;
+                      setShowDeleteModal(false);
+                      setDeletePassword("");
+                      setDeleteErrors({});
+                    }}
+                  >
+                    <div
+                      className="bg-white p-8 rounded-3xl w-full max-w-md relative"
+                      onClick={(e) => e.stopPropagation()} 
+                    >
+                      <h2 className="text-2xl font-extrabold text-red-600">
+                        Delete you sure or not? 💀
+                      </h2>
 
-              
+                      <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                        Once delete means delete liao hor.
+                        All your data confirm gone. No undo, no Ctrl+Z, no comeback season.
+                      </p>
+
+                      <div className="mt-6 space-y-4">
+                        <label className="text-sm font-semibold ml-1">
+                          Password (last warning ah)
+                        </label>
+
+                        <input
+                          type="password"
+                          value={deletePassword}
+                          onChange={(e) => {
+                            setDeletePassword(e.target.value);
+                            setIsPasswordValid(false);
+                            setDeleteErrors((prev) => ({ ...prev, password: undefined }));
+                          }}
+                          className="w-full border rounded-xl px-4 py-3"
+                          placeholder="Enter password"
+                        />
+
+                        <div className="min-h-[20px] mt-1">
+                          <p
+                            className={`text-red-500 text-xs text-bold transition-opacity duration-200 ${
+                              deleteErrors.password ? "opacity-100" : "opacity-0"
+                            }`}
+                          >
+                            {deleteErrors.password ?? " "}
+                          </p>
+                        </div>
+
+                        {deleteErrors.general && (
+                          <p className="text-red-500 text-sm mt-2">
+                            {deleteErrors.general}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3 mt-6">
+                        <button
+                          onClick={() => {
+                            setShowDeleteModal(false);
+                            setDeletePassword("");
+                            setDeleteErrors({});
+                          }}
+                          className="flex-1 border rounded-xl py-2"
+                        >
+                          Aiya cancel lah 😌
+                        </button>
+
+                        <div
+                          className={`flex-1 transition-opacity duration-300 ${
+                            isDeleteUnlocked
+                              ? "opacity-100"
+                              : "opacity-0 pointer-events-none"
+                          }`}
+                        >
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={!isDeleteUnlocked || isDeleting}
+                            className={`
+                              w-full py-3 rounded-xl font-semibold text-sm
+                              transition-all duration-200 ease-out
+                              ${
+                                isDeleteUnlocked
+                                  ? `
+                                    bg-gradient-to-br from-red-600 to-red-700
+                                    text-white
+                                    shadow-lg shadow-red-600/30
+                                    hover:shadow-red-700/40
+                                    hover:scale-[1.02]
+                                    active:scale-[0.98]
+                                  `
+                                  : `
+                                    bg-gray-200 text-gray-400 cursor-not-allowed
+                                  `
+                              }
+                            `}
+                          >
+                            {isDeleting ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Deleting account...
+                              </span>
+                            ) : isVerifyingPassword ? (
+                              "Wan delete... bye bye 👋"
+                            ) : (
+                              "Confirm Delete 🫠"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
