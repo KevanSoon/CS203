@@ -1,30 +1,30 @@
 package com.backend.cs203.controller;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.repository.UserRepository;
@@ -100,7 +100,7 @@ class UserControllerTest {
 
     @Test
     void deleteMyAccount_authenticated_returns204() throws Exception {
-        doNothing().when(userService).deleteMyAccount();
+        doNothing().when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
         mockMvc.perform(delete("/api/profile/delete")
                         .with(user("testuser").roles("USER"))
@@ -117,7 +117,7 @@ class UserControllerTest {
     @Test
     void deleteMyAccount_alreadyDeactivated_returns500() throws Exception {
         doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated"))
-                .when(userService).deleteMyAccount();
+                .when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
         mockMvc.perform(delete("/api/profile/delete")
                         .with(user("testuser").roles("USER"))
