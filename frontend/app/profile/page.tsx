@@ -16,6 +16,7 @@ import {
   X
 } from "lucide-react";
 import { Sidebar } from "@/app/components/Sidebar";
+import AddFriendButton from "@/app/components/AddFriendButton";
 
 type Profile = {
   username: string;
@@ -408,12 +409,19 @@ export default function ProfilePage() {
                             <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white border border-[#6C63FF]/20 flex-shrink-0 font-extrabold text-[#6C63FF]">
                               {user.username[0]?.toUpperCase() ?? "?"}
                             </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-extrabold text-slate-900">
-                                {user.username}
-                              </p>
-                              <p className="text-xs text-slate-400 mt-0.5">Simi Slang user</p>
+                            
+                            <div className="flex flex-1 items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-slate-900">
+                                  {user.username}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  Simi Slang user
+                                </p>
+                              </div>
+                              <AddFriendButton key={user.id} targetUserId={user.id} />
                             </div>
+
                           </div>
                         ))}
                       </div>
