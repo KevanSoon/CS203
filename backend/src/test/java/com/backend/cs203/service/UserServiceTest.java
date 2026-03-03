@@ -188,19 +188,18 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteMyAccount_alreadyDeactivated_throwsBadRequest() {
+    void deleteMyAccount_incorrectPassword_throwsBadRequest() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser")
                 .password("encodedPassword")
-                .deactivatedAt(java.time.Instant.now())
                 .build();
 
         DeleteAccountRequest request = new DeleteAccountRequest();
-        request.setPassword("rawPassword");
+        request.setPassword("wrongPassword");
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
+        when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> userService.deleteMyAccount(request));
