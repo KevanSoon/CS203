@@ -1,7 +1,6 @@
 package com.backend.cs203.dto.error;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 import lombok.Builder;
 import lombok.Data;
