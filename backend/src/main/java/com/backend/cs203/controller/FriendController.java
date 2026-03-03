@@ -31,6 +31,11 @@ public class FriendController {
         return friendService.getFriends(authentication.getName());
     }
 
+    @GetMapping("/pending")
+    public List<FriendDto> getPending(Authentication authentication) {
+        return friendService.getPendingRequests(authentication.getName());
+    }
+
     @PostMapping("/{id}")
     public ResponseEntity<Void> sendFriendRequest(
             @PathVariable Integer id,
@@ -47,6 +52,15 @@ public class FriendController {
 
         friendService.sendFriendRequest(id, currentUsername);
 
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/accept/{id}")
+    public ResponseEntity<Void> acceptFriend(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        friendService.acceptFriendRequest(id, authentication.getName());
         return ResponseEntity.ok().build();
     }
 }

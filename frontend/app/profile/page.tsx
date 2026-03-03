@@ -333,6 +333,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+                {/* INSERT FRIEND LIST AND FRIEND PENDING LIST HERE */}
               </div>
 
               <div className="md:col-span-2 space-y-6">

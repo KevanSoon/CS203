@@ -44,6 +44,20 @@ public class FriendService {
             .toList();
     }
 
+    public List<FriendDto> getPendingRequests(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Friendship> friendships = friendshipRepository.findFriendshipsByUserId(
+                user.getId(),
+                FriendshipStatus.pending
+        );
+
+        return friendships.stream()
+                .filter(f -> f.getUser2().getId().equals(user.getId()))
+                .map(f -> new FriendDto(f.getUser1().getUsername()))
+                .toList();
+    }
+
     @Transactional
     public void sendFriendRequest(Integer targetUserId, String currentUsername) {
 
@@ -59,9 +73,11 @@ public class FriendService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot add yourself");
         }
 
-        boolean exists = friendshipRepository.existsByUser1IdAndUser2Id(currentUser.getId(), targetUser.getId());
+        boolean exists = friendshipRepository
+                .findExistingFriendship(currentUser.getId(), targetUser.getId())
+                .isPresent();
         if (exists) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Friend request already sent");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Friendship already exists or pending");
         }
 
         Friendship friendship = new Friendship(
@@ -70,4 +86,28 @@ public class FriendService {
 
         friendshipRepository.save(friendship);
     }
+
+    @Transactional
+    public void acceptFriendRequest(Integer requesterId, String currentUsername) {
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Friendship friendship = friendshipRepository
+            .findExistingFriendship(requesterId, currentUser.getId())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Friend request not found"
+            ));
+
+        if (!friendship.getUser2().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Not authorized to accept this request"
+            );
+        }
+
+        friendship.setStatus(FriendshipStatus.confirmed);
+    }
+
 }
