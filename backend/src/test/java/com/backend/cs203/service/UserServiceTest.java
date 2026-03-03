@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
@@ -170,12 +171,17 @@ class UserServiceTest {
         User user = User.builder()
                 .id(1)
                 .username("testuser")
+                .password("encodedPassword")
                 .build();
 
+        DeleteAccountRequest request = new DeleteAccountRequest();
+        request.setPassword("rawPassword");
+
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        userService.deleteMyAccount();
+        userService.deleteMyAccount(request);
 
         assertNotNull(user.getDeactivatedAt());
         assertTrue(user.getUsername().startsWith("testuser_"));
@@ -187,19 +193,26 @@ class UserServiceTest {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser")
+                .password("encodedPassword")
                 .deactivatedAt(java.time.Instant.now())
                 .build();
 
+        DeleteAccountRequest request = new DeleteAccountRequest();
+        request.setPassword("rawPassword");
+
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> userService.deleteMyAccount());
+                () -> userService.deleteMyAccount(request));
         assertEquals(400, ex.getStatusCode().value());
     }
 
     @Test
     void deleteMyAccount_unauthenticated_throwsUnauthorized() {
-        assertThrows(ResponseStatusException.class, () -> userService.deleteMyAccount());
+        DeleteAccountRequest request = new DeleteAccountRequest();
+        request.setPassword("rawPassword");
+        assertThrows(ResponseStatusException.class, () -> userService.deleteMyAccount(request));
     }
 
     // ===== updateMyProfile =====

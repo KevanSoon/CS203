@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.repository.UserRepository;
@@ -100,7 +101,7 @@ class UserControllerTest {
 
     @Test
     void deleteMyAccount_authenticated_returns204() throws Exception {
-        doNothing().when(userService).deleteMyAccount();
+        doNothing().when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
         mockMvc.perform(delete("/api/profile/delete")
                         .with(user("testuser").roles("USER"))
@@ -117,7 +118,7 @@ class UserControllerTest {
     @Test
     void deleteMyAccount_alreadyDeactivated_returns500() throws Exception {
         doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already deactivated"))
-                .when(userService).deleteMyAccount();
+                .when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
         mockMvc.perform(delete("/api/profile/delete")
                         .with(user("testuser").roles("USER"))
