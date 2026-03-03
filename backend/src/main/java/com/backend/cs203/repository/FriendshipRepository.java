@@ -27,6 +27,20 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
 
     @Query("""
         SELECT f FROM Friendship f
+        WHERE f.user2.id = :userId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    List<Friendship> findIncomingPending(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE f.user1.id = :userId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    List<Friendship> findOutgoingPending(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT f FROM Friendship f
         WHERE 
         (f.user1.id = :user1 AND f.user2.id = :user2)
         OR

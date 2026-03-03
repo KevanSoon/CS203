@@ -36,25 +36,49 @@ public class FriendService {
         return friendships.stream()
             .map(f -> {
                 if (f.getUser1().getId().equals(user.getId())) {
-                    return new FriendDto(f.getUser2().getUsername());
+                    return new FriendDto(
+                        f.getUser2().getId(),
+                        f.getUser2().getUsername()
+                    );
                 } else {
-                    return new FriendDto(f.getUser1().getUsername());
+                    return new FriendDto(
+                        f.getUser1().getId(),
+                        f.getUser1().getUsername()
+                    );
                 }
             })
             .toList();
     }
 
     public List<FriendDto> getPendingRequests(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Friendship> friendships = friendshipRepository.findFriendshipsByUserId(
-                user.getId(),
-                FriendshipStatus.pending
-        );
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return friendships.stream()
-                .filter(f -> f.getUser2().getId().equals(user.getId()))
-                .map(f -> new FriendDto(f.getUser1().getUsername()))
+        List<Friendship> incoming = friendshipRepository
+                .findIncomingPending(user.getId());
+
+        return incoming.stream()
+                .map(f -> new FriendDto(
+                    f.getUser1().getId(),
+                    f.getUser1().getUsername()
+                ))
+                .toList();
+    }
+
+    public List<FriendDto> getOutgoingRequests(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Friendship> outgoing = friendshipRepository
+                .findOutgoingPending(user.getId());
+
+        return outgoing.stream()
+                .map(f -> new FriendDto(
+                    f.getUser2().getId(),
+                    f.getUser2().getUsername()
+                ))
                 .toList();
     }
 

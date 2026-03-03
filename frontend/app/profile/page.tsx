@@ -25,6 +25,7 @@ type Profile = {
 };
 
 type FriendDto = {
+  id: number,
   username: string;
 };
 
@@ -124,7 +125,7 @@ export default function ProfilePage() {
 
     const timeout = setTimeout(() => {
       verifyPassword(deletePassword);
-    }, 500);
+    }, 200);
 
     return () => clearTimeout(timeout);
   }, [deletePassword]);
@@ -137,6 +138,80 @@ export default function ProfilePage() {
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+
+  const [pendingFriends, setPendingFriends] = useState<FriendDto[]>([]);
+  const [isLoadingPending, setIsLoadingPending] = useState(true);
+  const [pendingError, setPendingError] = useState("");
+
+  const loadFriends = async () => {
+    setFriendsError("");
+    setIsLoadingFriends(true);
+
+    try {
+      const res = await fetch("/api/friendship", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || data?.error || "Failed to load friends"
+        );
+      }
+
+      setFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setFriendsError(e?.message || "Failed to load friends");
+      setFriends([]);
+    } finally {
+      setIsLoadingFriends(false);
+    }
+  };
+
+  const loadPending = async () => {
+    setPendingError("");
+    setIsLoadingPending(true);
+
+    try {
+      const res = await fetch("/api/friendship/pending", {
+        cache: "no-store",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || data?.error || "Failed to load pending"
+        );
+      }
+
+      setPendingFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setPendingError(e?.message || "Failed to load pending");
+      setPendingFriends([]);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  };
+
+  const handleAcceptFriend = async (requesterId: number) => {
+    try {
+      const res = await fetch(`/api/friendship/accept/${requesterId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to accept request");
+      }
+
+      toast.success("Friend request accepted!");
+
+      // refresh both lists
+      await loadFriends();
+      await loadPending();
+
+    } catch (err) {
+      toast.error("Failed to accept friend request");
+    }
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -164,31 +239,9 @@ export default function ProfilePage() {
       }
     };
 
-    const loadFriends = async () => {
-      setFriendsError("");
-      setIsLoadingFriends(true);
-
-      try {
-        const res = await fetch("/api/friendship", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(
-            data?.message || data?.error || "Failed to load friends"
-          );
-        }
-
-        setFriends(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        setFriendsError(e?.message || "Failed to load friends");
-        setFriends([]);
-      } finally {
-        setIsLoadingFriends(false);
-      }
-    };
-
     loadProfile();
     loadFriends();
+    loadPending();
   }, []);
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
@@ -333,7 +386,81 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-                {/* INSERT FRIEND LIST AND FRIEND PENDING LIST HERE */}
+                <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Users size={20} className="text-[#6C63FF]" />
+                      <h2 className="text-lg font-extrabold">Friends</h2>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                      {isLoadingFriends ? "..." : friends.length}
+                    </span>
+                  </div>
+
+                  <div className="mb-8">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
+                      Pending Requests
+                    </p>
+                    {isLoadingPending ? (
+                      <p className="text-sm text-slate-500">Loading...</p>
+                    ) : pendingFriends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No pending requests.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {pendingFriends.map((friend) => (
+                          <div
+                            key={friend.username}
+                            className="flex items-center justify-between rounded-2xl border border-[#6C63FF]/20 bg-[#F6F5FF] px-4 py-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white font-bold text-[#6C63FF]">
+                                {friend.username[0]?.toUpperCase()}
+                              </div>
+                              <p className="text-sm font-bold">
+                                {friend.username}
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => handleAcceptFriend(friend.id)}
+                              className="rounded-xl bg-[#6C63FF] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-105"
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Your Friends
+                    </p>
+
+                    {isLoadingFriends ? (
+                      <p className="text-sm text-slate-500">Loading friends...</p>
+                    ) : friends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No friends yet.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {friends.map((friend) => (
+                          <div
+                            key={friend.username}
+                            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                          >
+                            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 font-bold">
+                              {friend.username[0]?.toUpperCase()}
+                            </div>
+                            <p className="text-sm font-bold truncate">
+                              {friend.username}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="md:col-span-2 space-y-6">
@@ -474,54 +601,8 @@ export default function ProfilePage() {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-4 border-t border-slate-200" />
                     </div>
-                  )}
-
-                  {friendsError && (
-                    <div className="mb-4 w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                      {friendsError}
-                    </div>
-                  )}
-
-                  {searchResults.length > 0 && (
-                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                      Your Friends
-                    </p>
-                  )}
-
-                  {isLoadingFriends ? (
-                    <div className="text-sm text-slate-500">Loading friends...</div>
-                  ) : friends.length === 0 ? (
-                    <div className="text-sm text-slate-500">No friends yet.</div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {friends.map((friend) => {
-                        const initial = (friend.username?.[0] || "?").toUpperCase();
-                        return (
-                          <div
-                            key={friend.username}
-                            className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
-                                {initial}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-extrabold text-slate-900">
-                                  {friend.username}
-                                </p>
-                                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                                  <Flame size={14} />
-                                  Friend
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  )}                  
                 </CollapsibleCard>
 
                 <CollapsibleCard
