@@ -179,17 +179,7 @@ export default function EditProfilePage() {
         throw new Error(data?.message || data?.error || "Failed to update profile");
       }
 
-      setSuccessMsg("Updated! You solid lah.");
-      setPassword("");
-      setConfirmPassword("");
-      setImageFile(null);
-
-      // refresh returned profile picture url (if backend returns it)
-      setProfilePictureUrl(data?.profilePictureUrl ?? profilePictureUrl);
-
-      // drop preview so we show backend image
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl("");
+      router.push("/profile");
 
     } catch (e: any) {
       setPageError(e?.message || "Failed to update profile");
