@@ -126,12 +126,13 @@ class UserServiceTest {
                 .build();
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(supabaseStorageService.getSignedUrl("http://pic.url", 3600)).thenReturn("http://signed.url");
 
         UserResponse result = userService.getMyProfile();
 
         assertEquals("testuser", result.getUsername());
         assertEquals("test@example.com", result.getEmail());
-        assertEquals("http://pic.url", result.getProfilePictureUrl());
+        assertEquals("http://signed.url", result.getProfilePictureUrl());
     }
 
     @Test
