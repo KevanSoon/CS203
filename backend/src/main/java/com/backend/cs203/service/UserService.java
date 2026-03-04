@@ -22,8 +22,6 @@ import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -142,66 +140,78 @@ public class UserService {
         return passwordEncoder.matches(password, user.getPassword());
     }
 
+        // ─────────────────────────────────────────────────────────────
+    // Profile - Update (clean + supports username unique)
+    // ─────────────────────────────────────────────────────────────
     @Transactional
     public UserResponse updateMyProfile(UpdateProfileRequest request) {
-        String username = requireUsername();
 
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
+        }
 
-        // ✅ validate email (required)
+        String currentUsername = requireUsername();
+
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user.getDeactivatedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
+        }
+
+        // ✅ USERNAME (optional) + unique (only check if changed)
+        String newUsername = request.getUsername();
+        if (newUsername != null) {
+            newUsername = newUsername.trim();
+            if (newUsername.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
+            }
+            validateUsername(newUsername);
+
+            if (!newUsername.equals(user.getUsername())) {
+                if (userRepository.existsByUsername(newUsername)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already in use. Try another");
+                }
+                user.setUsername(newUsername);
+            }
+        }
+
+        // ✅ EMAIL (optional) + unique (only check if changed)
         String email = request.getEmail();
-        if (email == null || email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
-        }
-        email = email.trim();
-        if (email.length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email too long (max 100)");
-        }
-        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        if (email != null) {
+            email = email.trim();
+            if (email.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email cannot be empty");
+            }
+            validateEmail(email);
+
+            if (!email.equals(user.getEmail())) {
+                if (userRepository.existsByEmail(email)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use. Try another");
+                }
+                user.setEmail(email);
+            }
         }
 
-        user.setEmail(email);
-
-        // ✅ password optional
+        // ✅ PASSWORD (optional)
         String password = request.getPassword();
         if (password != null && !password.isBlank()) {
             validatePassword(password);
             user.setPassword(passwordEncoder.encode(password));
         }
 
+        // ✅ profileImage is normally handled in controller/file storage service
+        // If your UpdateProfileRequest includes a MultipartFile profileImage,
+        // you should handle saving it here (depends on your existing implementation).
+
         User saved = userRepository.save(user);
+
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
     }
 
-    private String requireUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated() || auth.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-        return auth.getName();
-    }
-
-    private void validatePassword(String password) {
-        if (password.length() < 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too short (min 8)");
-        }
-        if (password.length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too long (max 100)");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one lowercase letter");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one uppercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one number");
-        }
-    }
-
+    // ─────────────────────────────────────────────────────────────
+    // Search users (unchanged)
+    // ─────────────────────────────────────────────────────────────
     public List<UserSearchResult> searchUsers(String username) {
         String currentUsername = requireUsername();
 
@@ -214,5 +224,62 @@ public class UserService {
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
+    private String requireUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        return auth.getName();
+    }
+
+    private void validateUsername(String username) {
+        if (username.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username too short (min 3)");
+        }
+        if (username.length() > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username too long (max 50)");
+        }
+        if (!username.matches("^[a-zA-Z0-9_]+$")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Username can only contain letters, numbers, and underscore (_)"
+            );
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (email.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email too long (max 100)");
+        }
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        }
+    }
+
+    private void validatePassword(String password) {
+        if (password.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too short (min 8)");
+        }
+        if (password.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too long (max 100)");
+        }
+        if (!password.matches(".*[a-z].*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must have at least one lowercase letter");
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must have at least one uppercase letter");
+        }
+        if (!password.matches(".*\\d.*")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must have at least one number");
+        }
     }
 }

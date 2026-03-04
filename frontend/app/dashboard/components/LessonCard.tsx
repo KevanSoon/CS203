@@ -41,11 +41,10 @@ export default function LessonCard({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [showModal]);
 
-
-function getRatingStars() {
-  const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
-  return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
-}
+  function getRatingStars() {
+    const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+    return "★".repeat(safeRating) + "☆".repeat(5 - safeRating);
+  }
 
   return (
     <>
@@ -80,22 +79,26 @@ function getRatingStars() {
               {description}
             </p>
 
-            {description.length > 200 && <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openModal();
-              }}
-              className="
-                mt-1 text-xs sm:text-sm text-primary font-semibold
-                hover:underline cursor-pointer
-              "
-            >
-              See full description
-            </button>}
+            {description.length > 200 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal();
+                }}
+                className="
+                  mt-1 text-xs sm:text-sm text-primary font-semibold
+                  hover:underline cursor-pointer
+                "
+              >
+                See full description
+              </button>
+            )}
           </div>
 
-          {/* Tag badges — capped by character length and count */}
-            {tags.length > 0 && (() => {
+          {/* Tags (display only) */}
+          {tags.length > 0 &&
+            (() => {
               const { visible, remaining } = getVisibleTags(tags);
               return (
                 <div className="flex flex-wrap gap-1 mt-2 overflow-hidden max-h-[72px]">
@@ -129,13 +132,14 @@ function getRatingStars() {
               />
             </div>
 
-            <div className="text-[11px] sm:text-xs text-muted-foreground text">
+            <div className="text-[11px] sm:text-xs text-muted-foreground">
               Rating: <span className="text-yellow-500">{getRatingStars()}</span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div
           className="
@@ -154,6 +158,7 @@ function getRatingStars() {
             "
           >
             <button
+              type="button"
               onClick={closeModal}
               className="absolute top-3 right-3 p-2 rounded-md hover:bg-muted"
               aria-label="Close"
@@ -161,9 +166,7 @@ function getRatingStars() {
               <X size={18} />
             </button>
 
-            <h3 className="text-lg sm:text-xl font-bold mb-3">
-              {title}
-            </h3>
+            <h3 className="text-lg sm:text-xl font-bold mb-3">{title}</h3>
 
             <p className="text-sm text-muted-foreground leading-relaxed">
               {description}

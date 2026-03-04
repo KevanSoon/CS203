@@ -1,6 +1,7 @@
 package com.backend.cs203.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,9 @@ import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
+import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.UserService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @GetMapping("/api/profile")
     public UserResponse getProfile() {
@@ -60,5 +62,13 @@ public class UserController {
         @RequestParam String username
     ) {
         return userService.searchUsers(username);
+    }
+
+    @GetMapping("/api/users/username-available")
+    public Map<String, Boolean> usernameAvailable(@RequestParam String username) {
+
+        boolean exists = userRepository.existsByUsername(username.trim());
+
+        return Map.of("available", !exists);
     }
 }
