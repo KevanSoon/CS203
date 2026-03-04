@@ -86,10 +86,15 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
         }
 
+        String profilePictureUrl = user.getProfilePictureUrl();
+        String signedUrl = (profilePictureUrl != null)
+                ? supabaseStorageService.getSignedUrl(profilePictureUrl, 3600)
+                : null;
+
         return new UserResponse(
             user.getUsername(),
             user.getEmail(),
-            user.getProfilePictureUrl()
+            signedUrl
         );
     }
 
