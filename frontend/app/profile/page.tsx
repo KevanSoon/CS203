@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/app/components/Sidebar";
 import AddFriendButton from "@/app/components/AddFriendButton";
+import OutgoingFriendCard from "@/app/components/OutgoingFriendCard";
 
 type Profile = {
   username: string;
@@ -142,21 +143,17 @@ export default function ProfilePage() {
   const [pendingFriends, setPendingFriends] = useState<FriendDto[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(true);
   const [pendingError, setPendingError] = useState("");
+  const [outgoingFriends, setOutgoingFriends] = useState<FriendDto[]>([]);
+  const [isLoadingOutgoing, setIsLoadingOutgoing] = useState(true);
+  const [outgoingError, setOutgoingError] = useState("");
 
   const loadFriends = async () => {
     setFriendsError("");
     setIsLoadingFriends(true);
-
     try {
       const res = await fetch("/api/friendship", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || "Failed to load friends"
-        );
-      }
-
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load friends");
       setFriends(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setFriendsError(e?.message || "Failed to load friends");
@@ -169,20 +166,10 @@ export default function ProfilePage() {
   const loadPending = async () => {
     setPendingError("");
     setIsLoadingPending(true);
-
     try {
-      const res = await fetch("/api/friendship/pending", {
-        cache: "no-store",
-      });
-
+      const res = await fetch("/api/friendship/pending", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || "Failed to load pending"
-        );
-      }
-
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load pending");
       setPendingFriends(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setPendingError(e?.message || "Failed to load pending");
@@ -194,22 +181,29 @@ export default function ProfilePage() {
 
   const handleAcceptFriend = async (requesterId: number) => {
     try {
-      const res = await fetch(`/api/friendship/accept/${requesterId}`, {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to accept request");
-      }
-
+      const res = await fetch(`/api/friendship/accept/${requesterId}`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to accept request");
       toast.success("Friend request accepted!");
-
-      // refresh both lists
       await loadFriends();
       await loadPending();
-
-    } catch (err) {
+    } catch {
       toast.error("Failed to accept friend request");
+    }
+  };
+
+  const loadOutgoing = async () => {
+    setOutgoingError("");
+    setIsLoadingOutgoing(true);
+    try {
+      const res = await fetch("/api/friendship/pending/outgoing", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load outgoing");
+      setOutgoingFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setOutgoingError(e?.message || "Failed to load outgoing");
+      setOutgoingFriends([]);
+    } finally {
+      setIsLoadingOutgoing(false);
     }
   };
 
@@ -242,6 +236,7 @@ export default function ProfilePage() {
     loadProfile();
     loadFriends();
     loadPending();
+    loadOutgoing();
   }, []);
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
@@ -399,7 +394,7 @@ export default function ProfilePage() {
 
                   <div className="mb-8">
                     <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
-                      Pending Requests
+                      Incoming Requests
                     </p>
                     {isLoadingPending ? (
                       <p className="text-sm text-slate-500">Loading...</p>
@@ -456,6 +451,27 @@ export default function ProfilePage() {
                               {friend.username}
                             </p>
                           </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-8">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Outgoing Requests
+                    </p>
+
+                    {isLoadingOutgoing ? (
+                      <p className="text-sm text-slate-500">Loading...</p>
+                    ) : outgoingFriends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No outgoing requests.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {outgoingFriends.map((friend) => (
+                          <OutgoingFriendCard
+                            key={friend.id}
+                            friend={friend}
+                            onCancel={loadOutgoing}
+                          />
                         ))}
                       </div>
                     )}
@@ -595,7 +611,25 @@ export default function ProfilePage() {
                                   Simi Slang user
                                 </p>
                               </div>
-                              <AddFriendButton key={user.id} targetUserId={user.id} />
+                              {outgoingFriends.some((f) => f.id === user.id) ? (
+                                <AddFriendButton
+                                  targetUserId={user.id}
+                                  initialSent={outgoingFriends.some((f) => f.id === user.id)}
+                                  onSuccess={loadOutgoing}
+                                />
+                              ) : friends.some((f) => f.id === user.id) ? (
+                                <span className="text-xs font-semibold text-green-600">
+                                  Already Friends
+                                </span>
+                              ) : (
+                                <AddFriendButton
+                                  targetUserId={user.id}
+                                  initialSent={outgoingFriends.some((f) => f.id === user.id)}
+                                  onSuccess={async () => {
+                                    await loadOutgoing();
+                                  }}
+                                />
+                              )}
                             </div>
 
                           </div>

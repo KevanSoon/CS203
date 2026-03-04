@@ -50,10 +50,18 @@ public class FriendController {
             Authentication authentication
     ) {
         validateAuth(authentication);
-
         friendService.sendFriendRequest(id, authentication.getName());
-
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelRequest(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        validateAuth(authentication);
+        friendService.cancelOutgoingRequest(id, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/accept/{id}")
@@ -62,9 +70,7 @@ public class FriendController {
             Authentication authentication
     ) {
         validateAuth(authentication);
-
         friendService.acceptFriendRequest(id, authentication.getName());
-
         return ResponseEntity.ok().build();
     }
 

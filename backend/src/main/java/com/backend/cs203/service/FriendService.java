@@ -112,6 +112,35 @@ public class FriendService {
     }
 
     @Transactional
+    public void cancelOutgoingRequest(Integer targetUserId, String currentUsername) {
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+
+        Friendship friendship = friendshipRepository
+                .findExistingFriendship(currentUser.getId(), targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Request not found"));
+
+        if (!friendship.getUser1().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Not your outgoing request"
+            );
+        }
+
+        if (friendship.getStatus() != FriendshipStatus.pending) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot cancel confirmed friendship"
+            );
+        }
+
+        friendshipRepository.delete(friendship);
+    }
+
+    @Transactional
     public void acceptFriendRequest(Integer requesterId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
