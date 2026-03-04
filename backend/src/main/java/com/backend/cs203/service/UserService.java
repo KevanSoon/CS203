@@ -188,7 +188,7 @@ public class UserService {
             }
 
             //upload new image and store url path
-            String newPath = supabaseStorageService.uploadFile("" + user.getId(), profileImage);
+            String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
             user.setProfilePictureUrl(newPath);
         }
 

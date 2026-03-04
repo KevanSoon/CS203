@@ -10,6 +10,7 @@ import com.backend.cs203.dto.chapter.ChapterDTO;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
+import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.quiz.QuizDTO;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
@@ -27,18 +28,40 @@ public class LessonService {
     private final ChapterRepository chapterRepository;
     private final CardRepository cardRepository;
     private final QuizRepository quizRepository;
+    private final SupabaseStorageService supabaseStorageService;
 
-    public List<LessonSummaryDTO> getAllLessons() {
-        return lessonRepository.findAllLessons();
+    public List<LessonSummaryResponse> getAllLessons() {
+        return lessonRepository.findAllLessons().stream()
+                .map(this::toResponseWithSignedUrl)
+                .collect(Collectors.toList());
     }
-    public List<LessonSummaryDTO> getUserCreatedLessons(int id) {
-        return lessonRepository.findUserCreatedLessons(id);
+    public List<LessonSummaryResponse> getUserCreatedLessons(int id) {
+        return lessonRepository.findUserCreatedLessons(id).stream()
+                .map(this::toResponseWithSignedUrl)
+                .collect(Collectors.toList());
     }
     public List<LessonApplicationDTO> getAllLessonApplications() {
         return lessonRepository.findAllLessonApplications();
     }
-    public List<LessonSummaryDTO> getPendingLessonApplications() {
-        return lessonRepository.findAllPendingLessonApplications();
+    public List<LessonSummaryResponse> getPendingLessonApplications() {
+        return lessonRepository.findAllPendingLessonApplications().stream()
+                .map(this::toResponseWithSignedUrl)
+                .collect(Collectors.toList());
+    }
+
+    private LessonSummaryResponse toResponseWithSignedUrl(LessonSummaryDTO dto) {
+        String picUrl = dto.getLessonPictureUrl();
+        String signedUrl = (picUrl != null)
+                ? supabaseStorageService.getSignedUrl(picUrl, 3600)
+                : null;
+        return new LessonSummaryResponse(
+                dto.getTitle(),
+                dto.getDescription(),
+                dto.getCreatedBy(),
+                dto.getCreatedAt(),
+                dto.getTags(),
+                signedUrl
+        );
     }
 
     public LessonPageDTO getLessonPage(String lessonTitle) {

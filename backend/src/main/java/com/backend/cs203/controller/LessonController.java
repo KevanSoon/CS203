@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
-import com.backend.cs203.dto.lesson.LessonSummaryDTO;
+import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
@@ -26,13 +26,13 @@ public class LessonController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/")
-    public ResponseEntity<List<LessonSummaryDTO>> getAllAvailableLessons() {
+    public ResponseEntity<List<LessonSummaryResponse>> getAllAvailableLessons() {
             return ResponseEntity.ok(lessonService.getAllLessons());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user-lessons/")
-    public ResponseEntity<List<LessonSummaryDTO>> getUserCreatedLessons(Authentication authentication) {  
+    public ResponseEntity<List<LessonSummaryResponse>> getUserCreatedLessons(Authentication authentication) {  
             String username = authentication.getName();
             User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
@@ -47,7 +47,7 @@ public class LessonController {
 
     @PreAuthorize("hasRole('ROOT')")
     @GetMapping("/applications/pending")
-    public ResponseEntity<List<LessonSummaryDTO>> getPendingLessonApplications() {
+    public ResponseEntity<List<LessonSummaryResponse>> getPendingLessonApplications() {
             return ResponseEntity.ok(lessonService.getPendingLessonApplications());
     }
 
