@@ -96,7 +96,6 @@ export default function LessonCard({
             )}
           </div>
 
-          {/* Tags (display only) */}
           {tags.length > 0 &&
             (() => {
               const { visible, remaining } = getVisibleTags(tags);
@@ -139,7 +138,6 @@ export default function LessonCard({
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div
           className="

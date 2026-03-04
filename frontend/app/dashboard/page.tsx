@@ -11,7 +11,7 @@ interface Lesson {
   description: string;
   createdBy: string;
   createdAt: string;
-  tags?: string; 
+  tags?: string; // comma-separated
 }
 
 function parseTags(tags?: string): string[] {
@@ -31,8 +31,11 @@ export default function DashboardPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // user input (tag search text)
-  const [tagQuery, setTagQuery] = useState("");
+  // input text
+  const [query, setQuery] = useState("");
+
+  // selected tag chips
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -48,22 +51,38 @@ export default function DashboardPage() {
     fetchLessons();
   }, []);
 
-  // Filter logic:
-  // - if tagQuery empty: show all
-  // - else: show lessons where ANY tag includes the query (case-insensitive)
+  const addTag = (tag: string) => {
+    const cleaned = tag.trim();
+    if (!cleaned) return;
+
+    // prevent duplicates (case-insensitive)
+    const exists = selectedTags.some((t) => normalize(t) === normalize(cleaned));
+    if (exists) return;
+
+    setSelectedTags((prev) => [...prev, cleaned]);
+  };
+
+  const removeTag = (tag: string) => {
+    setSelectedTags((prev) => prev.filter((t) => t !== tag));
+  };
+
+  const clearAll = () => setSelectedTags([]);
+
+  // Filtering: AND logic (lesson must contain ALL selected tags)
   const filteredLessons = useMemo(() => {
-    const q = normalize(tagQuery);
-    if (!q) return lessons;
+    if (selectedTags.length === 0) return lessons;
+
+    const selectedNorm = selectedTags.map(normalize);
 
     return lessons.filter((lesson) => {
-      const tagsArr = parseTags(lesson.tags).map(normalize);
-      return tagsArr.some((t) => t.includes(q));
+      const lessonTags = parseTags(lesson.tags).map(normalize);
+
+      // AND condition:
+      return selectedNorm.every((sel) => lessonTags.includes(sel));
     });
-  }, [lessons, tagQuery]);
+  }, [lessons, selectedTags]);
 
-  const clearFilter = () => setTagQuery("");
-
-  const isFiltering = tagQuery.trim().length > 0;
+  const isFiltering = selectedTags.length > 0;
 
   return (
     <div className="flex w-full bg-background text-foreground">
@@ -77,32 +96,24 @@ export default function DashboardPage() {
           Enrolled & Available Courses
         </p>
 
-        {/* ✅ Tag search bar (no suggestions) */}
         <TagFilterSearch
-          value={tagQuery}
-          onChange={setTagQuery}
-          onClear={clearFilter}
-          placeholder="filter by tag (case insensitive)"
+          query={query}
+          setQuery={setQuery}
+          selectedTags={selectedTags}
+          addTag={addTag}
+          removeTag={removeTag}
+          clearAll={clearAll}
         />
-
-        {isFiltering && (
-          <div className="mt-2">
-            <span className="text-xs px-3 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">
-              Filtering: {tagQuery.trim()}
-            </span>
-          </div>
-        )}
 
         {error && <p className="text-red-500 mt-6">{error}</p>}
 
-        {/* ✅ No results for filter */}
+        {/* No results */}
         {!error && isFiltering && filteredLessons.length === 0 && (
           <p className="text-muted-foreground mt-6">
             No lessons found for this tag
           </p>
         )}
 
-        {/* GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {filteredLessons.map((lesson, i) => (
             <LessonCard
@@ -117,7 +128,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* No lessons at all */}
         {lessons.length === 0 && !error && (
           <p className="text-muted-foreground mt-6">
             No courses available yet.
