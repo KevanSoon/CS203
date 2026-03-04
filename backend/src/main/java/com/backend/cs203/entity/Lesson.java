@@ -33,6 +33,9 @@ public class Lesson {
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
 
+    @Column(name = "lesson_picture_url")
+    private String lessonPictureUrl;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
