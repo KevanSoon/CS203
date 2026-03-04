@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -23,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
+import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
@@ -48,6 +48,9 @@ class LessonServiceTest {
     @Mock
     private QuizRepository quizRepository;
 
+    @Mock
+    private SupabaseStorageService supabaseStorageService;
+
     @InjectMocks
     private LessonService lessonService;
 
@@ -58,10 +61,9 @@ class LessonServiceTest {
         LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
         when(lessonRepository.findAllLessons()).thenReturn(List.of(dto));
 
-        List<LessonSummaryDTO> result = lessonService.getAllLessons();
+        List<LessonSummaryResponse> result = lessonService.getAllLessons();
 
         assertEquals(1, result.size());
-        assertSame(dto, result.get(0));
         verify(lessonRepository).findAllLessons();
     }
 
@@ -69,7 +71,7 @@ class LessonServiceTest {
     void getAllLessons_returnsEmptyListWhenNoLessons() {
         when(lessonRepository.findAllLessons()).thenReturn(Collections.emptyList());
 
-        List<LessonSummaryDTO> result = lessonService.getAllLessons();
+        List<LessonSummaryResponse> result = lessonService.getAllLessons();
 
         assertTrue(result.isEmpty());
     }
@@ -81,7 +83,7 @@ class LessonServiceTest {
         LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
         when(lessonRepository.findUserCreatedLessons(1)).thenReturn(List.of(dto));
 
-        List<LessonSummaryDTO> result = lessonService.getUserCreatedLessons(1);
+        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(1);
 
         assertEquals(1, result.size());
         verify(lessonRepository).findUserCreatedLessons(1);
@@ -91,7 +93,7 @@ class LessonServiceTest {
     void getUserCreatedLessons_returnsEmptyForUserWithNoLessons() {
         when(lessonRepository.findUserCreatedLessons(999)).thenReturn(Collections.emptyList());
 
-        List<LessonSummaryDTO> result = lessonService.getUserCreatedLessons(999);
+        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(999);
 
         assertTrue(result.isEmpty());
     }
@@ -116,7 +118,7 @@ class LessonServiceTest {
         LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
         when(lessonRepository.findAllPendingLessonApplications()).thenReturn(List.of(dto));
 
-        List<LessonSummaryDTO> result = lessonService.getPendingLessonApplications();
+        List<LessonSummaryResponse> result = lessonService.getPendingLessonApplications();
 
         assertEquals(1, result.size());
         verify(lessonRepository).findAllPendingLessonApplications();
