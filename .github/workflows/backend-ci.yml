@@ -94,6 +94,9 @@ jobs:
           DB_USER: root
           DB_PASSWORD: testpass
           JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hmac-sha256
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_SERVICE_TOKEN: ci-placeholder
+          SUPABASE_STORAGE_BUCKET: ci-placeholder
 
       - name: Upload test results
         if: always()
