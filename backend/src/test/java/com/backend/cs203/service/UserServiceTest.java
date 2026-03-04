@@ -35,6 +35,9 @@ import com.backend.cs203.repository.UserRepository;
 class UserServiceTest {
 
     @Mock
+    private SupabaseStorageService supabaseStorageService;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -227,7 +230,7 @@ class UserServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UpdateProfileRequest request = new UpdateProfileRequest("new@example.com", null);
+        UpdateProfileRequest request = new UpdateProfileRequest("new@example.com", null, null);
         UserResponse result = userService.updateMyProfile(request);
 
         assertEquals("new@example.com", result.getEmail());
@@ -247,7 +250,7 @@ class UserServiceTest {
         when(passwordEncoder.encode("NewPassword1")).thenReturn("newEncoded");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UpdateProfileRequest request = new UpdateProfileRequest("test@example.com", "NewPassword1");
+        UpdateProfileRequest request = new UpdateProfileRequest("test@example.com", "NewPassword1", null);
         userService.updateMyProfile(request);
 
         assertEquals("newEncoded", user.getPassword());
@@ -260,7 +263,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        UpdateProfileRequest request = new UpdateProfileRequest("", null);
+        UpdateProfileRequest request = new UpdateProfileRequest("", null, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> userService.updateMyProfile(request));
@@ -274,7 +277,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        UpdateProfileRequest request = new UpdateProfileRequest("not-an-email", null);
+        UpdateProfileRequest request = new UpdateProfileRequest("not-an-email", null, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> userService.updateMyProfile(request));
@@ -288,7 +291,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        UpdateProfileRequest request = new UpdateProfileRequest("test@example.com", "Ab1");
+        UpdateProfileRequest request = new UpdateProfileRequest("test@example.com", "Ab1", null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> userService.updateMyProfile(request));

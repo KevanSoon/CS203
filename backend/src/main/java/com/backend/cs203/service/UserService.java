@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
@@ -22,14 +23,13 @@ import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private final SupabaseStorageService supabaseStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -170,6 +170,24 @@ public class UserService {
             validatePassword(password);
             user.setPassword(passwordEncoder.encode(password));
         }
+
+        // ✅ profile image (optional)
+        MultipartFile profileImage = request.getProfileImage();
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String existingUrl = user.getProfilePictureUrl();
+
+            //check if there is image url in database
+            if (existingUrl != null) {
+                //delete file from supabase storage
+                supabaseStorageService.deleteFile(existingUrl);
+            }
+
+            //upload new image and store url path
+            String newPath = supabaseStorageService.uploadFile("" + user.getId(), profileImage);
+            user.setProfilePictureUrl(newPath);
+        }
+
+
 
         User saved = userRepository.save(user);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
