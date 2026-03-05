@@ -11,6 +11,7 @@ interface Lesson {
   createdBy: string;
   createdAt: string;
   tags?: string; // comma-separated string from backend GROUP_CONCAT
+  lessonPictureUrl?: string;
 }
 
 export default function DashboardPage() {
@@ -53,7 +54,7 @@ export default function DashboardPage() {
               title={lesson.title}
               description={lesson.description}
               // image={`https://source.unsplash.com/random/400x300?sig=${i}`}
-              image={`/images/questionmark.jpg`}
+              image={lesson.lessonPictureUrl || `/images/questionmark.jpg`}
               progress={0}
               rating={3}
               tags={lesson.tags ? lesson.tags.split(",").map((t) => t.trim()) : []}
