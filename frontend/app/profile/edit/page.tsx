@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { PencilLine, Upload } from "lucide-react";
+import toast from "react-hot-toast";
 
 const BACKEND_PUBLIC_BASE = "http://localhost:8080";
 
@@ -178,7 +179,7 @@ export default function EditProfilePage() {
       if (!res.ok) {
         throw new Error(data?.message || data?.error || "Failed to update profile");
       }
-
+      toast.success("Update Successful")
       router.push("/profile");
 
     } catch (e: any) {
