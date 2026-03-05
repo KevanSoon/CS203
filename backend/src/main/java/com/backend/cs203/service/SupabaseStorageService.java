@@ -31,10 +31,7 @@ public class SupabaseStorageService {
                 .build();
     }
 
-    /**
-     * Uploads a file to the private bucket under the user's folder.
-     * Returns the file path in storage (NOT a URL, since bucket is private).
-     */
+    //upload image file to supabase private bucket, returns file path for storing in DB
     public String uploadFile(String folderPath, MultipartFile file) {
         validateFile(file);
 
@@ -60,11 +57,9 @@ public class SupabaseStorageService {
         }
     }
 
-    /**
-     * Generates a signed URL for a file in the private bucket.
-     * @param filePath  the path stored from uploadFile()
-     * @param expiresIn expiry time in seconds
-     */
+    // get signedurl of image file from private supabase bucket, 
+    // filePath is path stored from uploadfile 
+    // expiresIn is expiry time of url in seconds
     public String getSignedUrl(String filePath, int expiresIn) {
         try {
             SignedUrlResponse response = restClient.post()
@@ -87,6 +82,20 @@ public class SupabaseStorageService {
         }
     }
 
+    //delete image file from supabase bucket if there is existing
+    public void deleteFile(String filePath) {
+        try {
+            restClient.delete()
+                    .uri("/object/" + bucketName + "/" + filePath)
+                    .retrieve()
+                    .toBodilessEntity();
+        }
+        catch (Exception e) {
+             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete from storage");
+        }
+    }
+
+    //file validation
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
@@ -100,6 +109,7 @@ public class SupabaseStorageService {
         }
     }
 
+    //file extension
     private String getExtension(String filename) {
         if (filename == null || !filename.contains(".")) {
             return ".png";

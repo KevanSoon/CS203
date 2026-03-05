@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
-import com.backend.cs203.dto.lesson.LessonSummaryDTO;
+import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
@@ -47,7 +47,7 @@ class LessonControllerTest {
 
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
-        LessonSummaryDTO dto = createSummaryDTO("Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java");
+        LessonSummaryResponse dto = new LessonSummaryResponse("Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null);
         when(lessonService.getAllLessons()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/lesson/").with(user("testuser").roles("USER")))
@@ -199,17 +199,6 @@ class LessonControllerTest {
 
     // ===== Helper methods =====
 
-    private LessonSummaryDTO createSummaryDTO(String title, String description, String createdBy,
-                                               LocalDateTime createdAt, String tags) {
-        return new LessonSummaryDTO() {
-            @Override public String getTitle() { return title; }
-            @Override public String getDescription() { return description; }
-            @Override public String getCreatedBy() { return createdBy; }
-            @Override public LocalDateTime getCreatedAt() { return createdAt; }
-            @Override public String getTags() { return tags; }
-        };
-    }
-
     private LessonApplicationDTO createApplicationDTO(String title, String description, String createdBy,
                                                        LocalDateTime createdAt, String tags, String status) {
         return new LessonApplicationDTO() {
@@ -218,6 +207,7 @@ class LessonControllerTest {
             @Override public String getCreatedBy() { return createdBy; }
             @Override public LocalDateTime getCreatedAt() { return createdAt; }
             @Override public String getTags() { return tags; }
+            @Override public String getLessonPictureUrl() { return null; }
             @Override public String getStatus() { return status; }
         };
     }
