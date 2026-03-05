@@ -169,6 +169,25 @@ public class UserService {
 
         user.setEmail(email);
 
+        // ✅ validate username 
+        String newUsername = request.getUsername();
+        if (newUsername != null && !newUsername.isBlank()) {
+            newUsername = newUsername.trim();
+            if (newUsername.length() < 3) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username too short (min 3)");
+            }
+            if (newUsername.length() > 30) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username too long (max 30)");
+            }
+            if (!newUsername.matches("^[a-zA-Z0-9_]+$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username can only contain letters, numbers, underscores");
+            }
+            if (!newUsername.equals(user.getUsername()) && userRepository.existsByUsername(newUsername)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
+            }
+            user.setUsername(newUsername);
+        }
+
         // ✅ password optional
         String password = request.getPassword();
         if (password != null && !password.isBlank()) {
@@ -191,8 +210,6 @@ public class UserService {
             String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
             user.setProfilePictureUrl(newPath);
         }
-
-
 
         User saved = userRepository.save(user);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
@@ -237,5 +254,18 @@ public class UserService {
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
+    }
+
+    public boolean checkUsernameAvailable(String username) {
+        if (username == null || username.isBlank()) return false;
+        username = username.trim();
+
+        // still allow current user's own username to pass as "available"
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            if (username.equals(auth.getName())) return true;
+        }
+
+        return !userRepository.existsByUsername(username);
     }
 }

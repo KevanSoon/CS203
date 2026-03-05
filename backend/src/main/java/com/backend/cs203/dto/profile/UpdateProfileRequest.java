@@ -12,6 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateProfileRequest {
+    private String username;
     private String email;
     private String password;
     private MultipartFile profileImage;
