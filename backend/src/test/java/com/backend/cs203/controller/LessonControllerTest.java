@@ -48,7 +48,7 @@ class LessonControllerTest {
 
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
-        LessonSummaryResponse dto = new LessonSummaryResponse("Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null);
+        LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null);
         when(lessonService.getAllLessons()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/lesson/").with(user("testuser").roles("USER")))
@@ -75,7 +75,6 @@ class LessonControllerTest {
 
     @Test
     void getAllAvailableLessons_withAdminRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('USER')") denies ADMIN role
         mockMvc.perform(get("/api/lesson/").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isInternalServerError());
     }
@@ -95,7 +94,6 @@ class LessonControllerTest {
 
     @Test
     void getUserCreatedLessons_withUserRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('ADMIN')") denies USER role
         mockMvc.perform(get("/api/lesson/user-lessons/").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
@@ -123,14 +121,12 @@ class LessonControllerTest {
 
     @Test
     void getAllLessonApplications_withUserRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('ROOT')") denies USER role
         mockMvc.perform(get("/api/lesson/applications/").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
 
     @Test
     void getAllLessonApplications_withAdminRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('ROOT')") denies ADMIN role
         mockMvc.perform(get("/api/lesson/applications/").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isInternalServerError());
     }
@@ -148,7 +144,6 @@ class LessonControllerTest {
 
     @Test
     void getPendingApplications_withAdminRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('ROOT')") denies ADMIN role
         mockMvc.perform(get("/api/lesson/applications/pending").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isInternalServerError());
     }
@@ -176,8 +171,6 @@ class LessonControllerTest {
 
     @Test
     void getLessonPage_missingTitleParam_returns500() throws Exception {
-        // MissingServletRequestParameterException is caught by GlobalExceptionHandler's
-        // catch-all @ExceptionHandler(Exception.class), which returns 500
         mockMvc.perform(get("/api/lesson/page").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
@@ -200,27 +193,26 @@ class LessonControllerTest {
 
     // ===== GET /api/lesson/user-applications/ (requires ADMIN role) =====
 
-@Test
-void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
-    User user = User.builder().id(1).username("adminuser").build();
-    LessonApplicationDTO dto = createApplicationDTO(
-            "Pending Lesson", "A lesson", "adminuser", LocalDateTime.now(), "java", "pending");
+    @Test
+    void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
+        User user = User.builder().id(1).username("adminuser").build();
+        LessonApplicationDTO dto = createApplicationDTO(
+                "Pending Lesson", "A lesson", "adminuser", LocalDateTime.now(), "java", "pending");
 
-    when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
-    when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+        when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
 
-    mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].title").value("Pending Lesson"))
-            .andExpect(jsonPath("$[0].status").value("pending"));
+        mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Pending Lesson"))
+                .andExpect(jsonPath("$[0].status").value("pending"));
 
-    verify(lessonService).getUserCreatedLessonApplications(1);
-    verify(lessonService, never()).getUserCreatedLessons(anyInt());
-}
+        verify(lessonService).getUserCreatedLessonApplications(1);
+        verify(lessonService, never()).getUserCreatedLessons(anyInt());
+    }
 
     @Test
     void getUserCreatedLessonApplications_withUserRole_deniesAccess() throws Exception {
-        // @PreAuthorize("hasRole('ADMIN')") denies USER role
         mockMvc.perform(get("/api/lesson/user-applications/").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
@@ -240,6 +232,7 @@ void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exceptio
     private LessonApplicationDTO createApplicationDTO(String title, String description, String createdBy,
                                                        LocalDateTime createdAt, String tags, String status) {
         return new LessonApplicationDTO() {
+            @Override public Integer getId() { return 1; }
             @Override public String getTitle() { return title; }
             @Override public String getDescription() { return description; }
             @Override public String getCreatedBy() { return createdBy; }

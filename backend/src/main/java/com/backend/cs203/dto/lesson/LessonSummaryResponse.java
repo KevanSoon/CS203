@@ -8,10 +8,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class LessonSummaryResponse {
-    private String title;
-    private String description;
-    private String createdBy;
-    private LocalDateTime createdAt;
-    private String tags;
-    private String lessonPictureUrl;
+    private final Integer id;
+    private final String title;
+    private final String description;
+    private final String createdBy;
+    private final LocalDateTime createdAt;
+    private final String tags;
+    private final String lessonPictureUrl;
 }
