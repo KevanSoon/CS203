@@ -30,6 +30,12 @@ public class LessonController {
             return ResponseEntity.ok(lessonService.getAllLessons());
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/page")
+    public ResponseEntity<LessonPageDTO> getLessonPage(@RequestParam String title) {
+            return ResponseEntity.ok(lessonService.getLessonPage(title));
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user-lessons/")
     public ResponseEntity<List<LessonSummaryResponse>> getUserCreatedLessons(Authentication authentication) {  
@@ -38,6 +44,15 @@ public class LessonController {
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
             return ResponseEntity.ok(lessonService.getUserCreatedLessons(user.getId()));
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/user-applications/")
+    public ResponseEntity<List<LessonSummaryResponse>> getUserCreatedLessonApplications(Authentication authentication) {  
+            String username = authentication.getName();
+            User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+            return ResponseEntity.ok(lessonService.getUserCreatedLessons(user.getId()));
+    }   
 
     @PreAuthorize("hasRole('ROOT')")
     @GetMapping("/applications/")
@@ -49,11 +64,5 @@ public class LessonController {
     @GetMapping("/applications/pending")
     public ResponseEntity<List<LessonSummaryResponse>> getPendingLessonApplications() {
             return ResponseEntity.ok(lessonService.getPendingLessonApplications());
-    }
-
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/page")
-    public ResponseEntity<LessonPageDTO> getLessonPage(@RequestParam String title) {
-            return ResponseEntity.ok(lessonService.getLessonPage(title));
     }
 }

@@ -48,6 +48,9 @@ public class LessonService {
                 .map(this::toResponseWithSignedUrl)
                 .collect(Collectors.toList());
     }
+    public List<LessonApplicationDTO> getUserCreatedLessonApplications(int id) {
+        return lessonRepository.FindUserCreatedLessonApplications(id);
+    }
 
     private LessonSummaryResponse toResponseWithSignedUrl(LessonSummaryDTO dto) {
         String picUrl = dto.getLessonPictureUrl();
