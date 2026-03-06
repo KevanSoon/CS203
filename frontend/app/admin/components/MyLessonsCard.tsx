@@ -13,7 +13,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 	const [appFilter, setAppFilter] = useState<FilterValue>("pending");
 
 	function renderPendingTag(status: string) {
-		const isPending = status === "pending";
+		const isPending = status.toLowerCase() === "pending";
 		return (
 			<span className={`ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${isPending ? "bg-warning-light text-warning-dark" : "bg-destructive-light text-destructive-dark"}`}>
 				<span className={`h-1.5 w-1.5 rounded-full ${isPending ? "bg-warning" : "bg-destructive"}`} />
@@ -57,7 +57,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 											<div className="flex items-start justify-between gap-2">
 												<div className="flex-1">
 													<p className="text-sm font-semibold text-foreground mb-1">
-														{record.title} {title === "Applications" ? renderPendingTag(record.status) : ""}
+														{record.title} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
 													</p>
 												</div>
 												{record.status === "pending" ? (
