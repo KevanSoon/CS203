@@ -144,23 +144,45 @@ public class FriendService {
     public void acceptFriendRequest(Integer requesterId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Friendship friendship = friendshipRepository
-            .findExistingFriendship(requesterId, currentUser.getId())
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Friend request not found"
-            ));
+                .findExistingFriendship(requesterId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Friend request not found"
+                ));
 
         if (!friendship.getUser2().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Not authorized to accept this request"
+                    HttpStatus.BAD_REQUEST,
+                    "You are not the recipient of this request"
+            );
+        }
+
+        if (friendship.getStatus() != FriendshipStatus.pending) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Request already handled"
             );
         }
 
         friendship.setStatus(FriendshipStatus.confirmed);
     }
 
+    @Transactional
+    public void rejectFriendRequest(Integer requesterId, String currentUsername) {
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Friendship friendship = friendshipRepository
+                .findIncomingRequest(requesterId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Friend request not found"
+                ));
+
+        friendshipRepository.delete(friendship);
+    }
 }

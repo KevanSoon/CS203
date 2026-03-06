@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 type Props = {
   targetUserId: number;
-  initialSent: boolean; // required now, parent drives state
+  initialSent: boolean; 
   onSuccess: () => Promise<void>; 
 };
 

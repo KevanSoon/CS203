@@ -79,4 +79,16 @@ public class FriendController {
             throw new RuntimeException("Unauthorized");
         }
     }
+
+    @PostMapping("/reject/{id}")
+    public ResponseEntity<Void> rejectFriend(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        validateAuth(authentication);
+
+        friendService.rejectFriendRequest(id, authentication.getName());
+
+        return ResponseEntity.noContent().build();
+    }
 }

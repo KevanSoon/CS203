@@ -19,6 +19,7 @@ import {
 import { Sidebar } from "@/app/components/Sidebar";
 import AddFriendButton from "@/app/components/AddFriendButton";
 import OutgoingFriendCard from "@/app/components/OutgoingFriendCard";
+import IncomingFriendCard from "@/app/components/IncomingFriendCard";
 
 type Profile = {
   username: string;
@@ -180,14 +181,23 @@ export default function ProfilePage() {
   };
 
   const handleAcceptFriend = async (requesterId: number) => {
+    const acceptedUser = pendingFriends.find(f => f.id === requesterId);
+    if (!acceptedUser) return;
+
+    setPendingFriends(prev => prev.filter(f => f.id !== requesterId));
+    setFriends(prev => [...prev, acceptedUser]);
+
     try {
-      const res = await fetch(`/api/friendship/accept/${requesterId}`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to accept request");
+      const res = await fetch(`/api/friendship/accept/${requesterId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) throw new Error();
       toast.success("Friend request accepted!");
-      await loadFriends();
-      await loadPending();
     } catch {
       toast.error("Failed to accept friend request");
+      await loadFriends();
+      await loadPending();
     }
   };
 
@@ -381,7 +391,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-                <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
+                <div className="mt-3 rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                       <Users size={20} className="text-[#6C63FF]" />
@@ -402,28 +412,16 @@ export default function ProfilePage() {
                       <p className="text-sm text-slate-500">No pending requests.</p>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        {pendingFriends.map((friend) => (
-                          <div
-                            key={friend.username}
-                            className="flex items-center justify-between rounded-2xl border border-[#6C63FF]/20 bg-[#F6F5FF] px-4 py-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white font-bold text-[#6C63FF]">
-                                {friend.username[0]?.toUpperCase()}
-                              </div>
-                              <p className="text-sm font-bold">
-                                {friend.username}
-                              </p>
-                            </div>
-
-                            <button
-                              onClick={() => handleAcceptFriend(friend.id)}
-                              className="rounded-xl bg-[#6C63FF] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-105"
-                            >
-                              Accept
-                            </button>
-                          </div>
-                        ))}
+                      {pendingFriends.map((friend) => (
+                        <IncomingFriendCard
+                          key={friend.id}
+                          friend={friend}
+                          onAccept={handleAcceptFriend}
+                          onReject={(id) =>
+                            setPendingFriends((prev) => prev.filter((f) => f.id !== id))
+                          }
+                        />
+                      ))}
                       </div>
                     )}
                   </div>

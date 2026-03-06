@@ -4,9 +4,6 @@ import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
-/**
- * Send Friend Request
- */
 export async function POST(
   req: NextRequest,
   context: { params: { id: string } }
