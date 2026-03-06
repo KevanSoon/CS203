@@ -47,11 +47,11 @@ public class LessonController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user-applications/")
-    public ResponseEntity<List<LessonSummaryResponse>> getUserCreatedLessonApplications(Authentication authentication) {  
+    public ResponseEntity<List<LessonApplicationDTO>> getUserCreatedLessonApplications(Authentication authentication) {  
             String username = authentication.getName();
             User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
-            return ResponseEntity.ok(lessonService.getUserCreatedLessons(user.getId()));
+            return ResponseEntity.ok(lessonService.getUserCreatedLessonApplications(user.getId()));
     }   
 
     @PreAuthorize("hasRole('ROOT')")
