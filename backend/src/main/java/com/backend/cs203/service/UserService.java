@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 
+    private final SupabaseStorageService supabaseStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -84,10 +86,15 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
         }
 
+        String profilePictureUrl = user.getProfilePictureUrl();
+        String signedUrl = (profilePictureUrl != null)
+                ? supabaseStorageService.getSignedUrl(profilePictureUrl, 3600)
+                : null;
+
         return new UserResponse(
             user.getUsername(),
             user.getEmail(),
-            user.getProfilePictureUrl()
+            signedUrl
         );
     }
 
@@ -168,6 +175,24 @@ public class UserService {
             validatePassword(password);
             user.setPassword(passwordEncoder.encode(password));
         }
+
+        // ✅ profile image (optional)
+        MultipartFile profileImage = request.getProfileImage();
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String existingUrl = user.getProfilePictureUrl();
+
+            //check if there is image url in database
+            if (existingUrl != null) {
+                //delete file from supabase storage
+                supabaseStorageService.deleteFile(existingUrl);
+            }
+
+            //upload new image and store url path
+            String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
+            user.setProfilePictureUrl(newPath);
+        }
+
+
 
         User saved = userRepository.save(user);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());

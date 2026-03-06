@@ -8,4 +8,5 @@ public interface LessonSummaryDTO {
     String getCreatedBy();
     LocalDateTime getCreatedAt();
     String getTags();
+    String getLessonPictureUrl();
 }

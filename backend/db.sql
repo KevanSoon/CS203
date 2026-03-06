@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS lesson (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   created_by_id INT NOT NULL,
+  lesson_picture_url VARCHAR(255),
   FOREIGN KEY (created_by_id) REFERENCES user(id)
 );
 
