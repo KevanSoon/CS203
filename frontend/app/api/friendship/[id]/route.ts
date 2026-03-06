@@ -9,9 +9,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { params } = context;
-    const resovlvedParams = await params;
-    const targetUserId = resovlvedParams.id;
+    const { id: targetUserId } = await context.params;
 
     if (!targetUserId) {
       return NextResponse.json(
@@ -59,9 +57,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { params } = context;
-    const resolvedParams = await params;
-    const targetUserId = resolvedParams.id;
+    const { id: targetUserId } = await context.params;
 
     if (!targetUserId) {
       return NextResponse.json(
