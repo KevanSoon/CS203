@@ -30,7 +30,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     @Query(value = SUMMARY + "FROM lesson l JOIN user u ON l.created_by_id = u.id LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL WHERE l.status = 'pending' AND l.deleted_at IS NULL GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url ORDER BY l.created_at DESC", nativeQuery = true)
     List<LessonSummaryDTO> findAllPendingLessonApplications();
 
-    @Query(value = SUMMARY + ", l.status AS status FROM lesson l JOIN user u ON l.created_by_id = u.id LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL WHERE l.status = 'pending' AND l.created_by_id = :userId AND l.deleted_at IS NULL GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.status, l.lesson_picture_url ORDER BY l.created_at DESC", nativeQuery = true)
+    @Query(value = SUMMARY + ", l.status AS status FROM lesson l JOIN user u ON l.created_by_id = u.id LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL WHERE l.status IN ('rejected','pending') AND l.created_by_id = :userId AND l.deleted_at IS NULL GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.status, l.lesson_picture_url ORDER BY l.created_at DESC", nativeQuery = true)
     List<LessonApplicationDTO> FindUserCreatedLessonApplications(@Param("userId") Integer userId);
 
     /** Returns the active tag names for a single lesson. */
