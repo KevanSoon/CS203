@@ -1,9 +1,13 @@
 import os
 import uuid
 from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph, MessagesState, START
+from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.store.postgres.aio import AsyncPostgresStore
+from langgraph.prebuilt import ToolNode, tools_condition
+from graph.tools import rag_search
+
+tools = [rag_search]
 
 DB_URI = os.getenv("SUPABASE_DB_URI", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "")
@@ -32,9 +36,15 @@ async def call_model(state: MessagesState, config, *, store):
     memory_info = "\n".join(m.value["data"] for m in memories) if memories else ""
 
     system_msg = (
-        "You are a helpful assistant. "
-        f"User info:\n{memory_info}" if memory_info else "You are a helpful assistant."
+        "You are a helpful assistant that explains Gen Alpha slang. "
+        "When a user asks about any Gen Alpha slang or internet lingo, "
+        "you MUST use the rag_search tool to search the knowledge base first. "
+        "Your answer MUST be based solely on the documents returned by rag_search. "
+        "Do NOT add definitions, examples, or explanations from your own training data. "
+        "If rag_search returns no relevant results, tell the user you could not find information on that term."
     )
+    if memory_info:
+        system_msg += f"\nUser info:\n{memory_info}"
 
     # Store every user message as a long-term memory
     last_msg = state["messages"][-1]
@@ -45,7 +55,7 @@ async def call_model(state: MessagesState, config, *, store):
             {"data": last_msg.content},
         )
 
-    model = _get_model()
+    model = _get_model().bind_tools(tools)
     response = await model.ainvoke(
         [{"role": "system", "content": system_msg}] + state["messages"]
     )
@@ -72,7 +82,10 @@ async def build_graph_with_memory():
 
     builder = StateGraph(MessagesState)
     builder.add_node("call_model", call_model)
+    builder.add_node("tools", ToolNode(tools))
     builder.add_edge(START, "call_model")
+    builder.add_conditional_edges("call_model", tools_condition)
+    builder.add_edge("tools", "call_model")
 
     graph = builder.compile(checkpointer=checkpointer, store=store)
 
