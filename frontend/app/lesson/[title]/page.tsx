@@ -7,6 +7,7 @@ import { FlippableCard } from "./components/FlippableCard";
 import { AIChatAssistant } from "./components/AIChatAssistant";
 import { MessageCircle } from "lucide-react";
 import { api } from "@/app/api/api";
+import { QuizCard } from "./components/QuizCard";
 
 // Backend DTO types
 interface CardDTO {
@@ -57,6 +58,7 @@ interface Node {
     front: string;
     back: string;
   };
+  quizData?: QuizDTO[];
 }
 
 function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
@@ -73,13 +75,14 @@ function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
         },
       }));
 
-    const quizNodes: Node[] = chapter.quizQuestions.map((quiz) => ({
-      id: quiz.id,
+    const quizNode: Node = {
+      id: chapter.id,
       type: "quiz" as const,
       status: "locked" as const,
-    }));
+      quizData: chapter.quizQuestions,
+    };
 
-    const allNodes = [...cardNodes, ...quizNodes];
+    const allNodes = [...cardNodes, quizNode];
 
     // First node starts as available
     if (allNodes.length > 0) {
@@ -237,11 +240,20 @@ export default function LessonRoadmapPage({
             </div>
 
             {/* Flippable Card Modal */}
-            {selectedNode && (
+            {selectedNode && selectedNode.type === "lesson" && (
               <FlippableCard
                 node={selectedNode}
                 onClose={() => setSelectedNode(null)}
                 onComplete={() => handleNodeComplete(selectedNode.id)}
+              />
+            )}
+            {/* Quiz Card Modal */}
+            {selectedNode && selectedNode.type === "quiz" && (
+              <QuizCard
+                node={selectedNode}
+                onClose={() => setSelectedNode(null)}
+                onComplete={() => handleNodeComplete(selectedNode.id)}
+                timeLimit={30}
               />
             )}
           </>
