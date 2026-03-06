@@ -1,5 +1,6 @@
 package com.backend.cs203.controller;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -195,6 +196,43 @@ class LessonControllerTest {
     void getLessonPage_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/lesson/page").param("title", "Test"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ===== GET /api/lesson/user-applications/ (requires ADMIN role) =====
+
+@Test
+void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
+    User user = User.builder().id(1).username("adminuser").build();
+    LessonApplicationDTO dto = createApplicationDTO(
+            "Pending Lesson", "A lesson", "adminuser", LocalDateTime.now(), "java", "pending");
+
+    when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+    when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
+
+    mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].title").value("Pending Lesson"))
+            .andExpect(jsonPath("$[0].status").value("pending"));
+
+    verify(lessonService).getUserCreatedLessonApplications(1);
+    verify(lessonService, never()).getUserCreatedLessons(anyInt());
+}
+
+    @Test
+    void getUserCreatedLessonApplications_withUserRole_deniesAccess() throws Exception {
+        // @PreAuthorize("hasRole('ADMIN')") denies USER role
+        mockMvc.perform(get("/api/lesson/user-applications/").with(user("testuser").roles("USER")))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void getUserCreatedLessonApplications_userNotFound_returns500() throws Exception {
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().is5xxServerError());
+
+        verify(lessonService, never()).getUserCreatedLessonApplications(anyInt());
     }
 
     // ===== Helper methods =====

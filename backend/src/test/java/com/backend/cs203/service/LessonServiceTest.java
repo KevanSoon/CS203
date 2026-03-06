@@ -124,6 +124,29 @@ class LessonServiceTest {
         verify(lessonRepository).findAllPendingLessonApplications();
     }
 
+    // ===== getUserCreatedLessonApplications =====
+
+    @Test
+    void getUserCreatedLessonApplications_returnsApplicationsForUser() {
+        LessonApplicationDTO dto = mock(LessonApplicationDTO.class);
+        when(lessonRepository.FindUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
+
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessonApplications(1);
+
+        assertEquals(1, result.size());
+        verify(lessonRepository).FindUserCreatedLessonApplications(1);
+    }
+
+    @Test
+    void getUserCreatedLessonApplications_returnsEmptyForUserWithNoPendingApplications() {
+        when(lessonRepository.FindUserCreatedLessonApplications(999)).thenReturn(Collections.emptyList());
+
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessonApplications(999);
+
+        assertTrue(result.isEmpty());
+        verify(lessonRepository).FindUserCreatedLessonApplications(999);
+    }
+
     // ===== getLessonPage =====
 
     @Test
