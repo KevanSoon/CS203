@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 
 export async function POST(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { params } = context;
