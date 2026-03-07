@@ -3,8 +3,12 @@ package com.backend.cs203.controller;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -18,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.report.ReportDTO;
+import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
@@ -38,6 +43,63 @@ class ReportControllerTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+    // ===== GET /api/report/admin =====
+
+    @Test
+    void getUserCreatedLessonReports_adminAuthenticated_returns200() throws Exception {
+        User userEntity = User.builder().id(7).username("adminuser").build();
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(userEntity));
+        when(reportService.getUserCreatedLessonReports(7)).thenReturn(List.of(sampleDto(1, "Broken Card")));
+
+        mockMvc.perform(get("/api/report/admin").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Broken Card"))
+                .andExpect(jsonPath("$[0].status").value("reported"))
+                .andExpect(jsonPath("$[0].type").value("high"))
+                .andExpect(jsonPath("$[0].reportedBy").value("alice"))
+                .andExpect(jsonPath("$[0].lessonTitle").value("Java Basics"))
+                .andExpect(jsonPath("$[0].chapterTitle").value("Variables"));
+
+        verify(reportService).getUserCreatedLessonReports(7);
+    }
+
+    @Test
+    void getUserCreatedLessonReports_noReports_returnsEmptyList() throws Exception {
+        User userEntity = User.builder().id(7).username("adminuser").build();
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(userEntity));
+        when(reportService.getUserCreatedLessonReports(7)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/report/admin").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+
+        verify(reportService).getUserCreatedLessonReports(7);
+    }
+
+    @Test
+    void getUserCreatedLessonReports_userNotFound_returns500() throws Exception {
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/report/admin").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().is5xxServerError());
+
+        verify(reportService, never()).getUserCreatedLessonReports(anyInt());
+    }
+
+    @Test
+    void getUserCreatedLessonReports_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/report/admin"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getUserCreatedLessonReports_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/report/admin").with(user("user1").roles("USER")))
+                .andExpect(status().isInternalServerError());
+    }
 
     // ===== GET /api/report/root =====
 
@@ -97,6 +159,9 @@ class ReportControllerTest {
 
             @Override
             public String getChapterTitle() { return "Variables"; }
+
+            @Override
+            public String getRemarks() { return "Needs review"; }
 
             @Override
             public LocalDateTime getCreatedAt() { return LocalDateTime.of(2026, 3, 6, 10, 0); }

@@ -8,12 +8,29 @@ import { StatsGrid } from "./components/StatsGrid";
 import { MyLessonsCard } from "./components/MyLessonsCard";
 import { FeedbacksCard } from "./components/FeedbacksCard";
 
+type ReportStatus = "reported" | "unresolved" | "closed";
+type ReportType = "critical" | "high" | "medium" | "low";
+export interface Report {
+  id: number;
+  title: string;
+  description: string;
+  status: ReportStatus;
+  type: ReportType;
+  reportedBy: string;
+  lessonTitle: string;
+  chapterTitle?: string | null;
+  remarks?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Lesson {
 	createdAt: string;
 	title: string;
 	description: string;
 	tags?: string[] | string | null;
   status?: string | null;
+  reports?: Array<Object>;
 }
 
 export interface LessonContentProps {
@@ -24,6 +41,7 @@ export interface LessonContentProps {
 export const AdminLessonPage = () => {
 	const [selected, setSelected] = useState("Manage Lessons");
 	const [lessons, setLessons] = useState([]);
+	const [reports, setReports] = useState([]);
 	const [applications, setApplications] = useState([]);
 
 
@@ -33,9 +51,25 @@ export const AdminLessonPage = () => {
 				//calls route.ts
 				const lessonResult = await api.get("/api/lesson/user-lessons/");
 				const applicationsResult = await api.get("/api/lesson/user-applications/");
+				const reportResult = await api.get("/api/report/admin/")
 
-				setLessons(lessonResult.data);
+				const reportsByLesson = (reportResult.data ?? []).reduce(
+					(acc: Record<string, Report[]>, report: Report) => {
+					const key = report.lessonTitle;
+					if (!acc[key]) acc[key] = [];
+					acc[key].push(report);
+					return acc;
+					},
+					{}
+				);
+
+				const lessonsWithReports = (lessonResult.data ?? []).map((lesson: Lesson) => ({
+					...lesson,
+					reports: reportsByLesson[lesson.title] ?? [],
+				}));
+				setLessons(lessonsWithReports);
 				setApplications(applicationsResult.data);
+				setReports(reportResult.data);
 
 			} catch (err) {
 				console.error("Failed to fetch lessons", err);
