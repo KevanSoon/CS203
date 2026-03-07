@@ -39,6 +39,9 @@ public class Report {
 	@Column(nullable = false)
 	private ReportType type;
 
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String remarks;
+
 	@ManyToOne
 	@JoinColumn(name = "reported_by", nullable = false)
 	private User reportedBy;
