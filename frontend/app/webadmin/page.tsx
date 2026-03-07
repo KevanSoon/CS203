@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import { api } from "@/app/api/api";
 import { StatsCards } from "./components/stats-cards";
 import { LessonsTable } from "./components/lessons-table";
@@ -38,17 +39,17 @@ function getLessonStats(lessons: Lesson[]): LessonStats {
 }
 
 export interface Report {
-  id: number;
-  title: string;
-  description: string;
-  status: ReportStatus;
-  type: ReportType;
-  reportedBy: string;
-  lessonTitle: string;
-  chapterTitle?: string | null;
-  remarks?: string | null;
-  createdAt: string;
-  updatedAt: string;
+	id: number;
+	title: string;
+	description: string;
+	status: ReportStatus;
+	type: ReportType;
+	reportedBy: string;
+	lessonTitle: string;
+	chapterTitle?: string | null;
+	remarks?: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export default function DashboardPage() {
@@ -57,6 +58,7 @@ export default function DashboardPage() {
 	const [reports, setReports] = useState<Report[]>([]);
 
 	const [loading, setLoading] = useState(true);
+	const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
 	useEffect(() => {
 		async function fetchLessons() {
@@ -66,8 +68,8 @@ export default function DashboardPage() {
 				const allLessons = [...pendingLessons, ...applicationsRes.data];
 				setLessons(allLessons);
 
-        const reportRes = await api.get("/api/report/root")
-        setReports(reportRes.data)
+				const reportRes = await api.get("/api/report/root");
+				setReports(reportRes.data);
 			} catch (err) {
 				console.error("Failed to fetch lessons:", err);
 				showToast("Failed to fetch lessons.", "error");
@@ -127,12 +129,11 @@ export default function DashboardPage() {
 						)
 					) : selected === "Manage Reports" ? (
 						<div className="py-4 text-muted-foreground">
-							<ReportsTable reports={reports} onCloseReport={()=>{}} onMarkRedirect={()=>{}} onSuspendLesson={()=>{}} />
+							<ReportsTable reports={reports} onCloseReport={() => {}} onMarkRedirect={() => {}} onSuspendLesson={() => {}} />
 						</div>
 					) : null}
 				</div>
 			</main>
-
 		</div>
 	);
 }

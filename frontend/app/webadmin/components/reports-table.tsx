@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Send, CheckCheck, Ban } from "lucide-react";
+
 import { Report } from "../page";
+import { SingleReportModal } from "./report-modal";
 
 type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
@@ -39,9 +42,9 @@ const severityRank: Record<ReportType, number> = {
 	medium: 2,
 	low: 1,
 };
-
 export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspendLesson }: ReportsTableProps) {
 	const [filter, setFilter] = useState<FilterValue>("reported");
+	const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
 	const filteredReports = useMemo(() => {
 		const base = filter === "all" ? reports : reports.filter((r) => r.status === filter);
@@ -65,10 +68,8 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspend
 	function renderUnresolvedRemarks(report: Report) {
 		return (
 			<>
-				<p className="mt-2 text-sm font-semibold text-foreground">Updates by Lesson Admin:</p>
-				{report.remarks ? <p className="text-sm text-muted-foreground">{report.remarks}</p> : <p className="text-sm text-muted-foreground">No updates yet</p>}
-				<p className="mt-2 text-xs text-muted-foreground">
-					Reported By: {report.reportedBy} · {new Date(report.createdAt).toLocaleString()}
+				<p className="mt-2 text-sm font-semibold text-foreground">
+					Updated by Lesson Admin: <span className={`font-normal ${report.remarks ? "text-success" : "text-destructive"}`}>{report.remarks ? "Yes" : "No"}</span>
 				</p>
 			</>
 		);
@@ -100,7 +101,7 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspend
 					</div>
 				) : (
 					filteredReports.map((report) => (
-						<div key={report.id} className="rounded-md border border-border px-3 py-3 shadow-sm transition-all hover:shadow-md">
+						<div key={report.id} className="rounded-md border border-border px-3 py-3 shadow-sm transition-all hover:shadow-md" onClick={() => setSelectedReport(report)}>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
 									<span className="text-sm font-semibold text-foreground">{report.title}</span>
@@ -108,8 +109,10 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspend
 										<>
 											{" "}
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
-											<div className="mt-2 flex flex-wrap items-center gap-2">
-												<span className="text-xs text-muted-foreground">Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}</span>
+											<div className="mt-1 flex flex-wrap items-center gap-2">
+												<span className="text-xs text-muted-foreground">
+													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+												</span>
 												<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(report.status)}`}>{toSentenceCase(report.status)}</span>{" "}
 											</div>
 										</>
@@ -118,38 +121,55 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspend
 											{" "}
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
 											<div className="mt-2 flex flex-wrap items-center gap-2">
-												<span className="text-xs text-muted-foreground">Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}</span>
+												<span className="text-xs text-muted-foreground">
+													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+												</span>
 											</div>
 										</>
 									)}
-
-									<p className="mt-2 text-sm text-muted-foreground">{report.description}</p>
 									{report.status == "unresolved" ? renderUnresolvedRemarks(report) : <></>}
+									<p className="mt-2 text-xs text-muted-foreground">{new Date(report.createdAt).toLocaleString()}</p>
 								</div>
 
 								<div className="flex shrink-0 items-center gap-2">
 									{report.status !== "unresolved" && (
-										<button onClick={() => onMarkRedirect(report.id)} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
-											Redirect
+										<button
+											onClick={() => onMarkRedirect(report.id)}
+											title="Redirect Report"
+											className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+											<Send className="h-4 w-4" />
 										</button>
 									)}
 									{report.status !== "closed" && (
 										<>
-											<button onClick={() => onCloseReport(report.id)} className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
-												Close
+											<button
+												onClick={() => onCloseReport(report.id)}
+												title="Close Report"
+												className="rounded-md bg-success text-xs px-3 py-1.5 font-medium text-white hover:opacity-90">
+												<CheckCheck className="h-4 w-4" />
 											</button>
-											<button onClick={() => onSuspendLesson(report.id)} className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
-												Suspend Lesson
+											<button
+												onClick={() => onSuspendLesson(report.id)}
+												title="Suspend Lesson"
+												className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+												<Ban className="h-4 w-4" />
 											</button>
 										</>
 									)}
-
 								</div>
 							</div>
 						</div>
 					))
 				)}
 			</div>
+			<SingleReportModal
+				open={selectedReport !== null}
+				report={selectedReport}
+				onClose={() => setSelectedReport(null)}
+				onMarkRedirect={onMarkRedirect}
+				onCloseReport={onCloseReport}
+				onSuspendLesson={onSuspendLesson}
+			/>
 		</div>
 	);
 }
