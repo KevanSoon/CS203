@@ -8,6 +8,7 @@ public interface ReportDTO {
     String getDescription();
     String getStatus();
     String getType();
+    String getRemarks();
     String getReportedBy();
     String getLessonTitle();
     String getChapterTitle();
