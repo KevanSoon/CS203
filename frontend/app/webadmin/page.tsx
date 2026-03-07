@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { api } from "@/app/api/api";
 import { StatsCards } from "./components/stats-cards";
 import { LessonsTable } from "./components/lessons-table";
-import { Toast } from "./components/toast";
 import { Sidebar } from "@/app/components/Sidebar";
+import toast from "react-hot-toast";
 import { ReportsTable } from "./components/reports-table";
 
 // Types
@@ -37,12 +37,6 @@ function getLessonStats(lessons: Lesson[]): LessonStats {
 	};
 }
 
-interface ToastState {
-	show: boolean;
-	message: string;
-	type: "success" | "error";
-}
-
 export interface Report {
   id: number;
   title: string;
@@ -63,7 +57,6 @@ export default function DashboardPage() {
 	const [reports, setReports] = useState<Report[]>([]);
 
 	const [loading, setLoading] = useState(true);
-	const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "success" });
 
 	useEffect(() => {
 		async function fetchLessons() {
@@ -88,8 +81,11 @@ export default function DashboardPage() {
 	const stats = getLessonStats(lessons);
 
 	const showToast = (message: string, type: "success" | "error") => {
-		setToast({ show: true, message, type });
-		setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+		if (type === "success") {
+			toast.success(message);
+		} else {
+			toast.error(message);
+		}
 	};
 
 	const updateLessonStatus = (title: string, status: LessonStatus) => {
@@ -137,7 +133,6 @@ export default function DashboardPage() {
 				</div>
 			</main>
 
-			<Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, show: false })} />
 		</div>
 	);
 }
