@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { CartoonButton } from "@/app/components/CartoonButton";
 import { Bot, User, X, Plus, ChevronDown } from "lucide-react";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useSiteState } from "@/app/store/SiteStore";
 
 
@@ -222,7 +224,15 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
                   : "bg-primary text-white"
               }`}
             >
-              {msg.content}
+              {msg.role === "assistant" ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                msg.content
+              )}
             </div>
           </div>
         ))}
