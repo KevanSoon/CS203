@@ -1,14 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Report, ReportType } from "@/app/webadmin/page";
+import { Report, ReportStatus, ReportType } from "@/app/webadmin/page";
 
 interface SingleReportModalProps {
 	open: boolean;
 	onClose: () => void;
 	report: Report | null;
-	onCloseReport: (id: number) => void;
-	onMarkRedirect: (id: number) => void;
+	handleChangeStatus: (id: number, status: ReportStatus) => void;
 	onSuspendLesson: (id: number) => void;
 }
 
@@ -24,14 +23,16 @@ function toSentenceCase(value: string): string {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function SingleReportModal({ open, onClose, report, onCloseReport, onMarkRedirect, onSuspendLesson }: SingleReportModalProps) {
+export function SingleReportModal({ open, onClose, report, handleChangeStatus, onSuspendLesson }: SingleReportModalProps) {
 	if (!open || !report) return null;
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
 			<div className="w-full max-w-2xl rounded-xl border border-border bg-card p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
 				<div className="flex items-center justify-between">
-					<h4 className="text-lg font-semibold text-foreground">{report.title}</h4>
+					<h4 className="text-lg font-semibold text-foreground">
+						Report {report.id}. {report.title}
+					</h4>
 					<button type="button" onClick={onClose} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-border/50 hover:text-foreground">
 						<X className="h-4 w-4" />
 					</button>
@@ -72,20 +73,41 @@ export function SingleReportModal({ open, onClose, report, onCloseReport, onMark
 						</p>
 
 						<div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
-							{report.status !== "unresolved" && (
-								<button title="Redirect Report" onClick={() => onMarkRedirect(report.id)} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
-									Redirect
-								</button>
-							)}
-							{report.status !== "closed" && (
+							{report.status !== "closed" ? (
 								<>
-									<button title="Close report" onClick={() => onCloseReport(report.id)} className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+									<button
+										title="Redirect Report"
+										onClick={async () => {
+											try {
+												await Promise.resolve(handleChangeStatus(report.id, "redirected"));
+											} finally {
+												onClose();
+											}
+										}}
+										className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+										Redirect
+									</button>
+									<button
+										title="Close report"
+										onClick={async () => {
+											try {
+												await Promise.resolve(handleChangeStatus(report.id, "redirected"));
+											} finally {
+												onClose();
+											}
+										}}
+										className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
 										Close
 									</button>
-									<button title="Suspend lesson" onClick={() => onSuspendLesson(report.id)} className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+									<button
+										title="Suspend lesson"
+										onClick={() => onSuspendLesson(report.id)}
+										className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
 										Suspend
 									</button>
 								</>
+							) : (
+								<p className="text-xs text-muted-foreground">Closed on {new Date(report.updatedAt).toLocaleString()}</p>
 							)}
 						</div>
 					</div>
