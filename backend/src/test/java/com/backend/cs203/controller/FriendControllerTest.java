@@ -34,9 +34,9 @@ class FriendControllerTest {
     private FriendService friendService;
 
     // ===== GET /api/friendship =====
+
     @Test
     void getMyFriends_authenticated_returns200() throws Exception {
-
         List<FriendDto> friends = List.of(
                 new FriendDto(1, "friend1"),
                 new FriendDto(2, "friend2")
@@ -44,8 +44,7 @@ class FriendControllerTest {
 
         when(friendService.getFriends("testuser")).thenReturn(friends);
 
-        mockMvc.perform(get("/api/friendship")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].username").value("friend1"))
                 .andExpect(jsonPath("$[1].username").value("friend2"));
@@ -53,12 +52,9 @@ class FriendControllerTest {
 
     @Test
     void getMyFriends_noFriends_returnsEmptyList() throws Exception {
+        when(friendService.getFriends("testuser")).thenReturn(Collections.emptyList());
 
-        when(friendService.getFriends("testuser"))
-                .thenReturn(Collections.emptyList());
-
-        mockMvc.perform(get("/api/friendship")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
@@ -66,87 +62,82 @@ class FriendControllerTest {
 
     @Test
     void getMyFriends_unauthenticated_returns401() throws Exception {
-
         mockMvc.perform(get("/api/friendship"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void getMyFriends_serviceThrowsException_returns500() throws Exception {
-
         when(friendService.getFriends("testuser"))
                 .thenThrow(new RuntimeException("User not found"));
 
-        mockMvc.perform(get("/api/friendship")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
 
     // ===== GET /api/friendship/pending =====
+
     @Test
     void getPendingRequests_returnsPendingList() throws Exception {
-
         List<FriendDto> pending = List.of(
                 new FriendDto(3, "pendingUser")
         );
 
         when(friendService.getPendingRequests("testuser")).thenReturn(pending);
 
-        mockMvc.perform(get("/api/friendship/pending")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(get("/api/friendship/pending").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].username").value("pendingUser"));
     }
 
     // ===== GET /api/friendship/pending/outgoing =====
+
     @Test
     void getOutgoingRequests_returnsOutgoingList() throws Exception {
-
         List<FriendDto> outgoing = List.of(
                 new FriendDto(4, "outgoingUser")
         );
 
         when(friendService.getOutgoingRequests("testuser")).thenReturn(outgoing);
 
-        mockMvc.perform(get("/api/friendship/pending/outgoing")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(get("/api/friendship/pending/outgoing").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].username").value("outgoingUser"));
     }
 
     // ===== POST /api/friendship/{id} =====
+
     @Test
     void sendFriendRequest_returns201() throws Exception {
 
-        mockMvc.perform(post("/api/friendship/5")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(post("/api/friendship/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isCreated());
     }
 
     // ===== DELETE /api/friendship/{id} =====
+
     @Test
     void cancelFriendRequest_returns204() throws Exception {
 
-        mockMvc.perform(delete("/api/friendship/5")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(delete("/api/friendship/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isNoContent());
     }
 
     // ===== POST /api/friendship/accept/{id} =====
+
     @Test
     void acceptFriendRequest_returns200() throws Exception {
 
-        mockMvc.perform(post("/api/friendship/accept/5")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(post("/api/friendship/accept/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk());
     }
 
     // ===== POST /api/friendship/reject/{id} =====
+
     @Test
     void rejectFriendRequest_returns204() throws Exception {
 
-        mockMvc.perform(post("/api/friendship/reject/5")
-                .with(user("testuser").roles("USER")))
+        mockMvc.perform(post("/api/friendship/reject/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isNoContent());
     }
 }
