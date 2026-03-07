@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS report(
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
-  status ENUM('reported', 'closed', 'unresolved') NOT NULL ,
+  status ENUM('reported', 'closed', 'unresolved', `redirected`) NOT NULL ,
   type ENUM ('critical', 'high','medium','low') NOT NULL,
   reported_by INT NOT NULL,
   remarks TEXT NOT NULL,
