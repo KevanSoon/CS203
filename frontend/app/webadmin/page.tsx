@@ -52,6 +52,7 @@ export interface Report {
   reportedBy: string;
   lessonTitle: string;
   chapterTitle?: string | null;
+  remarks?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -130,7 +131,7 @@ export default function DashboardPage() {
 						)
 					) : selected === "Manage Reports" ? (
 						<div className="py-4 text-muted-foreground">
-							<ReportsTable reports={reports} onCloseReport={()=>{}} onMarkRedirect={()=>{}} />
+							<ReportsTable reports={reports} onCloseReport={()=>{}} onMarkRedirect={()=>{}} onSuspendLesson={()=>{}} />
 						</div>
 					) : null}
 				</div>

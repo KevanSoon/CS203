@@ -11,6 +11,7 @@ interface ReportsTableProps {
 	reports: Report[];
 	onCloseReport: (id: number) => void;
 	onMarkRedirect: (id: number) => void;
+	onSuspendLesson: (id: number) => void;
 }
 
 function statusBadgeClass(status: ReportStatus): string {
@@ -33,26 +34,26 @@ function toSentenceCase(value: string): string {
 }
 
 const severityRank: Record<ReportType, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
+	critical: 4,
+	high: 3,
+	medium: 2,
+	low: 1,
 };
 
-export function ReportsTable({ reports, onCloseReport, onMarkRedirect }: ReportsTableProps) {
+export function ReportsTable({ reports, onCloseReport, onMarkRedirect, onSuspendLesson }: ReportsTableProps) {
 	const [filter, setFilter] = useState<FilterValue>("reported");
 
-    const filteredReports = useMemo(() => {
-    const base = filter === "all" ? reports : reports.filter((r) => r.status === filter);
+	const filteredReports = useMemo(() => {
+		const base = filter === "all" ? reports : reports.filter((r) => r.status === filter);
 
-    return [...base].sort((a, b) => {
-        const severityDiff = severityRank[b.type] - severityRank[a.type];
-        if (severityDiff !== 0) return severityDiff;
+		return [...base].sort((a, b) => {
+			const severityDiff = severityRank[b.type] - severityRank[a.type];
+			if (severityDiff !== 0) return severityDiff;
 
-        // tie-breaker: newest first
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-    }, [reports, filter]);
+			// tie-breaker: newest first
+			return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+		});
+	}, [reports, filter]);
 
 	const counts = {
 		all: reports.length,
@@ -60,6 +61,18 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect }: Reports
 		unresolved: reports.filter((r) => r.status === "unresolved").length,
 		closed: reports.filter((r) => r.status === "closed").length,
 	};
+
+	function renderUnresolvedRemarks(report: Report) {
+		return (
+			<>
+				<p className="mt-2 text-sm font-semibold text-foreground">Updates by Lesson Admin:</p>
+				{report.remarks ? <p className="text-sm text-muted-foreground">{report.remarks}</p> : <p className="text-sm text-muted-foreground">No updates yet</p>}
+				<p className="mt-2 text-xs text-muted-foreground">
+					Reported By: {report.reportedBy} · {new Date(report.createdAt).toLocaleString()}
+				</p>
+			</>
+		);
+	}
 
 	return (
 		<div className="w-full rounded-lg border border-border bg-card">
@@ -91,31 +104,46 @@ export function ReportsTable({ reports, onCloseReport, onMarkRedirect }: Reports
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
 									<span className="text-sm font-semibold text-foreground">{report.title}</span>
-									{filter === "all" ? <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(report.status)}`}>{toSentenceCase(report.status)}</span> : <></>}
-									<div className="mt-2 flex flex-wrap items-center gap-2">
-										<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
-										<span className="text-xs text-muted-foreground">
-											Lesson: {report.lessonTitle}
-											{report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
-										</span>
-									</div>
+									{filter === "all" ? (
+										<>
+											{" "}
+											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
+											<div className="mt-2 flex flex-wrap items-center gap-2">
+												<span className="text-xs text-muted-foreground">Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}</span>
+												<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(report.status)}`}>{toSentenceCase(report.status)}</span>{" "}
+											</div>
+										</>
+									) : (
+										<>
+											{" "}
+											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
+											<div className="mt-2 flex flex-wrap items-center gap-2">
+												<span className="text-xs text-muted-foreground">Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}</span>
+											</div>
+										</>
+									)}
+
 									<p className="mt-2 text-sm text-muted-foreground">{report.description}</p>
-									<p className="mt-2 text-xs text-muted-foreground">
-										Reported By: {report.reportedBy} · {new Date(report.createdAt).toLocaleString()}
-									</p>
+									{report.status == "unresolved" ? renderUnresolvedRemarks(report) : <></>}
 								</div>
 
 								<div className="flex shrink-0 items-center gap-2">
-									{report.status !== "closed" && (
-										<button onClick={() => onCloseReport(report.id)} className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
-											Close
-										</button>
-									)}
 									{report.status !== "unresolved" && (
-										<button onClick={() => onMarkRedirect(report.id)} className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+										<button onClick={() => onMarkRedirect(report.id)} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
 											Redirect
 										</button>
 									)}
+									{report.status !== "closed" && (
+										<>
+											<button onClick={() => onCloseReport(report.id)} className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+												Close
+											</button>
+											<button onClick={() => onSuspendLesson(report.id)} className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
+												Suspend Lesson
+											</button>
+										</>
+									)}
+
 								</div>
 							</div>
 						</div>
