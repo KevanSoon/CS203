@@ -28,6 +28,29 @@ class ReportServiceTest {
     private ReportService reportService;
 
     @Test
+    void getUserCreatedLessonReports_returnsListFromRepository() {
+        Integer userId = 5;
+        ReportDTO dto = mock(ReportDTO.class);
+        when(reportRepository.findUserCreatedLessonReports(userId)).thenReturn(List.of(dto));
+
+        List<ReportDTO> result = reportService.getUserCreatedLessonReports(userId);
+
+        assertEquals(1, result.size());
+        verify(reportRepository).findUserCreatedLessonReports(userId);
+    }
+
+    @Test
+    void getUserCreatedLessonReports_returnsEmptyListWhenNoReports() {
+        Integer userId = 5;
+        when(reportRepository.findUserCreatedLessonReports(userId)).thenReturn(Collections.emptyList());
+
+        List<ReportDTO> result = reportService.getUserCreatedLessonReports(userId);
+
+        assertTrue(result.isEmpty());
+        verify(reportRepository).findUserCreatedLessonReports(userId);
+    }
+
+    @Test
     void getAllLessonReports_returnsListFromRepository() {
         ReportDTO dto = mock(ReportDTO.class);
         when(reportRepository.findAllLessonReports()).thenReturn(List.of(dto));

@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS report(
   status ENUM('reported', 'closed', 'unresolved') NOT NULL ,
   type ENUM ('critical', 'high','medium','low') NOT NULL,
   reported_by INT NOT NULL,
+  remarks TEXT NOT NULL,
   lesson_id INT NOT NULL,
   chapter_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

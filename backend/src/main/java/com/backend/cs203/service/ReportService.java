@@ -17,6 +17,10 @@ public class ReportService {
         this.reportRepository = reportRepository;
     }
 
+    public List<ReportDTO> getUserCreatedLessonReports(Integer userId) {
+        return reportRepository.findUserCreatedLessonReports(userId);
+    }
+
     public List<ReportDTO> getAllLessonReports() {
         return reportRepository.findAllLessonReports();
     }
