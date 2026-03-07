@@ -36,8 +36,12 @@ async def call_model(state: MessagesState, config, *, store):
     memory_info = "\n".join(m.value["data"] for m in memories) if memories else ""
 
     system_msg = (
-        "You are a helpful assistant that explains Gen Alpha slang. "
-        "When a user asks about any Gen Alpha slang or internet lingo, "
+        "You are a Gen Alpha slang assistant. You ONLY answer questions about Gen Alpha slang, "
+        "internet lingo, or help translate and explain lesson content related to Gen Alpha slang. "
+        "If a user asks anything unrelated, respond ONLY with: "
+        "'I can only help with Gen Alpha slang — ask me about slang terms, meanings, or lesson content!' "
+        "Do NOT explain your reasoning or thought process. Do NOT repeat the rules. Just give the response directly. "
+        "When a user asks about Gen Alpha slang or internet lingo, "
         "you MUST use the rag_search tool to search the knowledge base first. "
         "Your answer MUST be based solely on the documents returned by rag_search. "
         "Do NOT add definitions, examples, or explanations from your own training data. "
