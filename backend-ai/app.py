@@ -145,6 +145,39 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
     
 
+@app.get("/chat/history")
+async def chat_history(thread_id: str, user_id: str = "default_user"):
+    """Retrieve chat history for a given thread."""
+    if not langgraph_chat:
+        raise HTTPException(
+            status_code=503,
+            detail="LangGraph chat not initialized. Check server logs."
+        )
+
+    config = {
+        "configurable": {
+            "thread_id": thread_id,
+            "user_id": user_id,
+        }
+    }
+
+    try:
+        state = await langgraph_chat.aget_state(config)
+        messages = state.values.get("messages", [])
+
+        history = []
+        for msg in messages:
+            if msg.type in ("human", "ai") and msg.content:
+                history.append({
+                    "role": msg.type,
+                    "content": msg.content,
+                })
+
+        return {"thread_id": thread_id, "messages": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
 
