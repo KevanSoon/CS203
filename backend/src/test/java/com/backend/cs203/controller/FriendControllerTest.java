@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.profile.FriendDto;
 import com.backend.cs203.security.JwtAuthenticationFilter;
+import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.FriendService;
 
 @WebMvcTest(FriendController.class)
@@ -32,6 +33,9 @@ class FriendControllerTest {
 
     @MockitoBean
     private FriendService friendService;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     // ===== GET /api/friendship =====
 
