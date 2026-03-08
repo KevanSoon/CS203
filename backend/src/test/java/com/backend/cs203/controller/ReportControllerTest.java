@@ -240,6 +240,55 @@ class ReportControllerTest {
                         .with(user("rootuser").roles("ROOT"))
         ).andExpect(status().is5xxServerError());
     }
+
+    // ===== PATCH /api/report/root/suspend =====
+
+    @Test
+    void updateReportStatusAndSuspendLesson_rootAuthenticated_returns204() throws Exception {
+        doNothing().when(reportService).updateReportStatusAndSuspendLesson(10, "resolved");
+
+        mockMvc.perform(
+                patch("/api/report/root/suspend")
+                        .param("reportId", "10")
+                        .param("status", "resolved")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().isNoContent());
+
+        verify(reportService).updateReportStatusAndSuspendLesson(10, "resolved");
+    }
+
+    @Test
+    void updateReportStatusAndSuspendLesson_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/suspend")
+                        .param("reportId", "10")
+                        .param("status", "resolved")
+        ).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateReportStatusAndSuspendLesson_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/suspend")
+                        .param("reportId", "10")
+                        .param("status", "resolved")
+                        .with(user("user1").roles("USER"))
+        ).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void updateReportStatusAndSuspendLesson_serviceThrows_returns500() throws Exception {
+        doThrow(new RuntimeException("Report not found"))
+                .when(reportService).updateReportStatusAndSuspendLesson(999, "resolved");
+
+        mockMvc.perform(
+                patch("/api/report/root/suspend")
+                        .param("reportId", "999")
+                        .param("status", "resolved")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().is5xxServerError());
+    }
+
     // ===== PATCH /api/report/root/remarks =====
 
     @Test

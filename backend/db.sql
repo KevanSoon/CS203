@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS lesson (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) UNIQUE NOT NULL,
   description TEXT,
-  status ENUM('saved','pending', 'approved', 'rejected') NOT NULL,
+  status ENUM('saved','pending', 'approved', 'rejected', 'suspended') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   created_by_id INT NOT NULL,
