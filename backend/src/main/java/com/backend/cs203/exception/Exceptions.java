@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Container class for all exception-related classes
- */
+ // */
 public class Exceptions {
 
     /**
@@ -95,6 +96,32 @@ public class Exceptions {
 
             return ResponseEntity
                 .badRequest()
+                .body(body);
+        }
+
+        /**
+         * Handle @PreAuthorize / method-security access denied errors
+         * Thrown inside the DispatcherServlet (after the filter chain), so the
+         * SecurityConfig accessDeniedHandler does NOT see it — this handler must.
+         * Returns 403 Forbidden
+         */
+        @ExceptionHandler(AuthorizationDeniedException.class)
+        public ResponseEntity<ErrorResponse> handleAuthorizationDenied(
+                AuthorizationDeniedException ex,
+                HttpServletRequest req) {
+
+            log.warn("Access denied at {}: {}", req.getRequestURI(), ex.getMessage());
+
+            ErrorResponse body = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .error(HttpStatus.FORBIDDEN.getReasonPhrase())
+                .message("Access denied: insufficient permissions")
+                .path(req.getRequestURI())
+                .build();
+
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(body);
         }
 

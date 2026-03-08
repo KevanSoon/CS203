@@ -16,6 +16,9 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     @Query(value = "SELECT * FROM lesson WHERE title = :title AND status = 'approved' AND deleted_at IS NULL", nativeQuery = true)
     Optional<Lesson> findByTitle(@Param("title") String title);
 
+    @Query(value = "SELECT * FROM lesson WHERE title = :title AND created_by_id = :userId AND deleted_at IS NULL", nativeQuery = true)
+    Optional<Lesson> findByTitleAndCreatedBy(@Param("title") String title, @Param("userId") Integer userId);
+
     @Query(value = """
             SELECT l.id AS id, l.title AS title, l.description AS description,
                    u.username AS createdBy, l.created_at AS createdAt,
@@ -87,4 +90,13 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
 
     @Query(value = "SELECT lt.tag_name FROM lesson_tagging lt WHERE lt.lesson_id = :lessonId AND lt.deleted_at IS NULL ORDER BY lt.tag_name", nativeQuery = true)
     List<String> findTagsByLessonId(@Param("lessonId") Integer lessonId);
+
+    /** Returns all existing tag names. */
+    @Query(value = "SELECT name FROM tag ORDER BY name", nativeQuery = true)
+    List<String> findAllTagNames();
+
+    /** Check if a lesson with the given title exists (any status, not deleted). */
+    @Query(value = "SELECT COUNT(*) FROM lesson WHERE title = :title AND deleted_at IS NULL", nativeQuery = true)
+    long countByTitleNotDeleted(@Param("title") String title);
+
 }
