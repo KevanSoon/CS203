@@ -34,7 +34,7 @@ public class Quiz {
 
     @Column(name = "quiz_type")
     @Enumerated(EnumType.STRING)
-    private QuizType quizType;
+    private QuizType quizType = QuizType.mcq;
 
     @Column(columnDefinition = "TEXT")
     private String options;
