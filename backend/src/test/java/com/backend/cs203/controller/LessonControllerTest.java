@@ -76,7 +76,7 @@ class LessonControllerTest {
     @Test
     void getAllAvailableLessons_withAdminRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     // ===== GET /api/lesson/user-lessons/ (requires ADMIN role) =====
@@ -95,7 +95,7 @@ class LessonControllerTest {
     @Test
     void getUserCreatedLessons_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/user-lessons/").with(user("testuser").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -122,13 +122,13 @@ class LessonControllerTest {
     @Test
     void getAllLessonApplications_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/applications/").with(user("testuser").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void getAllLessonApplications_withAdminRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/applications/").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     // ===== GET /api/lesson/applications/pending (requires ROOT role) =====
@@ -145,7 +145,7 @@ class LessonControllerTest {
     @Test
     void getPendingApplications_withAdminRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/applications/pending").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     // ===== GET /api/lesson/page (requires USER role) =====
@@ -214,7 +214,7 @@ class LessonControllerTest {
     @Test
     void getUserCreatedLessonApplications_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/user-applications/").with(user("testuser").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test

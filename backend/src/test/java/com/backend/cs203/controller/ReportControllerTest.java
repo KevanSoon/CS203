@@ -100,7 +100,7 @@ class ReportControllerTest {
     @Test
     void getUserCreatedLessonReports_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/report/admin").with(user("user1").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     // ===== GET /api/report/root =====
@@ -225,7 +225,7 @@ class ReportControllerTest {
                         .param("reportId", "10")
                         .param("status", "closed")
                         .with(user("user1").roles("USER"))
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isForbidden());
     }
 
     @Test
@@ -272,7 +272,7 @@ class ReportControllerTest {
                         .param("reportId", "10")
                         .param("remarks", "Reviewed and fixed")
                         .with(user("user1").roles("USER"))
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isForbidden());
     }
 
     @Test
