@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
 
@@ -39,6 +40,7 @@ export interface LessonContentProps {
 }
 
 export const AdminLessonPage = () => {
+	const router = useRouter();
 	const [selected, setSelected] = useState("Manage Lessons");
 	const [lessons, setLessons] = useState([]);
 	const [reports, setReports] = useState([]);
@@ -89,7 +91,7 @@ export const AdminLessonPage = () => {
 							<h1 className="text-3xl font-bold text-foreground">Lesson Management</h1>
 							<p className="text-muted-foreground mt-1">Manage and organize your lessons</p>
 						</div>
-						<CartoonButton label="+ Create Lesson" />
+						<CartoonButton label="+ Create Lesson" onClick={() => router.push("/admin/create")} />
 					</div>
 
 					<StatsGrid />

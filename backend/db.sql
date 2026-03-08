@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS quiz (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   question TEXT,
+  quiz_type ENUM('mcq', 'true_false', 'fill_blank') NOT NULL DEFAULT 'mcq',
   options TEXT,
   correct_answer VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
