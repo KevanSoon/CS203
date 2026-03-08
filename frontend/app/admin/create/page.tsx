@@ -1,48 +1,47 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { api } from "@/app/api/api";
+import { CartoonButton } from "@/app/components/CartoonButton";
+import { Sidebar } from "@/app/components/Sidebar";
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
+    closestCenter,
+    DndContext,
+    DragEndEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
 } from "@dnd-kit/core";
 import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  rectSortingStrategy,
-  arrayMove,
+    arrayMove,
+    rectSortingStrategy,
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Sidebar } from "@/app/components/Sidebar";
-import { CartoonButton } from "@/app/components/CartoonButton";
-import { LearningPath } from "@/app/lesson/[title]/components/LearningPath";
-import { api } from "@/app/api/api";
-import toast from "react-hot-toast";
 import {
-  Plus,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Layers,
-  ArrowLeft,
-  Check,
-  ImagePlus,
-  Eye,
-  Pencil,
-  Star,
-  Crown,
-  Zap,
-  Code2,
-  Upload,
-  AlertTriangle,
-  X,
-  GripVertical,
+    AlertTriangle,
+    ArrowLeft,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Code2,
+    Crown,
+    Eye,
+    GripVertical,
+    ImagePlus,
+    Layers,
+    Plus,
+    Star,
+    Trash2,
+    Upload,
+    X,
+    Zap,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { LessonPreviewMode } from "./LessonPreviewMode";
 
 /* ─── Constants ─── */
 const OPTION_KEYS_MCQ = ["A", "B", "C", "D"] as const;
@@ -120,7 +119,9 @@ function optionKeysForType(type: QuizType) {
 }
 
 /* ─── Shared transform helper: translate only, no scale distortion ─── */
-function translateOnly(transform: Parameters<typeof CSS.Transform.toString>[0]) {
+function translateOnly(
+  transform: Parameters<typeof CSS.Transform.toString>[0],
+) {
   if (!transform) return undefined;
   return CSS.Transform.toString({ ...transform, scaleX: 1, scaleY: 1 });
 }
@@ -133,9 +134,19 @@ function SortableCard({
 }: {
   id: string;
   className?: string;
-  children: (dragHandleProps: React.HTMLAttributes<HTMLElement>, isDragging: boolean) => React.ReactNode;
+  children: (
+    dragHandleProps: React.HTMLAttributes<HTMLElement>,
+    isDragging: boolean,
+  ) => React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id,
     animateLayoutChanges: () => false,
   });
@@ -159,12 +170,16 @@ function SortableQuiz({
   children,
 }: {
   id: string;
-  children: (dragHandleProps: React.HTMLAttributes<HTMLElement>, isDragging: boolean) => React.ReactNode;
+  children: (
+    dragHandleProps: React.HTMLAttributes<HTMLElement>,
+    isDragging: boolean,
+  ) => React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
-    id,
-    animateLayoutChanges: () => false,
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useSortable({
+      id,
+      animateLayoutChanges: () => false,
+    });
   const style: React.CSSProperties = {
     transform: translateOnly(transform),
     transition: "none",
@@ -185,12 +200,16 @@ function SortableChapter({
   children,
 }: {
   id: string;
-  children: (dragHandleProps: React.HTMLAttributes<HTMLElement>, isDragging: boolean) => React.ReactNode;
+  children: (
+    dragHandleProps: React.HTMLAttributes<HTMLElement>,
+    isDragging: boolean,
+  ) => React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
-    id,
-    animateLayoutChanges: () => false,
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useSortable({
+      id,
+      animateLayoutChanges: () => false,
+    });
   const style: React.CSSProperties = {
     transform: translateOnly(transform),
     transition: "none",
@@ -242,29 +261,38 @@ export default function CreateLessonPage() {
   const [previewCardIdx, setPreviewCardIdx] = useState<number | null>(null);
   const [previewFlipped, setPreviewFlipped] = useState(false);
   const [quizOverlayOpen, setQuizOverlayOpen] = useState(false);
-  const [quizOverlayIdx, setQuizOverlayIdx] = useState(0);
-  const [quizSelectedAnswer, setQuizSelectedAnswer] = useState<string | null>(null);
-  const [quizAnswerRevealed, setQuizAnswerRevealed] = useState(false);
 
   /* ─── DnD sensors ─── */
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   /* ─── Reorder helpers ─── */
-  const reorderCards = useCallback((chapterIdx: number, oldIdx: number, newIdx: number) => {
-    setChapters((prev) =>
-      prev.map((ch, i) =>
-        i !== chapterIdx ? ch : { ...ch, cards: arrayMove(ch.cards, oldIdx, newIdx) }
-      )
-    );
-  }, []);
+  const reorderCards = useCallback(
+    (chapterIdx: number, oldIdx: number, newIdx: number) => {
+      setChapters((prev) =>
+        prev.map((ch, i) =>
+          i !== chapterIdx
+            ? ch
+            : { ...ch, cards: arrayMove(ch.cards, oldIdx, newIdx) },
+        ),
+      );
+    },
+    [],
+  );
 
-  const reorderQuizzes = useCallback((chapterIdx: number, oldIdx: number, newIdx: number) => {
-    setChapters((prev) =>
-      prev.map((ch, i) =>
-        i !== chapterIdx ? ch : { ...ch, quizzes: arrayMove(ch.quizzes, oldIdx, newIdx) }
-      )
-    );
-  }, []);
+  const reorderQuizzes = useCallback(
+    (chapterIdx: number, oldIdx: number, newIdx: number) => {
+      setChapters((prev) =>
+        prev.map((ch, i) =>
+          i !== chapterIdx
+            ? ch
+            : { ...ch, quizzes: arrayMove(ch.quizzes, oldIdx, newIdx) },
+        ),
+      );
+    },
+    [],
+  );
 
   const reorderChapters = useCallback((oldIdx: number, newIdx: number) => {
     setChapters((prev) => arrayMove(prev, oldIdx, newIdx));
@@ -300,7 +328,7 @@ export default function CreateLessonPage() {
       titleCheckTimer.current = setTimeout(async () => {
         try {
           const res = await fetch(
-            `/api/lesson/manage?action=check-title&title=${encodeURIComponent(trimmed)}`
+            `/api/lesson/manage?action=check-title&title=${encodeURIComponent(trimmed)}`,
           );
           const data = await res.json();
           setTitleTaken(!data.available);
@@ -311,7 +339,7 @@ export default function CreateLessonPage() {
         }
       }, 500);
     },
-    [isEditMode, editTitle]
+    [isEditMode, editTitle],
   );
 
   /* ─── Load existing lesson for editing ─── */
@@ -340,15 +368,18 @@ export default function CreateLessonPage() {
                   opts = { A: "", B: "", C: "", D: "" };
                 }
                 // Ensure fill_blank always has A/B/C/D keys (same as MCQ)
-                if (q.quizType === "fill_blank" && Object.keys(opts).length === 0) {
+                if (
+                  q.quizType === "fill_blank" &&
+                  Object.keys(opts).length === 0
+                ) {
                   opts = { A: "", B: "", C: "", D: "" };
                 }
                 const qType: QuizType =
                   q.quizType === "true_false"
                     ? "true_false"
                     : q.quizType === "fill_blank"
-                    ? "fill_blank"
-                    : "mcq";
+                      ? "fill_blank"
+                      : "mcq";
                 return {
                   id: crypto.randomUUID(),
                   title: q.title || "",
@@ -397,7 +428,7 @@ export default function CreateLessonPage() {
 
   const filteredTags = allTags.filter(
     (t) =>
-      !tags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase())
+      !tags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase()),
   );
 
   /* ─── Thumbnail placeholder ─── */
@@ -417,23 +448,19 @@ export default function CreateLessonPage() {
     setChapters(chapters.filter((_: ChapterForm, i: number) => i !== idx));
   };
 
-  const updateChapter = (
-    idx: number,
-    field: keyof ChapterForm,
-    value: any
-  ) => {
+  const updateChapter = (idx: number, field: keyof ChapterForm, value: any) => {
     setChapters(
       chapters.map((ch: ChapterForm, i: number) =>
-        i === idx ? { ...ch, [field]: value } : ch
-      )
+        i === idx ? { ...ch, [field]: value } : ch,
+      ),
     );
   };
 
   const toggleChapter = (idx: number) => {
     setChapters(
       chapters.map((ch: ChapterForm, i: number) =>
-        i === idx ? { ...ch, isExpanded: !ch.isExpanded } : ch
-      )
+        i === idx ? { ...ch, isExpanded: !ch.isExpanded } : ch,
+      ),
     );
   };
 
@@ -450,9 +477,7 @@ export default function CreateLessonPage() {
       toast.error("Each chapter must have at least one card");
       return;
     }
-    u[ci].cards = u[ci].cards.filter(
-      (_: CardForm, i: number) => i !== cardIdx
-    );
+    u[ci].cards = u[ci].cards.filter((_: CardForm, i: number) => i !== cardIdx);
     setChapters(u);
   };
 
@@ -460,7 +485,7 @@ export default function CreateLessonPage() {
     ci: number,
     cardIdx: number,
     field: keyof CardForm,
-    value: string
+    value: string,
   ) => {
     const u = [...chapters];
     u[ci].cards[cardIdx] = { ...u[ci].cards[cardIdx], [field]: value };
@@ -480,9 +505,7 @@ export default function CreateLessonPage() {
       toast.error("Each chapter must have at least one quiz question");
       return;
     }
-    u[ci].quizzes = u[ci].quizzes.filter(
-      (_: QuizForm, i: number) => i !== qi
-    );
+    u[ci].quizzes = u[ci].quizzes.filter((_: QuizForm, i: number) => i !== qi);
     setChapters(u);
   };
 
@@ -490,7 +513,7 @@ export default function CreateLessonPage() {
     ci: number,
     qi: number,
     field: keyof QuizForm,
-    value: any
+    value: any,
   ) => {
     const u = [...chapters];
     u[ci].quizzes[qi] = { ...u[ci].quizzes[qi], [field]: value };
@@ -501,7 +524,7 @@ export default function CreateLessonPage() {
     ci: number,
     qi: number,
     key: string,
-    value: string
+    value: string,
   ) => {
     const u = [...chapters];
     u[ci].quizzes[qi].options = {
@@ -524,18 +547,18 @@ export default function CreateLessonPage() {
       // fill_blank uses same A/B/C/D word bank structure as MCQ
       const clearAB = oldType === "true_false";
       q.options = {
-        A: clearAB ? "" : (q.options.A || ""),
-        B: clearAB ? "" : (q.options.B || ""),
-        C: clearAB ? "" : (q.options.C || ""),
-        D: clearAB ? "" : (q.options.D || ""),
+        A: clearAB ? "" : q.options.A || "",
+        B: clearAB ? "" : q.options.B || "",
+        C: clearAB ? "" : q.options.C || "",
+        D: clearAB ? "" : q.options.D || "",
       };
       q.correctAnswer = "";
     } else {
       // MCQ — clear values if coming from true_false or fill_blank
       const clearAB = oldType === "true_false" || oldType === "fill_blank";
       q.options = {
-        A: clearAB ? "" : (q.options.A || ""),
-        B: clearAB ? "" : (q.options.B || ""),
+        A: clearAB ? "" : q.options.A || "",
+        B: clearAB ? "" : q.options.B || "",
         C: "",
         D: "",
       };
@@ -556,15 +579,13 @@ export default function CreateLessonPage() {
       if (!ch.title.trim()) errs.add(`chapter-${i}-title`);
 
       for (let j = 0; j < ch.cards.length; j++) {
-        if (!ch.cards[j].front.trim())
-          errs.add(`chapter-${i}-card-${j}-front`);
+        if (!ch.cards[j].front.trim()) errs.add(`chapter-${i}-card-${j}-front`);
         if (!ch.cards[j].back.trim()) errs.add(`chapter-${i}-card-${j}-back`);
       }
 
       for (let q = 0; q < ch.quizzes.length; q++) {
         const quiz = ch.quizzes[q];
-        if (!quiz.question.trim())
-          errs.add(`chapter-${i}-quiz-${q}-question`);
+        if (!quiz.question.trim()) errs.add(`chapter-${i}-quiz-${q}-question`);
 
         if (quiz.quizType === "fill_blank") {
           // fill_blank: question must contain ___, needs ≥2 word bank options and a correct answer
@@ -591,9 +612,7 @@ export default function CreateLessonPage() {
 
     if (errs.size > 0) {
       for (let i = 0; i < chapters.length; i++) {
-        const has = Array.from(errs).some((k) =>
-          k.startsWith(`chapter-${i}-`)
-        );
+        const has = Array.from(errs).some((k) => k.startsWith(`chapter-${i}-`));
         if (has && !chapters[i].isExpanded) {
           toggleChapter(i);
           break;
@@ -624,7 +643,7 @@ export default function CreateLessonPage() {
 
     if (!isEditMode && titleTaken) {
       toast.error(
-        "A lesson with this title already exists. Please choose a different title."
+        "A lesson with this title already exists. Please choose a different title.",
       );
       document
         .querySelector('[data-field="title"]')
@@ -659,7 +678,7 @@ export default function CreateLessonPage() {
       if (isEditMode) {
         await api.put(
           `/api/lesson/manage?originalTitle=${encodeURIComponent(editTitle!)}`,
-          payload
+          payload,
         );
         toast.success("Lesson updated and re-submitted for approval!");
       } else {
@@ -677,9 +696,7 @@ export default function CreateLessonPage() {
   /* ─── Loading state ─── */
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <p className="text-muted-foreground text-lg">Loading lesson...</p>
-      </div>
+      <div className="flex min-h-screen w-full items-center justify-center bg-background"/>
     );
   }
 
@@ -687,469 +704,27 @@ export default function CreateLessonPage() {
      PREVIEW MODE
      ════════════════════════════════════════════════════ */
   if (viewMode === "preview") {
-    const currentChapter = chapters[previewChapterIdx];
-
-    const pathNodes = currentChapter
-      ? [
-          ...currentChapter.cards.map((card: CardForm, idx: number) => ({
-            id: idx,
-            type: "lesson" as const,
-            status: "available" as const,
-            content: {
-              front: card.front || `Card ${idx + 1}`,
-              back: card.back,
-            },
-          })),
-          /* Single quiz node at the end of each chapter */
-          ...(currentChapter.quizzes.length > 0
-            ? [
-                {
-                  id: currentChapter.cards.length,
-                  type: "quiz" as const,
-                  status: "available" as const,
-                },
-              ]
-            : []),
-        ]
-      : [];
-
-    const handleNodeClick = (node: { id: number; type: string }) => {
-      if (node.type === "quiz") {
-        setQuizOverlayOpen(true);
-        setQuizOverlayIdx(0);
-        setQuizSelectedAnswer(null);
-        setQuizAnswerRevealed(false);
-      } else {
-        setPreviewCardIdx(node.id);
-      }
-      setPreviewFlipped(false);
-    };
-
     return (
-      <div className="flex min-h-screen w-full">
-        <div className="flex w-full bg-background text-foreground">
-          <Sidebar
-            selected={selected}
-            setSelected={setSelected}
-            defaultOpen={true}
-            chapters={chapters.map((c: ChapterForm, i: number) => ({
-              id: i,
-              title: c.title || `Chapter ${i + 1}`,
-              description: c.description,
-            }))}
-            selectedChapter={previewChapterIdx}
-            onChapterSelect={(i: number) => {
-              setPreviewChapterIdx(i);
-              setPreviewCardIdx(null);
-              setPreviewFlipped(false);
-              setQuizOverlayOpen(false);
-            }}
-          />
-
-          <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-x-hidden overflow-y-auto pb-20">
-            {/* Top bar */}
-            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">
-                  Preview Mode
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  setViewMode("edit");
-                  setPreviewCardIdx(null);
-                  setPreviewFlipped(false);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Back to Editor
-              </button>
-            </div>
-
-            {/* Lesson Title */}
-            <div className="px-4 pt-8 pb-4 text-center">
-              <h1 className="text-3xl md:text-4xl font-black text-foreground">
-                {title || "Untitled Lesson"}
-              </h1>
-              {description && (
-                <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
-                  {description}
-                </p>
-              )}
-            </div>
-
-            {currentChapter && (
-              <>
-                {/* Chapter Banner */}
-                <div className="px-4 pt-4 pb-8 flex justify-center">
-                  <div className="relative w-full max-w-md rounded-xl bg-primary border-2 border-primary-dark px-6 py-3 shadow-[0_4px_0_0_var(--color-primary-dark)] overflow-hidden group">
-                    <div className="relative z-10">
-                      <p className="text-sm text-white/70">
-                        {currentChapter.title ||
-                          `Chapter ${previewChapterIdx + 1}`}
-                      </p>
-                      {currentChapter.description && (
-                        <p className="text-lg font-bold text-white mt-1">
-                          {currentChapter.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
-                  </div>
-                </div>
-
-                {/* S-curve LearningPath with extra top spacing */}
-                <div className="flex justify-center mt-4">
-                  <LearningPath
-                    nodes={pathNodes}
-                    onNodeClick={handleNodeClick}
-                    chapterIndex={previewChapterIdx}
-                  />
-                </div>
-
-                {/* Card overlay (flashcard only) */}
-                {previewCardIdx !== null && (
-                  <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4"
-                    onClick={() => setPreviewCardIdx(null)}
-                  >
-                    <div
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      className="relative w-full max-w-[420px]"
-                    >
-                      <button
-                        onClick={() => setPreviewCardIdx(null)}
-                        className="absolute -top-12 right-0 text-white hover:text-gray-200 transition z-50 text-2xl"
-                      >
-                        ✕
-                      </button>
-
-                      {/* Flippable Card */}
-                        <div
-                          className="h-[420px] w-full cursor-pointer"
-                          style={{ perspective: "2000px" }}
-                          onClick={() => setPreviewFlipped(!previewFlipped)}
-                        >
-                          <div
-                            className="relative h-full w-full transition-all duration-700"
-                            style={{
-                              transformStyle: "preserve-3d",
-                              transform: previewFlipped
-                                ? "rotateY(180deg)"
-                                : "rotateY(0deg)",
-                            }}
-                          >
-                            <div
-                              className="absolute inset-0 rounded-2xl p-6 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 border border-slate-200 dark:border-zinc-800/50 shadow-lg flex flex-col"
-                              style={{ backfaceVisibility: "hidden" }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-500/5 rounded-2xl" />
-                              <div className="relative z-10 flex-1 flex flex-col">
-                                <div className="mb-3 flex items-center gap-2">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
-                                    <Zap className="h-4 w-4 text-white" />
-                                  </div>
-                                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">
-                                    Question
-                                  </h3>
-                                </div>
-                                <div className="flex-1 flex items-center">
-                                  <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                    {currentChapter.cards[previewCardIdx]
-                                      ?.front || "No content"}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="relative z-10 mt-auto border-t border-slate-200 dark:border-zinc-800 pt-4">
-                                <div className="flex items-center justify-between rounded-lg p-2.5 bg-slate-100 dark:bg-zinc-800">
-                                  <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                                    Click to reveal answer
-                                  </span>
-                                  <span className="text-primary">→</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div
-                              className="absolute inset-0 rounded-2xl p-6 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 border border-slate-200 dark:border-zinc-800 shadow-lg flex flex-col"
-                              style={{
-                                backfaceVisibility: "hidden",
-                                transform: "rotateY(180deg)",
-                              }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-500/5 rounded-2xl" />
-                              <div className="relative z-10 flex-1 flex flex-col">
-                                <div className="mb-3 flex items-center gap-2">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
-                                    <Code2 className="h-4 w-4 text-white" />
-                                  </div>
-                                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">
-                                    Answer
-                                  </h3>
-                                </div>
-                                <div className="flex-1 flex items-center">
-                                  <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                    {currentChapter.cards[previewCardIdx]
-                                      ?.back || "No content"}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Multi-question Quiz Overlay ── */}
-                {quizOverlayOpen && currentChapter.quizzes.length > 0 && (() => {
-                  const quiz = currentChapter.quizzes[quizOverlayIdx];
-                  if (!quiz) return null;
-                  const totalQ = currentChapter.quizzes.length;
-                  const isCorrect = quizAnswerRevealed && quizSelectedAnswer === quiz.correctAnswer;
-
-                  return (
-                    <div
-                      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4"
-                      onClick={() => {
-                        setQuizOverlayOpen(false);
-                        setQuizSelectedAnswer(null);
-                        setQuizAnswerRevealed(false);
-                      }}
-                    >
-                      <div
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                        className="relative w-full max-w-[480px]"
-                      >
-                        <button
-                          onClick={() => {
-                            setQuizOverlayOpen(false);
-                            setQuizSelectedAnswer(null);
-                            setQuizAnswerRevealed(false);
-                          }}
-                          className="absolute -top-12 right-0 text-white hover:text-gray-200 transition z-50 text-2xl"
-                        >
-                          ✕
-                        </button>
-
-                        <div className="bg-card rounded-3xl p-8 shadow-2xl border-4 border-warning">
-                          {/* Progress bar */}
-                          <div className="flex items-center gap-2 mb-5">
-                            {Array.from({ length: totalQ }).map((_, i) => (
-                              <div
-                                key={i}
-                                className={`h-1.5 flex-1 rounded-full transition-colors ${
-                                  i < quizOverlayIdx
-                                    ? "bg-success"
-                                    : i === quizOverlayIdx
-                                    ? "bg-warning"
-                                    : "bg-border"
-                                }`}
-                              />
-                            ))}
-                          </div>
-
-                          {/* Header */}
-                          <div className="text-center mb-6">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-warning/20 rounded-full flex items-center justify-center">
-                              <span className="text-3xl">🏆</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-1 font-medium tracking-wide uppercase">
-                              Question {quizOverlayIdx + 1} of {totalQ}
-                            </p>
-                            <h3 className="text-xl font-bold text-foreground">
-                              {quiz.title || "Quiz"}
-                            </h3>
-                            <span className="text-xs text-muted-foreground mt-1 inline-block">
-                              {QUIZ_TYPE_LABELS[quiz.quizType]}
-                            </span>
-                          </div>
-
-                          {/* Question */}
-                          {quiz.quizType === "fill_blank" ? (
-                            /* Sentence with blank rendered as a styled slot */
-                            <p className="text-foreground font-medium mb-6 text-center leading-loose text-lg">
-                              {quiz.question.split("___").map((part, idx, arr) => (
-                                <span key={idx}>
-                                  {part}
-                                  {idx < arr.length - 1 && (
-                                    quizSelectedAnswer ? (
-                                      <span className={`inline-block mx-1 px-3 py-0.5 rounded-lg border-2 font-semibold text-base transition-all ${
-                                        quizAnswerRevealed
-                                          ? isCorrect
-                                            ? "border-success bg-success/10 text-success"
-                                            : "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-500 line-through"
-                                          : "border-warning bg-warning/10 text-warning"
-                                      }`}>
-                                        {quiz.options[quizSelectedAnswer]}
-                                        {quizAnswerRevealed && !isCorrect && (
-                                          <span className="ml-2 no-underline line-through-none text-success not-line-through">
-                                          </span>
-                                        )}
-                                      </span>
-                                    ) : (
-                                      <span className="inline-block mx-1 px-6 py-0.5 rounded-lg border-2 border-dashed border-warning/50 bg-warning/5 text-warning/40 font-bold text-base min-w-[60px] text-center">
-                                        ___
-                                      </span>
-                                    )
-                                  )}
-                                </span>
-                              ))}
-                            </p>
-                          ) : (
-                            <p className="text-foreground font-medium mb-6 text-center">
-                              {quiz.question || "No question set"}
-                            </p>
-                          )}
-
-                          {/* Word bank chips (fill_blank) OR MCQ option buttons */}
-                          {quiz.quizType === "fill_blank" ? (
-                            <div className="mb-2">
-                              <p className="text-xs text-muted-foreground text-center mb-3 uppercase tracking-wide font-medium">
-                                Word Bank
-                              </p>
-                              <div className="flex flex-wrap justify-center gap-2">
-                                {OPTION_KEYS_MCQ.filter(k => quiz.options[k]?.trim()).map(k => (
-                                  <button
-                                    key={k}
-                                    disabled={quizAnswerRevealed}
-                                    onClick={() => {
-                                      setQuizSelectedAnswer(k);
-                                      setQuizAnswerRevealed(true);
-                                    }}
-                                    className={`px-5 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all shadow-sm ${
-                                      quizAnswerRevealed
-                                        ? k === quiz.correctAnswer
-                                          ? "border-success bg-success/10 text-success"
-                                          : k === quizSelectedAnswer
-                                          ? "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-500"
-                                          : "border-border opacity-30 cursor-not-allowed"
-                                        : quizSelectedAnswer === k
-                                        ? "border-warning bg-warning/10 text-warning"
-                                        : "border-border bg-card hover:border-warning hover:bg-warning/5 hover:-translate-y-0.5 hover:shadow-md"
-                                    }`}
-                                  >
-                                    {quiz.options[k]}
-                                  </button>
-                                ))}
-                              </div>
-                              {quizAnswerRevealed && !isCorrect && (
-                                <p className="text-center text-xs text-success mt-3 font-medium">
-                                  ✓ Correct answer: <span className="font-bold">{quiz.options[quiz.correctAnswer]}</span>
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {Object.entries(quiz.options).map(
-                                ([key, val]: [string, string]) =>
-                                  val.trim() && (
-                                    <button
-                                      key={key}
-                                      disabled={quizAnswerRevealed}
-                                      onClick={() => {
-                                        setQuizSelectedAnswer(key);
-                                        setQuizAnswerRevealed(true);
-                                      }}
-                                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-colors text-left ${
-                                        quizAnswerRevealed
-                                          ? key === quiz.correctAnswer
-                                            ? "border-success bg-success/10"
-                                            : key === quizSelectedAnswer
-                                            ? "border-red-400 bg-red-50 dark:bg-red-900/20"
-                                            : "border-border opacity-60"
-                                          : quizSelectedAnswer === key
-                                          ? "border-primary bg-primary/5"
-                                          : "border-border hover:border-primary/40 hover:bg-primary/5"
-                                      }`}
-                                    >
-                                      <span
-                                        className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                                          quizAnswerRevealed && key === quiz.correctAnswer
-                                            ? "bg-success text-white"
-                                            : quizAnswerRevealed && key === quizSelectedAnswer
-                                            ? "bg-red-400 text-white"
-                                            : "bg-border text-foreground"
-                                        }`}
-                                      >
-                                        {key}
-                                      </span>
-                                      <span className="text-foreground flex-1">{val}</span>
-                                      {quizAnswerRevealed && key === quiz.correctAnswer && (
-                                        <Check className="h-4 w-4 text-success ml-auto" />
-                                      )}
-                                      {quizAnswerRevealed && key === quizSelectedAnswer && key !== quiz.correctAnswer && (
-                                        <X className="h-4 w-4 text-red-400 ml-auto" />
-                                      )}
-                                    </button>
-                                  )
-                              )}
-                            </div>
-                          )}
-
-                          {/* Feedback */}
-                          {quizAnswerRevealed && (
-                            <div className={`mt-4 p-3 rounded-xl text-center text-sm font-semibold ${
-                              isCorrect ? "bg-success/10 text-success" : "bg-red-50 dark:bg-red-900/20 text-red-500"
-                            }`}>
-                              {isCorrect
-                                ? "🎉 Correct!"
-                                : quiz.quizType === "fill_blank"
-                                ? "❌ Not quite — check the correct answer above"
-                                : `❌ Incorrect — the answer is "${quiz.options[quiz.correctAnswer] || quiz.correctAnswer}"`}
-                            </div>
-                          )}
-
-                          {/* Navigation */}
-                          <div className="flex items-center justify-between mt-6">
-                            <button
-                              disabled={quizOverlayIdx === 0}
-                              onClick={() => {
-                                setQuizOverlayIdx(quizOverlayIdx - 1);
-                                setQuizSelectedAnswer(null);
-                                setQuizAnswerRevealed(false);
-                              }}
-                              className="px-4 py-2 rounded-xl text-sm font-semibold border-2 border-border text-muted-foreground hover:bg-accent-light/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              ← Previous
-                            </button>
-
-                            {quizOverlayIdx < totalQ - 1 ? (
-                              <button
-                                onClick={() => {
-                                  setQuizOverlayIdx(quizOverlayIdx + 1);
-                                  setQuizSelectedAnswer(null);
-                                  setQuizAnswerRevealed(false);
-                                }}
-                                className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-dark transition-colors"
-                              >
-                                Next →
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setQuizOverlayOpen(false);
-                                  setQuizSelectedAnswer(null);
-                                  setQuizAnswerRevealed(false);
-                                }}
-                                className="px-5 py-2 rounded-xl text-sm font-semibold bg-success text-white hover:bg-success/90 transition-colors"
-                              >
-                                Finish Quiz ✓
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <LessonPreviewMode
+        title={title}
+        description={description}
+        chapters={chapters}
+        selected={selected}
+        setSelected={setSelected}
+        previewChapterIdx={previewChapterIdx}
+        setPreviewChapterIdx={setPreviewChapterIdx}
+        previewCardIdx={previewCardIdx}
+        setPreviewCardIdx={setPreviewCardIdx}
+        previewFlipped={previewFlipped}
+        setPreviewFlipped={setPreviewFlipped}
+        quizOverlayOpen={quizOverlayOpen}
+        setQuizOverlayOpen={setQuizOverlayOpen}
+        onExitPreview={() => {
+          setViewMode("edit");
+          setPreviewCardIdx(null);
+          setPreviewFlipped(false);
+        }}
+      />
     );
   }
 
@@ -1158,7 +733,7 @@ export default function CreateLessonPage() {
      ════════════════════════════════════════════════════ */
   const totalQuizCount = chapters.reduce(
     (sum, ch) => sum + ch.quizzes.length,
-    0
+    0,
   );
 
   return (
@@ -1196,8 +771,8 @@ export default function CreateLessonPage() {
                     saving
                       ? "Saving..."
                       : isEditMode
-                      ? "Update & Re-submit"
-                      : "Submit for Approval"
+                        ? "Update & Re-submit"
+                        : "Submit for Approval"
                   }
                   color="bg-success"
                   textColor="text-white"
@@ -1244,23 +819,30 @@ export default function CreateLessonPage() {
                       errors.has("title")
                         ? "border-destructive"
                         : titleTaken
-                        ? "border-warning"
-                        : "border-transparent focus:border-primary"
+                          ? "border-warning"
+                          : "border-transparent focus:border-primary"
                     }`}
                   />
                   {/* Status below the title */}
                   {titleChecking && (
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
-                      <span className="text-xs text-muted-foreground">Checking...</span>
+                      <span className="text-xs text-muted-foreground">
+                        Checking...
+                      </span>
                     </div>
                   )}
-                  {!titleChecking && title.trim() && !errors.has("title") && !titleTaken && (
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <Check className="h-3.5 w-3.5 text-success" />
-                      <span className="text-xs text-success font-medium">Available</span>
-                    </div>
-                  )}
+                  {!titleChecking &&
+                    title.trim() &&
+                    !errors.has("title") &&
+                    !titleTaken && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <Check className="h-3.5 w-3.5 text-success" />
+                        <span className="text-xs text-success font-medium">
+                          Available
+                        </span>
+                      </div>
+                    )}
                   {titleTaken && (
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <AlertTriangle className="h-3.5 w-3.5 text-warning" />
@@ -1387,612 +969,784 @@ export default function CreateLessonPage() {
               onDragEnd={(event: DragEndEvent) => {
                 const { active, over } = event;
                 if (over && active.id !== over.id) {
-                  const oldIdx = chapters.findIndex((_: ChapterForm, i: number) => `chapter-${i}` === active.id);
-                  const newIdx = chapters.findIndex((_: ChapterForm, i: number) => `chapter-${i}` === over.id);
+                  const oldIdx = chapters.findIndex(
+                    (_: ChapterForm, i: number) => `chapter-${i}` === active.id,
+                  );
+                  const newIdx = chapters.findIndex(
+                    (_: ChapterForm, i: number) => `chapter-${i}` === over.id,
+                  );
                   reorderChapters(oldIdx, newIdx);
                 }
               }}
             >
               <SortableContext
-                items={chapters.map((_: ChapterForm, i: number) => `chapter-${i}`)}
+                items={chapters.map(
+                  (_: ChapterForm, i: number) => `chapter-${i}`,
+                )}
                 strategy={verticalListSortingStrategy}
               >
-            <div className="space-y-5">
-              {chapters.map((chapter: ChapterForm, ci: number) => {
-                const chapterHasErr = Array.from(errors).some((k) =>
-                  k.startsWith(`chapter-${ci}-`)
-                );
-                return (
-                  <SortableChapter key={`chapter-${ci}`} id={`chapter-${ci}`}>
-                    {(chapterDragHandleProps, chapterIsDragging) => (
-                  <div
-                    className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${
-                      chapterHasErr ? "border-destructive/50" : "border-border"
-                    } ${chapterIsDragging ? "shadow-xl" : ""}`}
-                  >
-                    {/* Chapter Header */}
-                    <div
-                      className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
-                        chapter.isExpanded
-                          ? "bg-primary/10 border-b border-primary/20"
-                          : "hover:bg-border/30"
-                      }`}
-                      onClick={() => toggleChapter(ci)}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Chapter drag handle */}
-                        <div
-                          {...chapterDragHandleProps}
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                        >
-                          <GripVertical className="h-4 w-4" />
-                        </div>
-                        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-sm font-bold shrink-0">
-                          {ci + 1}
-                        </span>
-                        {chapter.isExpanded ? (
-                          <input
-                            type="text"
-                            value={chapter.title}
-                            data-field={`chapter-${ci}-title`}
-                            onChange={(e) => {
-                              updateChapter(ci, "title", e.target.value);
-                              clearError(`chapter-${ci}-title`);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            placeholder={`Chapter ${ci + 1} title *`}
-                            className={`flex-1 bg-transparent font-semibold text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-0 border-b-2 pb-0.5 transition-colors ${
-                              errors.has(`chapter-${ci}-title`)
-                                ? "border-destructive"
-                                : "border-transparent focus:border-primary"
-                            }`}
-                          />
-                        ) : (
-                          <span className="font-semibold text-foreground truncate">
-                            {chapter.title || `Chapter ${ci + 1}`}
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                          {chapter.cards.length} card
-                          {chapter.cards.length !== 1 ? "s" : ""} ·{" "}
-                          {chapter.quizzes.length} question
-                          {chapter.quizzes.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeChapter(ci);
-                          }}
-                          className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        {chapter.isExpanded ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Chapter Body */}
-                    {chapter.isExpanded && (
-                      <div className="p-5 space-y-6">
-                        <input
-                          type="text"
-                          value={chapter.description}
-                          onChange={(e) =>
-                            updateChapter(ci, "description", e.target.value)
-                          }
-                          placeholder="Chapter description (optional)"
-                          className="w-full text-sm bg-transparent border-b border-border/50 outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors"
-                        />
-
-                        {/* ── Flashcards ── */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                              <Star className="h-4 w-4 text-primary" />
-                              Flashcards ({chapter.cards.length})
-                            </h3>
-                            <button
-                              onClick={() => addCard(ci)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              Add Card
-                            </button>
-                          </div>
-
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={(event: DragEndEvent) => {
-                              const { active, over } = event;
-                              if (over && active.id !== over.id) {
-                                const oldIdx = chapter.cards.findIndex((c: CardForm) => c.id === active.id);
-                                const newIdx = chapter.cards.findIndex((c: CardForm) => c.id === over.id);
-                                if (oldIdx !== -1 && newIdx !== -1) reorderCards(ci, oldIdx, newIdx);
-                              }
-                            }}
+                <div className="space-y-5">
+                  {chapters.map((chapter: ChapterForm, ci: number) => {
+                    const chapterHasErr = Array.from(errors).some((k) =>
+                      k.startsWith(`chapter-${ci}-`),
+                    );
+                    return (
+                      <SortableChapter
+                        key={`chapter-${ci}`}
+                        id={`chapter-${ci}`}
+                      >
+                        {(chapterDragHandleProps, chapterIsDragging) => (
+                          <div
+                            className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${
+                              chapterHasErr
+                                ? "border-destructive/50"
+                                : "border-border"
+                            } ${chapterIsDragging ? "shadow-xl" : ""}`}
                           >
-                            <SortableContext
-                              items={chapter.cards.map((c: CardForm) => c.id)}
-                              strategy={rectSortingStrategy}
+                            {/* Chapter Header */}
+                            <div
+                              className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
+                                chapter.isExpanded
+                                  ? "bg-primary/10 border-b border-primary/20"
+                                  : "hover:bg-border/30"
+                              }`}
+                              onClick={() => toggleChapter(ci)}
                             >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {chapter.cards.map(
-                              (card: CardForm, cardIdx: number) => {
-                                const fk = `chapter-${ci}-card-${cardIdx}-front`;
-                                const bk = `chapter-${ci}-card-${cardIdx}-back`;
-                                const cardHasErr =
-                                  errors.has(fk) || errors.has(bk);
-                                return (
-                                  <SortableCard key={card.id} id={card.id}>
-                                    {(dragHandleProps, isDragging) => (
-                                  <div
-                                    className={`relative rounded-2xl border-2 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 shadow-sm overflow-hidden group transition-colors ${
-                                      cardHasErr
-                                        ? "border-destructive/60"
-                                        : "border-border"
-                                    } ${isDragging ? "shadow-xl border-primary" : ""}`}
-                                  >
-                                    {/* Drag handle */}
-                                    <div
-                                      {...dragHandleProps}
-                                      className="absolute top-3 left-3 z-10 cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                                    >
-                                      <GripVertical className="h-4 w-4" />
-                                    </div>
-                                    <div className="absolute top-3 left-8 z-10">
-                                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                                        {cardIdx + 1}
-                                      </span>
-                                    </div>
-                                    <button
-                                      onClick={() => removeCard(ci, cardIdx)}
-                                      className="absolute top-3 right-3 z-10 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                {/* Chapter drag handle */}
+                                <div
+                                  {...chapterDragHandleProps}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </div>
+                                <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-sm font-bold shrink-0">
+                                  {ci + 1}
+                                </span>
+                                {chapter.isExpanded ? (
+                                  <input
+                                    type="text"
+                                    value={chapter.title}
+                                    data-field={`chapter-${ci}-title`}
+                                    onChange={(e) => {
+                                      updateChapter(
+                                        ci,
+                                        "title",
+                                        e.target.value,
+                                      );
+                                      clearError(`chapter-${ci}-title`);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    placeholder={`Chapter ${ci + 1} title *`}
+                                    className={`flex-1 bg-transparent font-semibold text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-0 border-b-2 pb-0.5 transition-colors ${
+                                      errors.has(`chapter-${ci}-title`)
+                                        ? "border-destructive"
+                                        : "border-transparent focus:border-primary"
+                                    }`}
+                                  />
+                                ) : (
+                                  <span className="font-semibold text-foreground truncate">
+                                    {chapter.title || `Chapter ${ci + 1}`}
+                                  </span>
+                                )}
+                                <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                                  {chapter.cards.length} card
+                                  {chapter.cards.length !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeChapter(ci);
+                                  }}
+                                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                                {chapter.isExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                            </div>
 
-                                    <div className="p-4 pt-10 space-y-3">
-                                      <div data-field={fk}>
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                          <Zap className="h-3 w-3 text-primary" />
-                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                                            Front
-                                          </span>
-                                        </div>
-                                        <textarea
-                                          value={card.front}
-                                          onChange={(e) => {
-                                            updateCard(
-                                              ci,
-                                              cardIdx,
-                                              "front",
-                                              e.target.value
+                            {/* Chapter Body */}
+                            {chapter.isExpanded && (
+                              <div className="p-5 space-y-6">
+                                <input
+                                  type="text"
+                                  value={chapter.description}
+                                  onChange={(e) =>
+                                    updateChapter(
+                                      ci,
+                                      "description",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Chapter description (optional)"
+                                  className="w-full text-sm bg-transparent border-b border-border/50 outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors"
+                                />
+
+                                {/* ── Flashcards ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                      <Star className="h-4 w-4 text-primary" />
+                                      Flashcards ({chapter.cards.length})
+                                    </h3>
+                                    <button
+                                      onClick={() => addCard(ci)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                    >
+                                      <Plus className="h-3.5 w-3.5" />
+                                      Add Card
+                                    </button>
+                                  </div>
+
+                                  <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={(event: DragEndEvent) => {
+                                      const { active, over } = event;
+                                      if (over && active.id !== over.id) {
+                                        const oldIdx = chapter.cards.findIndex(
+                                          (c: CardForm) => c.id === active.id,
+                                        );
+                                        const newIdx = chapter.cards.findIndex(
+                                          (c: CardForm) => c.id === over.id,
+                                        );
+                                        if (oldIdx !== -1 && newIdx !== -1)
+                                          reorderCards(ci, oldIdx, newIdx);
+                                      }
+                                    }}
+                                  >
+                                    <SortableContext
+                                      items={chapter.cards.map(
+                                        (c: CardForm) => c.id,
+                                      )}
+                                      strategy={rectSortingStrategy}
+                                    >
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {chapter.cards.map(
+                                          (card: CardForm, cardIdx: number) => {
+                                            const fk = `chapter-${ci}-card-${cardIdx}-front`;
+                                            const bk = `chapter-${ci}-card-${cardIdx}-back`;
+                                            const cardHasErr =
+                                              errors.has(fk) || errors.has(bk);
+                                            return (
+                                              <SortableCard
+                                                key={card.id}
+                                                id={card.id}
+                                              >
+                                                {(
+                                                  dragHandleProps,
+                                                  isDragging,
+                                                ) => (
+                                                  <div
+                                                    className={`relative rounded-2xl border-2 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 shadow-sm overflow-hidden group transition-colors ${
+                                                      cardHasErr
+                                                        ? "border-destructive/60"
+                                                        : "border-border"
+                                                    } ${isDragging ? "shadow-xl border-primary" : ""}`}
+                                                  >
+                                                    {/* Drag handle */}
+                                                    <div
+                                                      {...dragHandleProps}
+                                                      className="absolute top-3 left-3 z-10 cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
+                                                    >
+                                                      <GripVertical className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="absolute top-3 left-8 z-10">
+                                                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                                                        {cardIdx + 1}
+                                                      </span>
+                                                    </div>
+                                                    <button
+                                                      onClick={() =>
+                                                        removeCard(ci, cardIdx)
+                                                      }
+                                                      className="absolute top-3 right-3 z-10 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                                                    >
+                                                      <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+
+                                                    <div className="p-4 pt-10 space-y-3">
+                                                      <div data-field={fk}>
+                                                        <div className="flex items-center gap-1.5 mb-1">
+                                                          <Zap className="h-3 w-3 text-primary" />
+                                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                                                            Front
+                                                          </span>
+                                                        </div>
+                                                        <textarea
+                                                          value={card.front}
+                                                          onChange={(e) => {
+                                                            updateCard(
+                                                              ci,
+                                                              cardIdx,
+                                                              "front",
+                                                              e.target.value,
+                                                            );
+                                                            clearError(fk);
+                                                          }}
+                                                          placeholder="Question or term..."
+                                                          rows={2}
+                                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
+                                                            errors.has(fk)
+                                                              ? "border-destructive ring-1 ring-destructive/50"
+                                                              : "border-border/50"
+                                                          }`}
+                                                        />
+                                                      </div>
+                                                      <div data-field={bk}>
+                                                        <div className="flex items-center gap-1.5 mb-1">
+                                                          <Code2 className="h-3 w-3 text-primary" />
+                                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                                                            Back
+                                                          </span>
+                                                        </div>
+                                                        <textarea
+                                                          value={card.back}
+                                                          onChange={(e) => {
+                                                            updateCard(
+                                                              ci,
+                                                              cardIdx,
+                                                              "back",
+                                                              e.target.value,
+                                                            );
+                                                            clearError(bk);
+                                                          }}
+                                                          placeholder="Answer or definition..."
+                                                          rows={2}
+                                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
+                                                            errors.has(bk)
+                                                              ? "border-destructive ring-1 ring-destructive/50"
+                                                              : "border-border/50"
+                                                          }`}
+                                                        />
+                                                      </div>
+                                                      <button
+                                                        onClick={() =>
+                                                          toast(
+                                                            "Card media upload coming soon!",
+                                                            { icon: "🖼️" },
+                                                          )
+                                                        }
+                                                        className="w-full py-2 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1.5"
+                                                      >
+                                                        <ImagePlus className="h-3 w-3" />
+                                                        Add Media
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </SortableCard>
                                             );
-                                            clearError(fk);
-                                          }}
-                                          placeholder="Question or term..."
-                                          rows={2}
-                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                                            errors.has(fk)
-                                              ? "border-destructive ring-1 ring-destructive/50"
-                                              : "border-border/50"
-                                          }`}
-                                        />
-                                      </div>
-                                      <div data-field={bk}>
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                          <Code2 className="h-3 w-3 text-primary" />
-                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                                            Back
+                                          },
+                                        )}
+
+                                        <button
+                                          onClick={() => addCard(ci)}
+                                          className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-2 min-h-[200px] text-muted-foreground hover:text-primary"
+                                        >
+                                          <Plus className="h-8 w-8" />
+                                          <span className="text-sm font-medium">
+                                            Add Card
                                           </span>
-                                        </div>
-                                        <textarea
-                                          value={card.back}
-                                          onChange={(e) => {
-                                            updateCard(
-                                              ci,
-                                              cardIdx,
-                                              "back",
-                                              e.target.value
-                                            );
-                                            clearError(bk);
-                                          }}
-                                          placeholder="Answer or definition..."
-                                          rows={2}
-                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                                            errors.has(bk)
-                                              ? "border-destructive ring-1 ring-destructive/50"
-                                              : "border-border/50"
-                                          }`}
-                                        />
+                                        </button>
                                       </div>
+                                    </SortableContext>
+                                  </DndContext>
+                                </div>
+
+                                {/* ── Quiz Section (multi-question) ── */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                      <Crown className="h-4 w-4 text-warning" />
+                                      Quiz Questions ({chapter.quizzes.length})
+                                    </h3>
+                                    <div className="flex gap-1.5">
+                                      <button
+                                        onClick={() => addQuiz(ci, "mcq")}
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        MCQ
+                                      </button>
                                       <button
                                         onClick={() =>
-                                          toast(
-                                            "Card media upload coming soon!",
-                                            { icon: "🖼️" }
-                                          )
+                                          addQuiz(ci, "true_false")
                                         }
-                                        className="w-full py-2 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1.5"
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
                                       >
-                                        <ImagePlus className="h-3 w-3" />
-                                        Add Media
+                                        <Plus className="h-3.5 w-3.5" />
+                                        T/F
                                       </button>
-                                    </div>
-                                  </div>
-                                    )}
-                                  </SortableCard>
-                                );
-                              }
-                            )}
-
-                            <button
-                              onClick={() => addCard(ci)}
-                              className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-2 min-h-[200px] text-muted-foreground hover:text-primary"
-                            >
-                              <Plus className="h-8 w-8" />
-                              <span className="text-sm font-medium">
-                                Add Card
-                              </span>
-                            </button>
-                          </div>
-                            </SortableContext>
-                          </DndContext>
-                        </div>
-
-                        {/* ── Quiz Section (multi-question) ── */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                              <Crown className="h-4 w-4 text-warning" />
-                              Quiz Questions ({chapter.quizzes.length})
-                            </h3>
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => addQuiz(ci, "mcq")}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                MCQ
-                              </button>
-                              <button
-                                onClick={() => addQuiz(ci, "true_false")}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                T/F
-                              </button>
-                              <button
-                                onClick={() => addQuiz(ci, "fill_blank")}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                Fill
-                              </button>
-                            </div>
-                          </div>
-
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={(event: DragEndEvent) => {
-                              const { active, over } = event;
-                              if (over && active.id !== over.id) {
-                                const oldIdx = chapter.quizzes.findIndex((q: QuizForm) => q.id === active.id);
-                                const newIdx = chapter.quizzes.findIndex((q: QuizForm) => q.id === over.id);
-                                reorderQuizzes(ci, oldIdx, newIdx);
-                              }
-                            }}
-                          >
-                            <SortableContext
-                              items={chapter.quizzes.map((q: QuizForm) => q.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                          <div className="space-y-4">
-                            {chapter.quizzes.map(
-                              (quiz: QuizForm, qi: number) => {
-                                const keys = optionKeysForType(quiz.quizType);
-                                const qHasErr = Array.from(errors).some((k) =>
-                                  k.startsWith(`chapter-${ci}-quiz-${qi}`)
-                                );
-
-                                return (
-                                  <SortableQuiz key={quiz.id} id={quiz.id}>
-                                    {(dragHandleProps, isDragging) => (
-                                  <div
-                                    className={`rounded-2xl border-2 bg-warning/5 p-5 space-y-4 transition-colors ${
-                                      qHasErr
-                                        ? "border-destructive/50"
-                                        : "border-warning/30"
-                                    } ${isDragging ? "shadow-xl" : ""}`}
-                                  >
-                                    {/* Quiz question header */}
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        {/* Drag handle */}
-                                        <div
-                                          {...dragHandleProps}
-                                          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                                        >
-                                          <GripVertical className="h-4 w-4" />
-                                        </div>
-                                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-warning/20 text-warning text-xs font-bold">
-                                          Q{qi + 1}
-                                        </span>
-                                        {/* Type toggle */}
-                                        <div className="flex rounded-lg border border-border overflow-hidden text-xs">
-                                          {(
-                                            Object.keys(
-                                              QUIZ_TYPE_LABELS
-                                            ) as QuizType[]
-                                          ).map((t) => (
-                                            <button
-                                              key={t}
-                                              type="button"
-                                              onClick={() =>
-                                                changeQuizType(ci, qi, t)
-                                              }
-                                              className={`px-2.5 py-1 transition-colors ${
-                                                quiz.quizType === t
-                                                  ? "bg-warning text-white font-medium"
-                                                  : "bg-card text-muted-foreground hover:bg-warning/10"
-                                              }`}
-                                            >
-                                              {QUIZ_TYPE_LABELS[t]}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
                                       <button
-                                        onClick={() => removeQuiz(ci, qi)}
-                                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
+                                        onClick={() =>
+                                          addQuiz(ci, "fill_blank")
+                                        }
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
                                       >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Fill
                                       </button>
                                     </div>
-
-                                    {/* Question text */}
-                                    <div
-                                      data-field={`chapter-${ci}-quiz-${qi}-question`}
-                                    >
-                                      <textarea
-                                        value={quiz.question}
-                                        onChange={(e) => {
-                                          updateQuiz(
-                                            ci,
-                                            qi,
-                                            "question",
-                                            e.target.value
-                                          );
-                                          clearError(
-                                            `chapter-${ci}-quiz-${qi}-question`
-                                          );
-                                        }}
-                                        placeholder={
-                                          quiz.quizType === "fill_blank"
-                                            ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
-                                            : "Write your quiz question here... *"
-                                        }
-                                        rows={2}
-                                        className={`w-full bg-card/50 rounded-xl border px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 resize-none transition-colors ${
-                                          errors.has(
-                                            `chapter-${ci}-quiz-${qi}-question`
-                                          )
-                                            ? "border-destructive"
-                                            : "border-border/50"
-                                        }`}
-                                      />
-                                      {/* Live sentence preview for fill_blank */}
-                                      {quiz.quizType === "fill_blank" && quiz.question.trim() && (
-                                        <div className="mt-2 px-4 py-2.5 rounded-xl bg-warning/5 border border-warning/20 text-sm text-foreground">
-                                          <span className="text-[10px] font-semibold text-warning uppercase tracking-wide block mb-1">Preview</span>
-                                          {quiz.question.split("___").map((part, idx, arr) => (
-                                            <span key={idx}>
-                                              {part}
-                                              {idx < arr.length - 1 && (
-                                                <span className="inline-block mx-1 px-3 py-0.5 rounded-md bg-warning/20 border-b-2 border-warning text-warning font-semibold text-xs">
-                                                  {quiz.options[quiz.correctAnswer]?.trim()
-                                                    ? quiz.options[quiz.correctAnswer]
-                                                    : "______"}
-                                                </span>
-                                              )}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                      {quiz.quizType === "fill_blank" && quiz.question.trim() && !quiz.question.includes("___") && (
-                                        <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
-                                          ⚠ Add <code className="bg-warning/10 px-1 rounded">___</code> to mark where the blank goes
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    {/* Options / Answer */}
-                                    {quiz.quizType === "fill_blank" ? (
-                                      /* Fill in the Blank — word bank (A/B/C/D) + mark correct */
-                                      <div data-field={`chapter-${ci}-quiz-${qi}-options`}>
-                                        <p className="text-xs font-medium text-muted-foreground mb-2">
-                                          Word Bank — click the letter to mark the correct word
-                                          {errors.has(`chapter-${ci}-quiz-${qi}-answer`) && (
-                                            <span className="text-destructive ml-2">← Select the correct word</span>
-                                          )}
-                                        </p>
-                                        <div className="space-y-2.5">
-                                          {OPTION_KEYS_MCQ.map((key) => (
-                                            <div key={key} className="flex items-center gap-2.5">
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  updateQuiz(ci, qi, "correctAnswer", key);
-                                                  clearError(`chapter-${ci}-quiz-${qi}-answer`);
-                                                }}
-                                                className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                                                  quiz.correctAnswer === key
-                                                    ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
-                                                    : errors.has(`chapter-${ci}-quiz-${qi}-answer`)
-                                                    ? "bg-card border-2 border-destructive/50 text-muted-foreground"
-                                                    : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
-                                                }`}
-                                              >
-                                                {quiz.correctAnswer === key ? <Check className="h-4 w-4" /> : key}
-                                              </button>
-                                              <input
-                                                type="text"
-                                                value={quiz.options[key] || ""}
-                                                onChange={(e) => {
-                                                  updateQuizOption(ci, qi, key, e.target.value);
-                                                  clearError(`chapter-${ci}-quiz-${qi}-options`);
-                                                }}
-                                                placeholder={`Word ${key}`}
-                                                className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
-                                                  errors.has(`chapter-${ci}-quiz-${qi}-options`)
-                                                    ? "border-destructive/50"
-                                                    : "border-border/50"
-                                                }`}
-                                              />
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      /* MCQ / True-False — option buttons */
-                                      <div
-                                        data-field={`chapter-${ci}-quiz-${qi}-options`}
-                                      >
-                                        <p className="text-xs font-medium text-muted-foreground mb-2">
-                                          Options — click the letter to mark
-                                          correct answer
-                                          {errors.has(
-                                            `chapter-${ci}-quiz-${qi}-answer`
-                                          ) && (
-                                            <span className="text-destructive ml-2">
-                                              ← Select a correct answer
-                                            </span>
-                                          )}
-                                        </p>
-                                        <div className="space-y-2.5">
-                                          {keys.map((key) => (
-                                            <div
-                                              key={key}
-                                              className="flex items-center gap-2.5"
-                                              data-field={
-                                                key === quiz.correctAnswer
-                                                  ? `chapter-${ci}-quiz-${qi}-answer`
-                                                  : undefined
-                                              }
-                                            >
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  updateQuiz(
-                                                    ci,
-                                                    qi,
-                                                    "correctAnswer",
-                                                    key
-                                                  );
-                                                  clearError(
-                                                    `chapter-${ci}-quiz-${qi}-answer`
-                                                  );
-                                                }}
-                                                className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                                                  quiz.correctAnswer === key
-                                                    ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
-                                                    : errors.has(
-                                                        `chapter-${ci}-quiz-${qi}-answer`
-                                                      )
-                                                    ? "bg-card border-2 border-destructive/50 text-muted-foreground"
-                                                    : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
-                                                }`}
-                                              >
-                                                {quiz.correctAnswer === key ? (
-                                                  <Check className="h-4 w-4" />
-                                                ) : (
-                                                  key
-                                                )}
-                                              </button>
-                                              <input
-                                                type="text"
-                                                value={
-                                                  quiz.options[key] || ""
-                                                }
-                                                onChange={(e) => {
-                                                  updateQuizOption(
-                                                    ci,
-                                                    qi,
-                                                    key,
-                                                    e.target.value
-                                                  );
-                                                  clearError(
-                                                    `chapter-${ci}-quiz-${qi}-options`
-                                                  );
-                                                }}
-                                                disabled={
-                                                  quiz.quizType === "true_false"
-                                                }
-                                                placeholder={
-                                                  quiz.quizType === "true_false"
-                                                    ? key === "A"
-                                                      ? "True"
-                                                      : "False"
-                                                    : `Option ${key}`
-                                                }
-                                                className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
-                                                  quiz.quizType === "true_false"
-                                                    ? "bg-muted/30 cursor-not-allowed"
-                                                    : ""
-                                                } ${
-                                                  errors.has(
-                                                    `chapter-${ci}-quiz-${qi}-options`
-                                                  )
-                                                    ? "border-destructive/50"
-                                                    : "border-border/50"
-                                                }`}
-                                              />
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
                                   </div>
-                                    )}
-                                  </SortableQuiz>
-                                );
-                              }
+
+                                  <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={(event: DragEndEvent) => {
+                                      const { active, over } = event;
+                                      if (over && active.id !== over.id) {
+                                        const oldIdx =
+                                          chapter.quizzes.findIndex(
+                                            (q: QuizForm) => q.id === active.id,
+                                          );
+                                        const newIdx =
+                                          chapter.quizzes.findIndex(
+                                            (q: QuizForm) => q.id === over.id,
+                                          );
+                                        reorderQuizzes(ci, oldIdx, newIdx);
+                                      }
+                                    }}
+                                  >
+                                    <SortableContext
+                                      items={chapter.quizzes.map(
+                                        (q: QuizForm) => q.id,
+                                      )}
+                                      strategy={verticalListSortingStrategy}
+                                    >
+                                      <div className="space-y-4">
+                                        {chapter.quizzes.map(
+                                          (quiz: QuizForm, qi: number) => {
+                                            const keys = optionKeysForType(
+                                              quiz.quizType,
+                                            );
+                                            const qHasErr = Array.from(
+                                              errors,
+                                            ).some((k) =>
+                                              k.startsWith(
+                                                `chapter-${ci}-quiz-${qi}`,
+                                              ),
+                                            );
+
+                                            return (
+                                              <SortableQuiz
+                                                key={quiz.id}
+                                                id={quiz.id}
+                                              >
+                                                {(
+                                                  dragHandleProps,
+                                                  isDragging,
+                                                ) => (
+                                                  <div
+                                                    className={`rounded-2xl border-2 bg-warning/5 p-5 space-y-4 transition-colors ${
+                                                      qHasErr
+                                                        ? "border-destructive/50"
+                                                        : "border-warning/30"
+                                                    } ${isDragging ? "shadow-xl" : ""}`}
+                                                  >
+                                                    {/* Quiz question header */}
+                                                    <div className="flex items-center justify-between">
+                                                      <div className="flex items-center gap-2">
+                                                        {/* Drag handle */}
+                                                        <div
+                                                          {...dragHandleProps}
+                                                          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
+                                                        >
+                                                          <GripVertical className="h-4 w-4" />
+                                                        </div>
+                                                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-warning/20 text-warning text-xs font-bold">
+                                                          Q{qi + 1}
+                                                        </span>
+                                                        {/* Type toggle */}
+                                                        <div className="flex rounded-lg border border-border overflow-hidden text-xs">
+                                                          {(
+                                                            Object.keys(
+                                                              QUIZ_TYPE_LABELS,
+                                                            ) as QuizType[]
+                                                          ).map((t) => (
+                                                            <button
+                                                              key={t}
+                                                              type="button"
+                                                              onClick={() =>
+                                                                changeQuizType(
+                                                                  ci,
+                                                                  qi,
+                                                                  t,
+                                                                )
+                                                              }
+                                                              className={`px-2.5 py-1 transition-colors ${
+                                                                quiz.quizType ===
+                                                                t
+                                                                  ? "bg-warning text-white font-medium"
+                                                                  : "bg-card text-muted-foreground hover:bg-warning/10"
+                                                              }`}
+                                                            >
+                                                              {
+                                                                QUIZ_TYPE_LABELS[
+                                                                  t
+                                                                ]
+                                                              }
+                                                            </button>
+                                                          ))}
+                                                        </div>
+                                                      </div>
+                                                      <button
+                                                        onClick={() =>
+                                                          removeQuiz(ci, qi)
+                                                        }
+                                                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
+                                                      >
+                                                        <Trash2 className="h-4 w-4" />
+                                                      </button>
+                                                    </div>
+
+                                                    {/* Question text */}
+                                                    <div
+                                                      data-field={`chapter-${ci}-quiz-${qi}-question`}
+                                                    >
+                                                      <textarea
+                                                        value={quiz.question}
+                                                        onChange={(e) => {
+                                                          updateQuiz(
+                                                            ci,
+                                                            qi,
+                                                            "question",
+                                                            e.target.value,
+                                                          );
+                                                          clearError(
+                                                            `chapter-${ci}-quiz-${qi}-question`,
+                                                          );
+                                                        }}
+                                                        placeholder={
+                                                          quiz.quizType ===
+                                                          "fill_blank"
+                                                            ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
+                                                            : "Write your quiz question here... *"
+                                                        }
+                                                        rows={2}
+                                                        className={`w-full bg-card/50 rounded-xl border px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 resize-none transition-colors ${
+                                                          errors.has(
+                                                            `chapter-${ci}-quiz-${qi}-question`,
+                                                          )
+                                                            ? "border-destructive"
+                                                            : "border-border/50"
+                                                        }`}
+                                                      />
+                                                      {/* Live sentence preview for fill_blank */}
+                                                      {quiz.quizType ===
+                                                        "fill_blank" &&
+                                                        quiz.question.trim() && (
+                                                          <div className="mt-2 px-4 py-2.5 rounded-xl bg-warning/5 border border-warning/20 text-sm text-foreground">
+                                                            <span className="text-[10px] font-semibold text-warning uppercase tracking-wide block mb-1">
+                                                              Preview
+                                                            </span>
+                                                            {quiz.question
+                                                              .split("___")
+                                                              .map(
+                                                                (
+                                                                  part,
+                                                                  idx,
+                                                                  arr,
+                                                                ) => (
+                                                                  <span
+                                                                    key={idx}
+                                                                  >
+                                                                    {part}
+                                                                    {idx <
+                                                                      arr.length -
+                                                                        1 && (
+                                                                      <span className="inline-block mx-1 px-3 py-0.5 rounded-md bg-warning/20 border-b-2 border-warning text-warning font-semibold text-xs">
+                                                                        {quiz.options[
+                                                                          quiz
+                                                                            .correctAnswer
+                                                                        ]?.trim()
+                                                                          ? quiz
+                                                                              .options[
+                                                                              quiz
+                                                                                .correctAnswer
+                                                                            ]
+                                                                          : "______"}
+                                                                      </span>
+                                                                    )}
+                                                                  </span>
+                                                                ),
+                                                              )}
+                                                          </div>
+                                                        )}
+                                                      {quiz.quizType ===
+                                                        "fill_blank" &&
+                                                        quiz.question.trim() &&
+                                                        !quiz.question.includes(
+                                                          "___",
+                                                        ) && (
+                                                          <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
+                                                            ⚠ Add{" "}
+                                                            <code className="bg-warning/10 px-1 rounded">
+                                                              ___
+                                                            </code>{" "}
+                                                            to mark where the
+                                                            blank goes
+                                                          </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Options / Answer */}
+                                                    {quiz.quizType ===
+                                                    "fill_blank" ? (
+                                                      /* Fill in the Blank — word bank (A/B/C/D) + mark correct */
+                                                      <div
+                                                        data-field={`chapter-${ci}-quiz-${qi}-options`}
+                                                      >
+                                                        <p className="text-xs font-medium text-muted-foreground mb-2">
+                                                          Word Bank — click the
+                                                          letter to mark the
+                                                          correct word
+                                                          {errors.has(
+                                                            `chapter-${ci}-quiz-${qi}-answer`,
+                                                          ) && (
+                                                            <span className="text-destructive ml-2">
+                                                              ← Select the
+                                                              correct word
+                                                            </span>
+                                                          )}
+                                                        </p>
+                                                        <div className="space-y-2.5">
+                                                          {OPTION_KEYS_MCQ.map(
+                                                            (key) => (
+                                                              <div
+                                                                key={key}
+                                                                className="flex items-center gap-2.5"
+                                                              >
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => {
+                                                                    updateQuiz(
+                                                                      ci,
+                                                                      qi,
+                                                                      "correctAnswer",
+                                                                      key,
+                                                                    );
+                                                                    clearError(
+                                                                      `chapter-${ci}-quiz-${qi}-answer`,
+                                                                    );
+                                                                  }}
+                                                                  className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                                                                    quiz.correctAnswer ===
+                                                                    key
+                                                                      ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
+                                                                      : errors.has(
+                                                                            `chapter-${ci}-quiz-${qi}-answer`,
+                                                                          )
+                                                                        ? "bg-card border-2 border-destructive/50 text-muted-foreground"
+                                                                        : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
+                                                                  }`}
+                                                                >
+                                                                  {quiz.correctAnswer ===
+                                                                  key ? (
+                                                                    <Check className="h-4 w-4" />
+                                                                  ) : (
+                                                                    key
+                                                                  )}
+                                                                </button>
+                                                                <input
+                                                                  type="text"
+                                                                  value={
+                                                                    quiz
+                                                                      .options[
+                                                                      key
+                                                                    ] || ""
+                                                                  }
+                                                                  onChange={(
+                                                                    e,
+                                                                  ) => {
+                                                                    updateQuizOption(
+                                                                      ci,
+                                                                      qi,
+                                                                      key,
+                                                                      e.target
+                                                                        .value,
+                                                                    );
+                                                                    clearError(
+                                                                      `chapter-${ci}-quiz-${qi}-options`,
+                                                                    );
+                                                                  }}
+                                                                  placeholder={`Word ${key}`}
+                                                                  className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
+                                                                    errors.has(
+                                                                      `chapter-${ci}-quiz-${qi}-options`,
+                                                                    )
+                                                                      ? "border-destructive/50"
+                                                                      : "border-border/50"
+                                                                  }`}
+                                                                />
+                                                              </div>
+                                                            ),
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    ) : (
+                                                      /* MCQ / True-False — option buttons */
+                                                      <div
+                                                        data-field={`chapter-${ci}-quiz-${qi}-options`}
+                                                      >
+                                                        <p className="text-xs font-medium text-muted-foreground mb-2">
+                                                          Options — click the
+                                                          letter to mark correct
+                                                          answer
+                                                          {errors.has(
+                                                            `chapter-${ci}-quiz-${qi}-answer`,
+                                                          ) && (
+                                                            <span className="text-destructive ml-2">
+                                                              ← Select a correct
+                                                              answer
+                                                            </span>
+                                                          )}
+                                                        </p>
+                                                        <div className="space-y-2.5">
+                                                          {keys.map((key) => (
+                                                            <div
+                                                              key={key}
+                                                              className="flex items-center gap-2.5"
+                                                              data-field={
+                                                                key ===
+                                                                quiz.correctAnswer
+                                                                  ? `chapter-${ci}-quiz-${qi}-answer`
+                                                                  : undefined
+                                                              }
+                                                            >
+                                                              <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                  updateQuiz(
+                                                                    ci,
+                                                                    qi,
+                                                                    "correctAnswer",
+                                                                    key,
+                                                                  );
+                                                                  clearError(
+                                                                    `chapter-${ci}-quiz-${qi}-answer`,
+                                                                  );
+                                                                }}
+                                                                className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                                                                  quiz.correctAnswer ===
+                                                                  key
+                                                                    ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
+                                                                    : errors.has(
+                                                                          `chapter-${ci}-quiz-${qi}-answer`,
+                                                                        )
+                                                                      ? "bg-card border-2 border-destructive/50 text-muted-foreground"
+                                                                      : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
+                                                                }`}
+                                                              >
+                                                                {quiz.correctAnswer ===
+                                                                key ? (
+                                                                  <Check className="h-4 w-4" />
+                                                                ) : (
+                                                                  key
+                                                                )}
+                                                              </button>
+                                                              <input
+                                                                type="text"
+                                                                value={
+                                                                  quiz.options[
+                                                                    key
+                                                                  ] || ""
+                                                                }
+                                                                onChange={(
+                                                                  e,
+                                                                ) => {
+                                                                  updateQuizOption(
+                                                                    ci,
+                                                                    qi,
+                                                                    key,
+                                                                    e.target
+                                                                      .value,
+                                                                  );
+                                                                  clearError(
+                                                                    `chapter-${ci}-quiz-${qi}-options`,
+                                                                  );
+                                                                }}
+                                                                disabled={
+                                                                  quiz.quizType ===
+                                                                  "true_false"
+                                                                }
+                                                                placeholder={
+                                                                  quiz.quizType ===
+                                                                  "true_false"
+                                                                    ? key ===
+                                                                      "A"
+                                                                      ? "True"
+                                                                      : "False"
+                                                                    : `Option ${key}`
+                                                                }
+                                                                className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
+                                                                  quiz.quizType ===
+                                                                  "true_false"
+                                                                    ? "bg-muted/30 cursor-not-allowed"
+                                                                    : ""
+                                                                } ${
+                                                                  errors.has(
+                                                                    `chapter-${ci}-quiz-${qi}-options`,
+                                                                  )
+                                                                    ? "border-destructive/50"
+                                                                    : "border-border/50"
+                                                                }`}
+                                                              />
+                                                            </div>
+                                                          ))}
+                                                        </div>
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </SortableQuiz>
+                                            );
+                                          },
+                                        )}
+                                      </div>
+                                    </SortableContext>
+                                  </DndContext>
+
+                                  {/* Add another question — bottom shortcut */}
+                                  <div className="flex gap-1.5 mt-3">
+                                    {(
+                                      [
+                                        "mcq",
+                                        "true_false",
+                                        "fill_blank",
+                                      ] as const
+                                    ).map((t) => (
+                                      <button
+                                        key={t}
+                                        onClick={() => addQuiz(ci, t)}
+                                        className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-warning/30 hover:border-warning hover:bg-warning/5 transition-colors flex items-center justify-center gap-1.5 text-muted-foreground hover:text-warning text-xs font-medium"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        {t === "mcq"
+                                          ? "MCQ"
+                                          : t === "true_false"
+                                            ? "T/F"
+                                            : "Fill"}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
-                            </SortableContext>
-                          </DndContext>
-
-                          {/* Add another question — bottom shortcut */}
-                          <div className="flex gap-1.5 mt-3">
-                            {(["mcq", "true_false", "fill_blank"] as const).map((t) => (
-                              <button
-                                key={t}
-                                onClick={() => addQuiz(ci, t)}
-                                className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-warning/30 hover:border-warning hover:bg-warning/5 transition-colors flex items-center justify-center gap-1.5 text-muted-foreground hover:text-warning text-xs font-medium"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                {t === "mcq" ? "MCQ" : t === "true_false" ? "T/F" : "Fill"}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                    )}
-                  </SortableChapter>
-                );
-              })}
-            </div>
+                        )}
+                      </SortableChapter>
+                    );
+                  })}
+                </div>
               </SortableContext>
             </DndContext>
 
@@ -2024,8 +1778,8 @@ export default function CreateLessonPage() {
                 saving
                   ? "Saving..."
                   : isEditMode
-                  ? "Update & Re-submit"
-                  : "Submit for Approval"
+                    ? "Update & Re-submit"
+                    : "Submit for Approval"
               }
               color="bg-success"
               textColor="text-white"
