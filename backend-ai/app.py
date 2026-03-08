@@ -8,6 +8,7 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,15 +38,17 @@ class ChatResponse(BaseModel):
 
 
 langgraph_chat = None
+langgraph_store = None
 
 #intialize langgraph with long term memory
 async def init_langgraph():
     """Initialize LangGraph with memory."""
-    global langgraph_chat
+    global langgraph_chat, langgraph_store
     try:
         from graph.builder import build_graph_with_memory
-        graph, _, _ = await build_graph_with_memory()
+        graph, _, store = await build_graph_with_memory()
         langgraph_chat = graph
+        langgraph_store = store
         print("[OK] LangGraph chat with memory initialized")
     except Exception as e:
         import traceback
@@ -71,9 +74,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -111,6 +116,20 @@ async def chat(request: ChatRequest):
         }
     }
 
+    # Register thread in store for this user
+    if langgraph_store:
+        thread_namespace = ("threads", request.user_id)
+        existing = await langgraph_store.aget(thread_namespace, request.thread_id)
+        if not existing:
+            await langgraph_store.aput(
+                thread_namespace,
+                request.thread_id,
+                {
+                    "thread_id": request.thread_id,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+
     try:
         if request.stream:
             async def generate_stream():
@@ -144,6 +163,62 @@ async def chat(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+@app.get("/chat/threads")
+async def chat_threads(user_id: str):
+    """List all threads for a user."""
+    if not langgraph_store:
+        raise HTTPException(
+            status_code=503,
+            detail="LangGraph store not initialized. Check server logs."
+        )
+
+    try:
+        namespace = ("threads", user_id)
+        items = await langgraph_store.asearch(namespace, query="", limit=100)
+
+        threads = []
+        for item in items:
+            threads.append(item.value)
+
+        threads.sort(key=lambda t: t.get("created_at", ""), reverse=True)
+        return {"user_id": user_id, "threads": threads}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/chat/history")
+async def chat_history(thread_id: str, user_id: str = "default_user"):
+    """Retrieve chat history for a given thread."""
+    if not langgraph_chat:
+        raise HTTPException(
+            status_code=503,
+            detail="LangGraph chat not initialized. Check server logs."
+        )
+
+    config = {
+        "configurable": {
+            "thread_id": thread_id,
+            "user_id": user_id,
+        }
+    }
+
+    try:
+        state = await langgraph_chat.aget_state(config)
+        messages = state.values.get("messages", [])
+
+        history = []
+        for msg in messages:
+            if msg.type in ("human", "ai") and msg.content:
+                history.append({
+                    "role": msg.type,
+                    "content": msg.content,
+                })
+
+        return {"thread_id": thread_id, "messages": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,137 +1,146 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { api } from "@/app/api/api"
-import { StatsCards } from "./components/stats-cards"
-import { LessonsTable } from "./components/lessons-table"
-import { Toast } from "./components/toast"
+import { useState, useEffect } from "react";
+
+import { api } from "@/app/api/api";
+import { StatsCards } from "./components/stats-cards";
+import { LessonsTable } from "./components/lessons-table";
 import { Sidebar } from "@/app/components/Sidebar";
+import toast from "react-hot-toast";
+import { ReportsTable } from "./components/reports-table";
 
 // Types
-export type LessonStatus = "pending" | "approved" | "rejected"
+export type LessonStatus = "pending" | "approved" | "rejected";
+export type ReportStatus = "reported" | "closed" | "unresolved" | "redirected";
+export type ReportType = "critical" | "high" | "medium" | "low";
 
 export interface Lesson {
-  title: string
-  description: string
-  createdBy: string
-  createdAt: string
-  status: LessonStatus
+	title: string;
+	description: string;
+	createdBy: string;
+	createdAt: string;
+	status: LessonStatus;
 }
 
 export interface LessonStats {
-  total: number
-  pending: number
-  approved: number
-  rejected: number
+	total: number;
+	pending: number;
+	approved: number;
+	rejected: number;
 }
 
 function getLessonStats(lessons: Lesson[]): LessonStats {
-  return {
-    total: lessons.length,
-    pending: lessons.filter((l) => l.status === "pending").length,
-    approved: lessons.filter((l) => l.status === "approved").length,
-    rejected: lessons.filter((l) => l.status === "rejected").length,
-  }
+	return {
+		total: lessons.length,
+		pending: lessons.filter((l) => l.status === "pending").length,
+		approved: lessons.filter((l) => l.status === "approved").length,
+		rejected: lessons.filter((l) => l.status === "rejected").length,
+	};
 }
 
-interface ToastState {
-  show: boolean
-  message: string
-  type: "success" | "error"
+export interface Report {
+	id: number;
+	title: string;
+	description: string;
+	status: ReportStatus;
+	type: ReportType;
+	reportedBy: string;
+	lessonTitle: string;
+	chapterTitle?: string | null;
+	remarks?: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export default function DashboardPage() {
-  const [selected, setSelected] = useState("Manage Applications");
-  const [lessons, setLessons] = useState<Lesson[]>([])
-  const [loading, setLoading] = useState(true)
-  const [toast, setToast] = useState<ToastState>({ show: false, message: "", type: "success" })
+	const [selected, setSelected] = useState("Manage Applications");
+	const [lessons, setLessons] = useState<Lesson[]>([]);
+	const [reports, setReports] = useState<Report[]>([]);
 
-  useEffect(() => {
-    async function fetchLessons() {
-      try {
-        const [pendingRes, applicationsRes] = await Promise.all([
-          api.get("/api/lesson/applications/pending"),
-          api.get("/api/lesson/applications"),
-        ])
-        const pendingLessons = pendingRes.data.map((l: Omit<Lesson, "status">) => ({ ...l, status: "pending" as const }))
-        const allLessons = [...pendingLessons, ...applicationsRes.data]
-        setLessons(allLessons)
-      } catch (err) {
-        console.error("Failed to fetch lessons:", err)
-        showToast("Failed to fetch lessons.", "error")
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchLessons()
-  }, [])
+	const [loading, setLoading] = useState(true);
 
-  const stats = getLessonStats(lessons)
+	const handleChangeStatus = async (id: number, status: ReportStatus) => {
+		await api.patch("/api/report/root/status", { reportId: id, status });
+		setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: status } : r)));
+		toast.success("Report "+ id + " " + status)
+	};
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToast({ show: true, message, type })
-    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000)
-  }
 
-  const updateLessonStatus = (title: string, status: LessonStatus) => {
-    setLessons((prev) =>
-      prev.map((lesson) =>
-        lesson.title === title ? { ...lesson, status } : lesson
-      )
-    )
-  }
 
-  const handleApprove = (title: string) => {
-    updateLessonStatus(title, "approved")
-    showToast(`"${title}" has been approved for publishing.`, "success")
-  }
+	useEffect(() => {
+		async function fetchLessons() {
+			try {
+				const [pendingRes, applicationsRes] = await Promise.all([api.get("/api/lesson/applications/pending"), api.get("/api/lesson/applications")]);
+				const pendingLessons = pendingRes.data.map((l: Omit<Lesson, "status">) => ({ ...l, status: "pending" as const }));
+				const allLessons = [...pendingLessons, ...applicationsRes.data];
+				setLessons(allLessons);
 
-  const handleReject = (title: string) => {
-    updateLessonStatus(title, "rejected")
-    showToast(`"${title}" has been rejected.`, "error")
-  }
+				const reportRes = await api.get("/api/report/root");
+				setReports(reportRes.data);
+			} catch (err) {
+				console.error("Failed to fetch lessons:", err);
+				showToast("Failed to fetch lessons.", "error");
+			} finally {
+				setLoading(false);
+			}
+		}
+		fetchLessons();
+	}, []);
 
-  return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar selected={selected} setSelected={setSelected} />
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">
-              Lesson Approval Dashboard
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Review and approve lessons submitted by instructors for publication.
-            </p>
-          </div>
+	const stats = getLessonStats(lessons);
 
-          {selected === "Manage Applications" ? (
-            loading ? (
-              <p className="text-muted-foreground">Loading lessons...</p>
-            ) : (
-              <div className="flex flex-col gap-6">
-                <StatsCards stats={stats} />
-                <LessonsTable
-                  lessons={lessons}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                />
-              </div>
-            )
-          ) : selected === "Manage Reports" ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <p>No reports to display.</p>
-            </div>
-          ) : null}
-        </div>
-      </main>
+	const showToast = (message: string, type: "success" | "error") => {
+		if (type === "success") {
+			toast.success(message);
+		} else {
+			toast.error(message);
+		}
+	};
 
-      <Toast
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
-    </div>
-  )
+	const updateLessonStatus = (title: string, status: LessonStatus) => {
+		setLessons((prev) => prev.map((lesson) => (lesson.title === title ? { ...lesson, status } : lesson)));
+	};
+
+	const handleApprove = (title: string) => {
+		updateLessonStatus(title, "approved");
+		showToast(`"${title}" has been approved for publishing.`, "success");
+	};
+
+	const handleReject = (title: string) => {
+		updateLessonStatus(title, "rejected");
+		showToast(`"${title}" has been rejected.`, "error");
+	};
+
+	return (
+		<div className="flex min-h-screen bg-background">
+			<Sidebar selected={selected} setSelected={setSelected} />
+			<main className="flex-1 overflow-auto">
+				<div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+					<div className="mb-8">
+						<h1 className="text-3xl font-bold text-foreground">Site Admin Dashboard</h1>
+						{selected === "Manage Applications" ? (
+							<p className="mt-1 text-muted-foreground">Review and approve lessons submitted by instructors for publication.</p>
+						) : selected === "Manage Reports" ? (
+							<p className="mt-1 text-muted-foreground">Review user reports on created lessons.</p>
+						) : null}
+					</div>
+
+					{selected === "Manage Applications" ? (
+						loading ? (
+							<p className="text-muted-foreground">Loading lessons...</p>
+						) : (
+							<div className="flex flex-col gap-6">
+								<StatsCards stats={stats} />
+								<LessonsTable lessons={lessons} onApprove={handleApprove} onReject={handleReject} />
+							</div>
+						)
+					) : selected === "Manage Reports" ? (
+						<div className="py-4 text-muted-foreground">
+							<ReportsTable reports={reports} handleChangeStatus={handleChangeStatus} onSuspendLesson={() => {}} />
+						</div>
+					) : null}
+				</div>
+			</main>
+		</div>
+	);
 }
