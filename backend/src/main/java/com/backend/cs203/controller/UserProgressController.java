@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.cs203.dto.progress.DashboardProgressDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.dto.progress.MarkCardCompleteRequest;
 import com.backend.cs203.service.UserProgressService;
@@ -26,12 +27,12 @@ public class UserProgressController {
 
     /**
      * GET /api/progress/dashboard
-     * Returns all lessons with progress info, ordered:
-     * in_progress → not_started → completed
+     * Returns lightweight progress-only data for every approved lesson.
+     * Lesson metadata (title, image, tags) comes from GET /api/lesson/.
      */
     @GetMapping("/dashboard")
-    public ResponseEntity<List<LessonProgressDTO>> getDashboard(Authentication authentication) {
-        List<LessonProgressDTO> dashboard = userProgressService.getDashboard(authentication.getName());
+    public ResponseEntity<List<DashboardProgressDTO>> getDashboard(Authentication authentication) {
+        List<DashboardProgressDTO> dashboard = userProgressService.getDashboard(authentication.getName());
         return ResponseEntity.ok(dashboard);
     }
 
@@ -45,18 +46,6 @@ public class UserProgressController {
             Authentication authentication) {
         LessonProgressDTO progress = userProgressService.getLessonProgress(authentication.getName(), lessonId);
         return ResponseEntity.ok(progress);
-    }
-
-    /**
-     * POST /api/progress/lesson/{lessonId}/start
-     * Creates an in_progress row (or updates last_accessed_at if already started).
-     */
-    @PostMapping("/lesson/{lessonId}/start")
-    public ResponseEntity<Void> startLesson(
-            @PathVariable Integer lessonId,
-            Authentication authentication) {
-        userProgressService.startLesson(authentication.getName(), lessonId);
-        return ResponseEntity.ok().build();
     }
 
     /**
