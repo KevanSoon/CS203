@@ -88,10 +88,10 @@ class LessonServiceTest {
 
     @Test
     void getUserCreatedLessons_returnsLessonsForUser() {
-        LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
+        LessonApplicationDTO dto = mock(LessonApplicationDTO.class);
         when(lessonRepository.findUserCreatedLessons(1)).thenReturn(List.of(dto));
 
-        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(1);
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessons(1);
 
         assertEquals(1, result.size());
         verify(lessonRepository).findUserCreatedLessons(1);
@@ -101,7 +101,7 @@ class LessonServiceTest {
     void getUserCreatedLessons_returnsEmptyForUserWithNoLessons() {
         when(lessonRepository.findUserCreatedLessons(999)).thenReturn(Collections.emptyList());
 
-        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(999);
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessons(999);
 
         assertTrue(result.isEmpty());
     }
@@ -143,6 +143,7 @@ class LessonServiceTest {
 
         assertEquals(1, result.size());
         verify(lessonRepository).findUserCreatedLessonApplications(1); // ← lowercase f
+        verify(lessonRepository, never()).findUserCreatedLessons(anyInt());
     }
 
     @Test
@@ -153,6 +154,17 @@ class LessonServiceTest {
 
         assertTrue(result.isEmpty());
         verify(lessonRepository).findUserCreatedLessonApplications(999); // ← lowercase f
+        verify(lessonRepository, never()).findUserCreatedLessons(anyInt());
+    }
+
+    @Test
+    void getUserCreatedLessonApplications_passesThroughCorrectUserId() {
+        when(lessonRepository.findUserCreatedLessonApplications(42)).thenReturn(Collections.emptyList());
+
+        lessonService.getUserCreatedLessonApplications(42);
+
+        verify(lessonRepository).findUserCreatedLessonApplications(42);
+        verify(lessonRepository, never()).findUserCreatedLessons(42);
     }
 
     // ===== getLessonPage =====

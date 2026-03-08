@@ -211,11 +211,33 @@ class LessonControllerTest {
         verify(lessonService, never()).getUserCreatedLessons(anyInt());
     }
 
+        @Test
+        void getUserCreatedLessonApplications_withAdminRoleAndNoApplications_returnsEmptyArray() throws Exception {
+                User user = User.builder().id(1).username("adminuser").build();
+
+                when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+                when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(Collections.emptyList());
+
+                mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$").isArray())
+                                .andExpect(jsonPath("$").isEmpty());
+
+                verify(userRepository).findByUsername("adminuser");
+                verify(lessonService).getUserCreatedLessonApplications(1);
+        }
+
     @Test
     void getUserCreatedLessonApplications_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/user-applications/").with(user("testuser").roles("USER")))
                 .andExpect(status().isInternalServerError());
     }
+
+        @Test
+        void getUserCreatedLessonApplications_withRootRole_deniesAccess() throws Exception {
+                mockMvc.perform(get("/api/lesson/user-applications/").with(user("root").roles("ROOT")))
+                                .andExpect(status().isInternalServerError());
+        }
 
     @Test
     void getUserCreatedLessonApplications_userNotFound_returns500() throws Exception {

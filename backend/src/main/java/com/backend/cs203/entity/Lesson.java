@@ -66,7 +66,7 @@ public class Lesson {
 
 
    public enum LessonStatus {
-       saved, pending, approved, rejected
+       saved, pending, approved, rejected, suspended
    }
 }
 
