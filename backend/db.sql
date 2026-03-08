@@ -78,3 +78,20 @@ CREATE TABLE IF NOT EXISTS friendship (
   FOREIGN KEY (user1_id) REFERENCES user(id),
   FOREIGN KEY (user2_id) REFERENCES user(id)
 );
+
+CREATE TABLE IF NOT EXISTS report(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  status ENUM('reported', 'closed', 'unresolved', `redirected`) NOT NULL ,
+  type ENUM ('critical', 'high','medium','low') NOT NULL,
+  reported_by INT NOT NULL,
+  remarks TEXT NOT NULL,
+  lesson_id INT NOT NULL,
+  chapter_id INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`reported_by`) REFERENCES user(`username`),
+  FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`),
+  FOREIGN KEY (`chapter_id`) REFERENCES chapter(`id`)
+);
