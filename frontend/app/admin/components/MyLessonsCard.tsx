@@ -56,6 +56,15 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 			</span>
 		);
 	}
+	function renderSuspendedTag() {
+		return (
+			<span
+				className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive-light text-destructive-dark">
+				<span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+				Suspended
+			</span>
+		);
+	}
 	const displayData = useMemo(() => {
 		if (title !== "Applications") return data;
 		return data.filter((l) => (l.status ?? "").toLowerCase() === appFilter);
@@ -113,7 +122,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 											<div className="flex items-start justify-between gap-2">
 												<div className="flex-1">
 													<p className="text-sm font-semibold text-foreground mb-1">
-														{record.title} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
+														{record.title} {record.status === "suspended" ? renderSuspendedTag() : <></>} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
 													</p>
 												</div>
 												{record.status === "pending" ? (
@@ -125,7 +134,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 															<Trash2 className="h-4 w-4" />
 														</button>
 													</div>
-												) : (record.reports?.length ?? 0) > 0 ? (
+												) : (record.reports?.length ?? 0) > 0 && record.status !== "suspended" ? (
 													<>
 														<button
 															type="button"

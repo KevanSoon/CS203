@@ -43,10 +43,8 @@ public class LessonService {
                 .collect(Collectors.toList());
     }
 
-    public List<LessonSummaryResponse> getUserCreatedLessons(int id) {
-        return lessonRepository.findUserCreatedLessons(id).stream()
-                .map(this::toResponseWithSignedUrl)
-                .collect(Collectors.toList());
+    public List<LessonApplicationDTO> getUserCreatedLessons(int id) {
+        return lessonRepository.findUserCreatedLessons(id);
     }
 
     public List<LessonApplicationDTO> getAllLessonApplications() {
