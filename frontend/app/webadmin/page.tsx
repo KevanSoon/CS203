@@ -11,7 +11,7 @@ import { ReportsTable } from "./components/reports-table";
 
 // Types
 export type LessonStatus = "pending" | "approved" | "rejected";
-export type ReportStatus = "reported" | "closed" | "unresolved";
+export type ReportStatus = "reported" | "closed" | "unresolved" | "redirected";
 export type ReportType = "critical" | "high" | "medium" | "low";
 
 export interface Lesson {
@@ -58,7 +58,14 @@ export default function DashboardPage() {
 	const [reports, setReports] = useState<Report[]>([]);
 
 	const [loading, setLoading] = useState(true);
-	const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+	const handleChangeStatus = async (id: number, status: ReportStatus) => {
+		await api.patch("/api/report/root/status", { reportId: id, status });
+		setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: status } : r)));
+		toast.success("Report "+ id + " " + status)
+	};
+
+
 
 	useEffect(() => {
 		async function fetchLessons() {
@@ -129,7 +136,7 @@ export default function DashboardPage() {
 						)
 					) : selected === "Manage Reports" ? (
 						<div className="py-4 text-muted-foreground">
-							<ReportsTable reports={reports} onCloseReport={() => {}} onMarkRedirect={() => {}} onSuspendLesson={() => {}} />
+							<ReportsTable reports={reports} handleChangeStatus={handleChangeStatus} onSuspendLesson={() => {}} />
 						</div>
 					) : null}
 				</div>
