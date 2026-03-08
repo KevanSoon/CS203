@@ -103,7 +103,7 @@ export function LessonRow({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border border-border bg-card py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
                   <button
                     onClick={() => {
                       onPreview(lesson)

@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { BookOpen, Pencil, Trash2, ChevronDown, BadgeAlert } from "lucide-react";
-import { parseTags, getVisibleTags } from "@/app/utils/tags";
-
+import { useRouter } from "next/navigation";
 import { Lesson } from "@/app/admin/page";
+import { parseTags, getVisibleTags } from "@/app/utils/tags";
 import { Report, ReportType } from "@/app/webadmin/page";
 import { ReportsModal } from "./ReportModal";
 
@@ -27,6 +27,7 @@ const severityRank: Record<ReportType, number> = {
 };
 
 export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
+	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(true);
 	const [appFilter, setAppFilter] = useState<FilterValue>("pending");
 
@@ -118,7 +119,14 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 												</div>
 												{record.status === "pending" ? (
 													<div className="flex items-center gap-1 shrink-0">
-														<button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+														<button
+															title="Edit lesson"
+															className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+															onClick={(e) => {
+																e.stopPropagation();
+																router.push(`/admin/create?edit=${encodeURIComponent(record.title)}`);
+															}}
+														>
 															<Pencil className="h-4 w-4" />
 														</button>
 														<button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
