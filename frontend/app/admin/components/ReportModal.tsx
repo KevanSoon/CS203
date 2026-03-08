@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { X, Pencil } from "lucide-react";
 
+import { api } from "@/app/api/api";
 import { Report, ReportType } from "@/app/webadmin/page";
+import toast from "react-hot-toast";
 
 interface ReportsModalProps {
 	open: boolean;
@@ -52,12 +54,14 @@ export function ReportsModal({ open, onClose, lessonTitle, reports, onSaveRemark
 		const nextRemark = draftRemark.trim();
 		setIsSaving(true);
 		try {
+			await api.patch("/api/report/admin/remark", { reportId, remark: nextRemark });
 			if (onSaveRemark) {
 				await onSaveRemark(reportId, nextRemark);
 			}
 			setLocalRemarks((prev) => ({ ...prev, [reportId]: nextRemark }));
 			cancelEdit();
 		} finally {
+			toast.success("Report remarks updated")
 			setIsSaving(false);
 		}
 	}

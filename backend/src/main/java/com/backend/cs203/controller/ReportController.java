@@ -37,6 +37,13 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getUserCreatedLessonReports(user.getId()));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/admin/remarks")
+    public ResponseEntity<Void> updateReportRemarks(@RequestParam Integer reportId, @RequestParam String remarks) {
+        reportService.updateReportRemarks(reportId, remarks);
+        return ResponseEntity.noContent().build();
+    }
+
     @PreAuthorize("hasRole('ROOT')")
     @GetMapping("/root")
     public ResponseEntity<List<ReportDTO>> getAllReportsForRoot() {
@@ -57,10 +64,4 @@ public class ReportController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('ROOT')")
-    @PatchMapping("/root/remarks")
-    public ResponseEntity<Void> updateReportRemarks(@RequestParam Integer reportId, @RequestParam String remarks) {
-        reportService.updateReportRemarks(reportId, remarks);
-        return ResponseEntity.noContent().build();
-    }
 }

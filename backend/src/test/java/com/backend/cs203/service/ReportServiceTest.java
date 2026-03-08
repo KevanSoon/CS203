@@ -81,95 +81,96 @@ class ReportServiceTest {
         verify(reportRepository).findAllLessonReportsForRoot();
     }
     @Test
-void updateReportStatus_updatesAndSavesReport() {
-    Integer reportId = 1;
-    Report report = new Report();
-    report.setStatus(Report.ReportStatus.reported);
+    void updateReportStatus_updatesAndSavesReport() {
+        Integer reportId = 1;
+        Report report = new Report();
+        report.setStatus(Report.ReportStatus.reported);
 
-    when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
-    reportService.updateReportStatus(reportId, "closed");
+        reportService.updateReportStatus(reportId, "closed");
 
-    assertEquals(Report.ReportStatus.closed, report.getStatus());
-    verify(reportRepository).findById(reportId);
-    verify(reportRepository).save(report);
-}
+        assertEquals(Report.ReportStatus.closed, report.getStatus());
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository).save(report);
+    }
 
-@Test
-void updateReportStatus_reportNotFound_throwsRuntimeException() {
-    Integer reportId = 999;
-    when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
+    @Test
+    void updateReportStatus_reportNotFound_throwsRuntimeException() {
+        Integer reportId = 999;
+        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
 
-    RuntimeException ex = assertThrows(RuntimeException.class,
-            () -> reportService.updateReportStatus(reportId, "closed"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> reportService.updateReportStatus(reportId, "closed"));
 
-    assertEquals("Report not found", ex.getMessage());
-    verify(reportRepository).findById(reportId);
-    verify(reportRepository, never()).save(any(Report.class));
-}
+        assertEquals("Report not found", ex.getMessage());
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository, never()).save(any(Report.class));
+    }
 
-@Test
-void updateReportStatus_invalidStatus_throwsIllegalArgumentException() {
-    Integer reportId = 1;
-    Report report = new Report();
-    when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+    @Test
+    void updateReportStatus_invalidStatus_throwsIllegalArgumentException() {
+        Integer reportId = 1;
+        Report report = new Report();
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
-    assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> reportService.updateReportStatus(reportId, "not-a-real-status"));
+        assertTrue(ex.getMessage() != null && !ex.getMessage().isBlank());
 
-    verify(reportRepository).findById(reportId);
-    verify(reportRepository, never()).save(report);
-}
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository, never()).save(report);
+    }
 
-@Test
-void updateReportStatusAndSuspendLesson_updatesReportAndSuspendsLesson() {
-    Integer reportId = 1;
-    Lesson lesson = new Lesson();
-    lesson.setStatus(Lesson.LessonStatus.approved);
+    @Test
+    void updateReportStatusAndSuspendLesson_updatesReportAndSuspendsLesson() {
+        Integer reportId = 1;
+        Lesson lesson = new Lesson();
+        lesson.setStatus(Lesson.LessonStatus.approved);
 
-    Report report = new Report();
-    report.setStatus(Report.ReportStatus.reported);
-    report.setLesson(lesson);
+        Report report = new Report();
+        report.setStatus(Report.ReportStatus.reported);
+        report.setLesson(lesson);
 
-    when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
-    reportService.updateReportStatusAndSuspendLesson(reportId, "closed");
+        reportService.updateReportStatusAndSuspendLesson(reportId, "closed");
 
-    assertEquals(Report.ReportStatus.closed, report.getStatus());
-    assertEquals(Lesson.LessonStatus.suspended, lesson.getStatus());
-    verify(reportRepository).findById(reportId);
-    verify(lessonRepository).save(lesson);
-    verify(reportRepository).save(report);
-}
+        assertEquals(Report.ReportStatus.closed, report.getStatus());
+        assertEquals(Lesson.LessonStatus.suspended, lesson.getStatus());
+        verify(reportRepository).findById(reportId);
+        verify(lessonRepository).save(lesson);
+        verify(reportRepository).save(report);
+    }
 
-@Test
-void updateReportStatusAndSuspendLesson_reportNotFound_throwsRuntimeException() {
-    Integer reportId = 999;
-    when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
+    @Test
+    void updateReportStatusAndSuspendLesson_reportNotFound_throwsRuntimeException() {
+        Integer reportId = 999;
+        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
 
-    RuntimeException ex = assertThrows(RuntimeException.class,
-            () -> reportService.updateReportStatusAndSuspendLesson(reportId, "closed"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> reportService.updateReportStatusAndSuspendLesson(reportId, "closed"));
 
-    assertEquals("Report not found", ex.getMessage());
-    verify(reportRepository).findById(reportId);
-    verify(lessonRepository, never()).save(any(Lesson.class));
-    verify(reportRepository, never()).save(any(Report.class));
-}
+        assertEquals("Report not found", ex.getMessage());
+        verify(reportRepository).findById(reportId);
+        verify(lessonRepository, never()).save(any(Lesson.class));
+        verify(reportRepository, never()).save(any(Report.class));
+    }
 
-@Test
-void updateReportStatusAndSuspendLesson_lessonMissing_throwsRuntimeException() {
-    Integer reportId = 1;
-    Report report = new Report();
-    report.setStatus(Report.ReportStatus.reported);
-    report.setLesson(null);
-    when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+    @Test
+    void updateReportStatusAndSuspendLesson_lessonMissing_throwsRuntimeException() {
+        Integer reportId = 1;
+        Report report = new Report();
+        report.setStatus(Report.ReportStatus.reported);
+        report.setLesson(null);
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
-    RuntimeException ex = assertThrows(RuntimeException.class,
-            () -> reportService.updateReportStatusAndSuspendLesson(reportId, "closed"));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> reportService.updateReportStatusAndSuspendLesson(reportId, "closed"));
 
-    assertEquals("Lesson not found for report", ex.getMessage());
-    verify(reportRepository).findById(reportId);
-    verify(lessonRepository, never()).save(any(Lesson.class));
-    verify(reportRepository, never()).save(any(Report.class));
-}
+        assertEquals("Lesson not found for report", ex.getMessage());
+        verify(reportRepository).findById(reportId);
+        verify(lessonRepository, never()).save(any(Lesson.class));
+        verify(reportRepository, never()).save(any(Report.class));
+    }
 }
