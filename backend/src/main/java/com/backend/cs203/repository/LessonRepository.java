@@ -38,7 +38,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             FROM lesson l
             JOIN user u ON l.created_by_id = u.id
             LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
-            WHERE l.created_by_id = :userId AND l.status = 'approved' AND l.deleted_at IS NULL
+            WHERE l.created_by_id = :userId AND l.status IN ('approved','suspended') AND l.deleted_at IS NULL
             GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url
             ORDER BY l.created_at DESC
             """, nativeQuery = true)

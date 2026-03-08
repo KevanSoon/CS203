@@ -51,6 +51,13 @@ public class ReportController {
     }
 
     @PreAuthorize("hasRole('ROOT')")
+    @PatchMapping("/root/suspend")
+    public ResponseEntity<Void> updateReportStatusAndSuspendLesson(@RequestParam Integer reportId, @RequestParam String status) {
+        reportService.updateReportStatusAndSuspendLesson(reportId, status);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ROOT')")
     @PatchMapping("/root/remarks")
     public ResponseEntity<Void> updateReportRemarks(@RequestParam Integer reportId, @RequestParam String remarks) {
         reportService.updateReportRemarks(reportId, remarks);
