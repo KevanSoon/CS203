@@ -745,7 +745,6 @@ export default function ProfilePage() {
                           </div>
                           ))}
                         </div>
-                        <div className="mt-4 border-t border-slate-200" />
                       </div>
                     )}
 
@@ -755,50 +754,7 @@ export default function ProfilePage() {
                       </div>
                     )}
 
-                    {searchResults.length > 0 && (
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                        Your Friends
-                      </p>
-                    )}
-
-                    {isLoadingFriends ? (
-                      <div className="text-sm text-slate-500">
-                        Loading friends...
-                      </div>
-                    ) : friends.length === 0 ? (
-                      <div className="text-sm text-slate-500">
-                        No friends yet.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {friends.map((friend) => {
-                          const initial = (
-                            friend.username?.[0] || "?"
-                          ).toUpperCase();
-                          return (
-                            <div
-                              key={friend.username}
-                              className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
-                                  {initial}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-extrabold text-slate-900">
-                                    {friend.username}
-                                  </p>
-                                  <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                                    <Flame size={14} />
-                                    Friend
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                  
                   </CollapsibleCard>
                 )}
 
