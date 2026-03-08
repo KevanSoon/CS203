@@ -22,6 +22,7 @@ interface QuizDTO {
   title: string;
   question: string;
   options: string;
+  quizType: "mcq" | "true_false" | "fill_blank";
   correctAnswer: string;
 }
 

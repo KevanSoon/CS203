@@ -92,7 +92,7 @@ public class LessonService {
                     .collect(Collectors.toList());
             List<QuizDTO> quizzes = quizRepository.findByChapterId(chapter.getId())
                     .stream()
-                    .map(quiz -> new QuizDTO(quiz.getId(), quiz.getTitle(), quiz.getQuestion(), quiz.getOptions(), quiz.getCorrectAnswer()))
+                    .map(quiz -> new QuizDTO(quiz.getId(), quiz.getTitle(), quiz.getQuestion(), quiz.getQuizType().name(), quiz.getOptions(), quiz.getCorrectAnswer()))
                     .collect(Collectors.toList());
 
             return new ChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getDescription(), cards, quizzes);

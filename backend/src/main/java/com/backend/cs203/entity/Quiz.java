@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,6 +32,10 @@ public class Quiz {
     @Column(columnDefinition = "TEXT")
     private String question;
 
+    @Column(name = "quiz_type")
+    @Enumerated(EnumType.STRING)
+    private QuizType quizType;
+
     @Column(columnDefinition = "TEXT")
     private String options;
 
@@ -48,5 +54,8 @@ public class Quiz {
         createdAt = LocalDateTime.now();
     }
 
+    public enum QuizType {
+        mcq, true_false, fill_blank
+    }
 
 }
