@@ -10,6 +10,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -45,7 +48,6 @@ class ReportControllerTest {
     private JwtUtil jwtUtil;
 
     // ===== GET /api/report/admin =====
-
     @Test
     void getUserCreatedLessonReports_adminAuthenticated_returns200() throws Exception {
         User userEntity = User.builder().id(7).username("adminuser").build();
@@ -102,10 +104,9 @@ class ReportControllerTest {
     }
 
     // ===== GET /api/report/root =====
-
     @Test
-    void getAllReports_rootAuthenticated_returns200() throws Exception {
-        when(reportService.getAllLessonReports()).thenReturn(List.of(sampleDto(1, "Broken Card")));
+    void getAllReportsForRoot_rootAuthenticated_returns200() throws Exception {
+        when(reportService.getAllLessonReportsForRoot()).thenReturn(List.of(sampleDto(1, "Broken Card")));
 
         mockMvc.perform(get("/api/report/root").with(user("rootuser").roles("ROOT")))
                 .andExpect(status().isOk())
@@ -119,8 +120,8 @@ class ReportControllerTest {
     }
 
     @Test
-    void getAllReports_noReports_returnsEmptyList() throws Exception {
-        when(reportService.getAllLessonReports()).thenReturn(Collections.emptyList());
+    void getAllReportsForRoot_noReports_returnsEmptyList() throws Exception {
+        when(reportService.getAllLessonReportsForRoot()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/report/root").with(user("rootuser").roles("ROOT")))
                 .andExpect(status().isOk())
@@ -137,37 +138,153 @@ class ReportControllerTest {
     private ReportDTO sampleDto(Integer id, String title) {
         return new ReportDTO() {
             @Override
-            public Integer getId() { return id; }
+            public Integer getId() {
+                return id;
+            }
 
             @Override
-            public String getTitle() { return title; }
+            public String getTitle() {
+                return title;
+            }
 
             @Override
-            public String getDescription() { return "Sample description"; }
+            public String getDescription() {
+                return "Sample description";
+            }
 
             @Override
-            public String getStatus() { return "reported"; }
+            public String getStatus() {
+                return "reported";
+            }
 
             @Override
-            public String getType() { return "high"; }
+            public String getType() {
+                return "high";
+            }
 
             @Override
-            public String getReportedBy() { return "alice"; }
+            public String getReportedBy() {
+                return "alice";
+            }
 
             @Override
-            public String getLessonTitle() { return "Java Basics"; }
+            public String getLessonTitle() {
+                return "Java Basics";
+            }
 
             @Override
-            public String getChapterTitle() { return "Variables"; }
+            public String getChapterTitle() {
+                return "Variables";
+            }
 
             @Override
-            public String getRemarks() { return "Needs review"; }
+            public String getRemarks() {
+                return "Needs review";
+            }
 
             @Override
-            public LocalDateTime getCreatedAt() { return LocalDateTime.of(2026, 3, 6, 10, 0); }
+            public LocalDateTime getCreatedAt() {
+                return LocalDateTime.of(2026, 3, 6, 10, 0);
+            }
 
             @Override
-            public LocalDateTime getUpdatedAt() { return LocalDateTime.of(2026, 3, 6, 11, 0); }
+            public LocalDateTime getUpdatedAt() {
+                return LocalDateTime.of(2026, 3, 6, 11, 0);
+            }
         };
+    }
+    // ===== PATCH /api/report/root =====
+
+    @Test
+    void updateReportStatus_rootAuthenticated_returns204() throws Exception {
+        doNothing().when(reportService).updateReportStatus(10, "closed");
+
+        mockMvc.perform(
+                patch("/api/report/root/status")
+                        .param("reportId", "10")
+                        .param("status", "closed")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().isNoContent());
+
+        verify(reportService).updateReportStatus(10, "closed");
+    }
+
+    @Test
+    void updateReportStatus_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/status")
+                        .param("reportId", "10")
+                        .param("status", "closed")
+        ).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateReportStatus_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/status")
+                        .param("reportId", "10")
+                        .param("status", "closed")
+                        .with(user("user1").roles("USER"))
+        ).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void updateReportStatus_serviceThrows_returns500() throws Exception {
+        doThrow(new RuntimeException("Report not found"))
+                .when(reportService).updateReportStatus(999, "closed");
+
+        mockMvc.perform(
+                patch("/api/report/root/status")
+                        .param("reportId", "999")
+                        .param("status", "closed")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().is5xxServerError());
+    }
+    // ===== PATCH /api/report/root/remarks =====
+
+    @Test
+    void updateReportRemarks_rootAuthenticated_returns204() throws Exception {
+        doNothing().when(reportService).updateReportRemarks(10, "Reviewed and fixed");
+
+        mockMvc.perform(
+                patch("/api/report/root/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "Reviewed and fixed")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().isNoContent());
+
+        verify(reportService).updateReportRemarks(10, "Reviewed and fixed");
+    }
+
+    @Test
+    void updateReportRemarks_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "Reviewed and fixed")
+        ).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateReportRemarks_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/root/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "Reviewed and fixed")
+                        .with(user("user1").roles("USER"))
+        ).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void updateReportRemarks_serviceThrows_returns500() throws Exception {
+        doThrow(new RuntimeException("Report not found"))
+                .when(reportService).updateReportRemarks(999, "Reviewed and fixed");
+
+        mockMvc.perform(
+                patch("/api/report/root/remarks")
+                        .param("reportId", "999")
+                        .param("remarks", "Reviewed and fixed")
+                        .with(user("rootuser").roles("ROOT"))
+        ).andExpect(status().is5xxServerError());
     }
 }

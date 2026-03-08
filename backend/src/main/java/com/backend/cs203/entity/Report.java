@@ -75,7 +75,8 @@ public class Report {
 	public enum ReportStatus {
 		reported,
 		closed,
-		unresolved
+		unresolved,
+		redirected
 	}
 
 	public enum ReportType {
