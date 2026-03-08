@@ -8,7 +8,7 @@ interface SingleReportModalProps {
 	onClose: () => void;
 	report: Report | null;
 	handleChangeStatus: (id: number, status: ReportStatus) => void;
-	onSuspendLesson: (id: number) => void;
+	onSuspendLesson: (id: number, status: ReportStatus) => void;
 }
 
 function severityTextClass(type: ReportType): string {
@@ -101,7 +101,13 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 									</button>
 									<button
 										title="Suspend lesson"
-										onClick={() => onSuspendLesson(report.id)}
+										onClick={async () => {
+											try {
+												await Promise.resolve(onSuspendLesson(report.id, "redirected"));
+											} finally {
+												onClose();
+											}
+										}}
 										className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
 										Suspend
 									</button>

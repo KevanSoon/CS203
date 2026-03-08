@@ -13,7 +13,7 @@ type FilterValue = "reports" | ReportStatus;
 interface ReportsTableProps {
 	reports: Report[];
 	handleChangeStatus: (id: number, status: ReportStatus) => void;
-	onSuspendLesson: (id: number) => void;
+	onSuspendLesson: (id: number, status: ReportStatus) => void;
 }
 
 function statusBadgeClass(status: ReportStatus): string {
@@ -149,7 +149,10 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 												<CheckCheck className="h-4 w-4" />
 											</button>
 											<button
-												onClick={() => onSuspendLesson(report.id)}
+												onClick={(e) => {
+													e.stopPropagation();
+													onSuspendLesson(report.id, "closed");
+												}}
 												title="Suspend Lesson"
 												className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
 												<Ban className="h-4 w-4" />
