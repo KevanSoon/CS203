@@ -26,6 +26,7 @@ interface QuizCardProps {
     onClose: () => void;
     onComplete?: () => void;
     timeLimit?: number;
+    showTimer?: boolean;
 }
 
 function parseOptions(raw: string): string[] {
@@ -85,6 +86,7 @@ export const QuizCard = ({
     onClose,
     onComplete,
     timeLimit = 30,
+    showTimer = true,
 }: QuizCardProps) => {
     const questions = node.quizData ?? [];
     const total = questions.length;
@@ -121,8 +123,9 @@ export const QuizCard = ({
         setTimeUp(false);
     }, [currentIndex, timeLimit]);
 
-    // Countdown
+    // Countdown — skipped entirely when showTimer is false (preview / no-timer mode)
     useEffect(() => {
+        if (!showTimer) return;
         if (checked || timeUp || finished) return;
         if (timeLeft <= 0) {
             setTimeUp(true);
@@ -130,7 +133,7 @@ export const QuizCard = ({
         }
         const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
         return () => clearTimeout(t);
-    }, [timeLeft, checked, timeUp, finished]);
+    }, [timeLeft, checked, timeUp, finished, showTimer]);
 
     // ESC to close
     useEffect(() => {
