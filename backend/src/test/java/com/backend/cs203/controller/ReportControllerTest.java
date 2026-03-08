@@ -289,17 +289,17 @@ class ReportControllerTest {
         ).andExpect(status().is5xxServerError());
     }
 
-    // ===== PATCH /api/report/root/remarks =====
+    // ===== PATCH /api/report/admin/remarks =====
 
     @Test
-    void updateReportRemarks_rootAuthenticated_returns204() throws Exception {
+    void updateReportRemarks_adminAuthenticated_returns204() throws Exception {
         doNothing().when(reportService).updateReportRemarks(10, "Reviewed and fixed");
 
         mockMvc.perform(
-                patch("/api/report/root/remarks")
+                patch("/api/report/admin/remarks")
                         .param("reportId", "10")
                         .param("remarks", "Reviewed and fixed")
-                        .with(user("rootuser").roles("ROOT"))
+                        .with(user("adminuser").roles("ADMIN"))
         ).andExpect(status().isNoContent());
 
         verify(reportService).updateReportRemarks(10, "Reviewed and fixed");
@@ -308,7 +308,7 @@ class ReportControllerTest {
     @Test
     void updateReportRemarks_unauthenticated_returns401() throws Exception {
         mockMvc.perform(
-                patch("/api/report/root/remarks")
+                patch("/api/report/admin/remarks")
                         .param("reportId", "10")
                         .param("remarks", "Reviewed and fixed")
         ).andExpect(status().isUnauthorized());
@@ -317,10 +317,20 @@ class ReportControllerTest {
     @Test
     void updateReportRemarks_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(
-                patch("/api/report/root/remarks")
+                patch("/api/report/admin/remarks")
                         .param("reportId", "10")
                         .param("remarks", "Reviewed and fixed")
                         .with(user("user1").roles("USER"))
+        ).andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void updateReportRemarks_withRootRole_deniesAccess() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/admin/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "Reviewed and fixed")
+                        .with(user("rootuser").roles("ROOT"))
         ).andExpect(status().isInternalServerError());
     }
 
@@ -330,10 +340,10 @@ class ReportControllerTest {
                 .when(reportService).updateReportRemarks(999, "Reviewed and fixed");
 
         mockMvc.perform(
-                patch("/api/report/root/remarks")
+            patch("/api/report/admin/remarks")
                         .param("reportId", "999")
                         .param("remarks", "Reviewed and fixed")
-                        .with(user("rootuser").roles("ROOT"))
+                .with(user("adminuser").roles("ADMIN"))
         ).andExpect(status().is5xxServerError());
     }
 }
