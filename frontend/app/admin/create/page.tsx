@@ -39,7 +39,7 @@ import {
     Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { LessonPreviewMode } from "./LessonPreviewMode";
 
@@ -225,7 +225,7 @@ function SortableChapter({
 }
 
 /* ───────────────────────────────────────────────── */
-export default function CreateLessonPage() {
+function CreateLessonPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editTitle = searchParams.get("edit");
@@ -1790,5 +1790,13 @@ export default function CreateLessonPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CreateLessonPageWrapper() {
+  return (
+    <Suspense>
+      <CreateLessonPage />
+    </Suspense>
   );
 }
