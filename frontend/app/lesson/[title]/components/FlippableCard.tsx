@@ -31,52 +31,6 @@ export const FlippableCard = ({ node, onClose, onComplete }: FlippableCardProps)
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // If it's a quiz, navigate to quiz page
-  // if (node.type === "quiz") {
-  //   return (
-  //     <div
-  //       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn px-4"
-  //       onClick={onClose}
-  //     >
-  //       <div
-  //         onClick={(e) => e.stopPropagation()}
-  //         className="bg-card rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-scaleIn border-4 border-warning"
-  //       >
-  //         <button
-  //           onClick={onClose}
-  //           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
-  //         >
-  //           <X size={24} />
-  //         </button>
-
-  //         <div className="text-center">
-  //           <div className="w-20 h-20 mx-auto mb-6 bg-warning/20 rounded-full flex items-center justify-center">
-  //             <span className="text-4xl">🏆</span>
-  //           </div>
-
-  //           <h3 className="text-2xl font-bold mb-3 text-foreground">
-  //             Chapter Quiz
-  //           </h3>
-
-  //           <p className="text-muted-foreground mb-8">
-  //             Test your knowledge and complete this chapter!
-  //           </p>
-
-  //           <button
-  //             onClick={() => {
-  //               alert("Quiz page coming soon!");
-  //               onClose();
-  //             }}
-  //             className="w-full bg-warning hover:bg-warning-dark text-white font-bold py-4 px-6 rounded-2xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
-  //           >
-  //             Start Quiz
-  //             <ArrowRight size={20} />
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   // Regular lesson card with new flip style
   return (
