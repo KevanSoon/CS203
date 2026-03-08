@@ -32,7 +32,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
 
     @Query(value = """
             SELECT l.id AS id, l.title AS title, l.description AS description,
-                   u.username AS createdBy, l.created_at AS createdAt,
+                   u.username AS createdBy, l.created_at AS createdAt, l.status AS status,
                    GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags,
                    l.lesson_picture_url AS lessonPictureUrl
             FROM lesson l
@@ -42,7 +42,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url
             ORDER BY l.created_at DESC
             """, nativeQuery = true)
-    List<LessonSummaryDTO> findUserCreatedLessons(@Param("userId") Integer userId);
+    List<LessonApplicationDTO> findUserCreatedLessons(@Param("userId") Integer userId);
 
     @Query(value = """
             SELECT l.title AS title, l.description AS description, l.status AS status,
