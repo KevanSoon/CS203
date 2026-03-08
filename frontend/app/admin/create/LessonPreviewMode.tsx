@@ -297,7 +297,7 @@ export function LessonPreviewMode({
                     quizData: quizNodeData,
                   }}
                   onClose={() => setQuizOverlayOpen(false)}
-                  timeLimit={0}
+                  showTimer={false}
                 />
               )}
             </>
