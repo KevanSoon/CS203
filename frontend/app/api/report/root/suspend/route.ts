@@ -18,7 +18,7 @@ export async function PATCH(req: Request) {
     const { reportId, status } = await req.json();
 
     const response = await axios.patch(
-      `${BACKEND_URL}/api/report/root/status`,
+      `${BACKEND_URL}/api/report/root/suspend`,
       null,
       {
         params: { reportId, status },
@@ -32,7 +32,7 @@ export async function PATCH(req: Request) {
 
     return new Response(null, { status: response.status });
   } catch (err: any) {
-    console.error("BFF PATCH /api/report/root/status failed:", err);
+    console.error("BFF PATCH /api/report/root/suspend failed:", err);
     return Response.json(
       {
         error: err?.response?.error || "Internal Server Error",
