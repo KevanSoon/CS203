@@ -15,6 +15,7 @@ interface Lesson {
  createdBy: string;
  createdAt: string;
  tags?: string;
+ lessonPictureUrl?: string;
 }
 
 
@@ -128,8 +129,8 @@ export default function DashboardPage() {
              lessonId={lesson.id}        // ADD THIS
              title={lesson.title}
              description={lesson.description}
-             image={`/images/questionmark.jpg`}
-             progress={0}
+            image={lesson.lessonPictureUrl || `/images/questionmark.jpg`}
+            progress={0}
              tags={parseTags(lesson.tags)}
            />
          ))}
