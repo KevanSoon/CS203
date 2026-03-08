@@ -273,7 +273,7 @@ class ReportControllerTest {
                         .param("reportId", "10")
                         .param("status", "resolved")
                         .with(user("user1").roles("USER"))
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isForbidden());
     }
 
     @Test
