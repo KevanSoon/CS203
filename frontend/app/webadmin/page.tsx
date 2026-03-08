@@ -65,6 +65,11 @@ export default function DashboardPage() {
 		toast.success("Report "+ id + " " + status)
 	};
 
+	const handleSuspendLesson = async (id: number, status: ReportStatus) => {
+		await api.patch("/api/report/root/suspend", { reportId: id, status });
+		setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: status } : r)));
+		toast.success("Report "+ id + " " + status + ". Lesson has been suspended")
+	};
 
 
 	useEffect(() => {
@@ -136,7 +141,7 @@ export default function DashboardPage() {
 						)
 					) : selected === "Manage Reports" ? (
 						<div className="py-4 text-muted-foreground">
-							<ReportsTable reports={reports} handleChangeStatus={handleChangeStatus} onSuspendLesson={() => {}} />
+							<ReportsTable reports={reports} handleChangeStatus={handleChangeStatus} onSuspendLesson={handleSuspendLesson} />
 						</div>
 					) : null}
 				</div>

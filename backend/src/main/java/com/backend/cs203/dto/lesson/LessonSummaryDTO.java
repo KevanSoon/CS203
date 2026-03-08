@@ -7,6 +7,7 @@ public interface LessonSummaryDTO {
     String getTitle();
     String getDescription();
     String getCreatedBy();
+    String getStatus();
     LocalDateTime getCreatedAt();
     String getTags();
     String getLessonPictureUrl();

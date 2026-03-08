@@ -35,17 +35,17 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
 
     @Query(value = """
             SELECT l.id AS id, l.title AS title, l.description AS description,
-                   u.username AS createdBy, l.created_at AS createdAt,
+                   u.username AS createdBy, l.created_at AS createdAt, l.status AS status,
                    GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags,
                    l.lesson_picture_url AS lessonPictureUrl
             FROM lesson l
             JOIN user u ON l.created_by_id = u.id
             LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
-            WHERE l.created_by_id = :userId AND l.status = 'approved' AND l.deleted_at IS NULL
+            WHERE l.created_by_id = :userId AND l.status IN ('approved','suspended') AND l.deleted_at IS NULL
             GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url
             ORDER BY l.created_at DESC
             """, nativeQuery = true)
-    List<LessonSummaryDTO> findUserCreatedLessons(@Param("userId") Integer userId);
+    List<LessonApplicationDTO> findUserCreatedLessons(@Param("userId") Integer userId);
 
     @Query(value = """
             SELECT l.title AS title, l.description AS description, l.status AS status,

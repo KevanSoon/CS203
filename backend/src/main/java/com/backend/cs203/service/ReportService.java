@@ -5,17 +5,21 @@ import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 
+import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.dto.report.ReportDTO;
+import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Report;
 
 @Service
 public class ReportService {
 
     private final ReportRepository reportRepository;
+    private final LessonRepository lessonRepository;
 
-    public ReportService(ReportRepository reportRepository) {
+    public ReportService(ReportRepository reportRepository, LessonRepository lessonRepository) {
         this.reportRepository = reportRepository;
+        this.lessonRepository = lessonRepository;
     }
 
     public List<ReportDTO> getUserCreatedLessonReports(Integer userId) {
@@ -31,6 +35,22 @@ public class ReportService {
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
         report.setStatus(Report.ReportStatus.valueOf(status.trim().toLowerCase(Locale.ROOT)));
+        reportRepository.save(report);
+    }
+
+    public void updateReportStatusAndSuspendLesson(Integer reportId, String status) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        report.setStatus(Report.ReportStatus.valueOf(status.trim().toLowerCase(Locale.ROOT)));
+
+        Lesson lesson = report.getLesson();
+        if (lesson == null) {
+            throw new RuntimeException("Lesson not found for report");
+        }
+        lesson.setStatus(Lesson.LessonStatus.suspended);
+
+        lessonRepository.save(lesson);
         reportRepository.save(report);
     }
 
