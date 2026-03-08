@@ -32,6 +32,8 @@ import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
+import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
@@ -47,6 +49,12 @@ class LessonServiceTest {
 
     @Mock
     private QuizRepository quizRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;      // ← ADD
+
+    @Mock
+    private UserRepository userRepository;          // ← ADD
 
     @Mock
     private SupabaseStorageService supabaseStorageService;
@@ -129,22 +137,22 @@ class LessonServiceTest {
     @Test
     void getUserCreatedLessonApplications_returnsApplicationsForUser() {
         LessonApplicationDTO dto = mock(LessonApplicationDTO.class);
-        when(lessonRepository.FindUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
+        when(lessonRepository.findUserCreatedLessonApplications(1)).thenReturn(List.of(dto)); // ← lowercase f
 
         List<LessonApplicationDTO> result = lessonService.getUserCreatedLessonApplications(1);
 
         assertEquals(1, result.size());
-        verify(lessonRepository).FindUserCreatedLessonApplications(1);
+        verify(lessonRepository).findUserCreatedLessonApplications(1); // ← lowercase f
     }
 
     @Test
     void getUserCreatedLessonApplications_returnsEmptyForUserWithNoPendingApplications() {
-        when(lessonRepository.FindUserCreatedLessonApplications(999)).thenReturn(Collections.emptyList());
+        when(lessonRepository.findUserCreatedLessonApplications(999)).thenReturn(Collections.emptyList()); // ← lowercase f
 
         List<LessonApplicationDTO> result = lessonService.getUserCreatedLessonApplications(999);
 
         assertTrue(result.isEmpty());
-        verify(lessonRepository).FindUserCreatedLessonApplications(999);
+        verify(lessonRepository).findUserCreatedLessonApplications(999); // ← lowercase f
     }
 
     // ===== getLessonPage =====

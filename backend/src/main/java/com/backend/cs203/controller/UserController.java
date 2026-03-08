@@ -19,7 +19,6 @@ import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.service.UserService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
