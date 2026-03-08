@@ -85,7 +85,7 @@ class LessonControllerTest {
     void getUserCreatedLessons_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
-        when(lessonService.getUserCreatedLessons(1)).thenReturn(Collections.emptyList());
+        when(lessonService.getUserCreatedLessons(1)).thenReturn(java.util.Collections.emptyList());
 
         mockMvc.perform(get("/api/lesson/user-lessons/").with(user("adminuser").roles("ADMIN")))
                 .andExpect(status().isOk())

@@ -14,4 +14,8 @@ public interface QuizRepository extends JpaRepository<Quiz, Integer> {
 
     @Query(value = "SELECT * FROM quiz WHERE chapter_id = :chapterId", nativeQuery = true)
     List<Quiz> findByChapterId(@Param("chapterId") Integer chapterId);
+
+    /** Batch: get all chapter IDs that have at least one quiz. */
+    @Query(value = "SELECT DISTINCT chapter_id FROM quiz", nativeQuery = true)
+    List<Integer> findChapterIdsWithQuiz();
 }
