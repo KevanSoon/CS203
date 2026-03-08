@@ -1,45 +1,55 @@
 import axios from "axios";
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL!; // http://localhost:8080
+const BACKEND_URL = process.env.BACKEND_URL!;
+console.log("BACKEND_URL:", BACKEND_URL);
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
-    //throw error
     if (!jwt) {
-        return Response.json(
-            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
-            { status: 401 }
-    );
+      return Response.json(
+        { error: "Unauthorized", message: "Unauthorized access. Please refresh and try again" },
+        { status: 401 }
+      );
     }
 
-    const response = await axios.get(
-      `${BACKEND_URL}/api/profile`,
-      {
-        headers: {
-          Cookie: `jwt=${jwt}`, // forward cookie to Spring Boot
-          Accept: "application/json",
-        },
-        validateStatus: () => true,
-      }
-    );
+    // Decode usertype from JWT payload (server-side, safe)
+    let usertype = "user";
+    try {
+      const payload = jwt.split(".")[1];
+      const decoded = JSON.parse(Buffer.from(payload, "base64").toString());
+      usertype = decoded.usertype || "user";
+    } catch {
+      usertype = "user";
+    }
 
-    return Response.json(response.data, {
-      status: response.status,
+    const response = await axios.get(`${BACKEND_URL}/api/profile`, {
+      headers: {
+        Cookie: `jwt=${jwt}`,
+        Accept: "application/json",
+      },
+      validateStatus: () => true,
     });
 
+    // Merge usertype into the response so the frontend can read it
+    return Response.json(
+      { ...response.data, usertype },
+      { status: response.status }
+    );
   } catch (err: any) {
     console.error("BFF GET /api/profile failed:", err);
     return Response.json(
-      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Profile retrieval failed. Please try again later" },
+      {
+        error: err?.response?.error || "Internal Server Error",
+        message: err?.response?.data?.message || "Profile retrieval failed. Please try again later",
+      },
       { status: err?.response?.status || 500 }
     );
   }
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -53,39 +63,32 @@ export async function PATCH(req: Request) {
     const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
-    //throw error
     if (!jwt) {
-        return Response.json(
-            { error: "Unauthorized", "message":"Unauthorized access. Please refresh and try again" },
-            { status: 401 }
-    );
+      return Response.json(
+        { error: "Unauthorized", message: "Unauthorized access. Please refresh and try again" },
+        { status: 401 }
+      );
     }
 
-    // ✅ receive form data from frontend
     const formData = await req.formData();
 
-    // ✅ forward to Spring Boot
-    const response = await axios.patch(
-      `${BACKEND_URL}/api/profile`,
-      formData,
-      {
-        headers: {
-          Cookie: `jwt=${jwt}`,
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
-        validateStatus: () => true,
-      }
-    );
-
-    return Response.json(response.data, {
-      status: response.status,
+    const response = await axios.patch(`${BACKEND_URL}/api/profile`, formData, {
+      headers: {
+        Cookie: `jwt=${jwt}`,
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
+      },
+      validateStatus: () => true,
     });
 
+    return Response.json(response.data, { status: response.status });
   } catch (err: any) {
     console.error("BFF PATCH /api/profile failed:", err);
     return Response.json(
-      { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Profile update failed. Please try again later" },
+      {
+        error: err?.response?.error || "Internal Server Error",
+        message: err?.response?.data?.message || "Profile update failed. Please try again later",
+      },
       { status: err?.response?.status || 500 }
     );
   }
@@ -98,10 +101,7 @@ export async function DELETE(req: Request) {
 
     if (!jwt) {
       return Response.json(
-        {
-          error: "Unauthorized",
-          message: "Unauthorized access. Please refresh and try again",
-        },
+        { error: "Unauthorized", message: "Unauthorized access. Please refresh and try again" },
         { status: 401 }
       );
     }
@@ -116,38 +116,31 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const response = await axios.delete(
-      `${BACKEND_URL}/api/profile`,
-      {
-        data: { password },
-        headers: {
-          Cookie: `jwt=${jwt}`,
-          Accept: "application/json",
-        },
-        validateStatus: () => true,
-      }
-    );
+    const response = await axios.delete(`${BACKEND_URL}/api/profile`, {
+      data: { password },
+      headers: {
+        Cookie: `jwt=${jwt}`,
+        Accept: "application/json",
+      },
+      validateStatus: () => true,
+    });
 
     if (response.status === 204 || response.status === 200) {
       return new Response(null, {
         status: 204,
         headers: {
           "Set-Cookie": `jwt=; Path=/; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
-        }
-      })
+        },
+      });
     }
 
     return Response.json(response.data, { status: response.status });
-
   } catch (err: any) {
     console.error("BFF DELETE /api/profile failed:", err);
-
     return Response.json(
       {
         error: err?.response?.data?.error || "Internal Server Error",
-        message:
-          err?.response?.data?.message ||
-          "Account deletion failed. Please try again later",
+        message: err?.response?.data?.message || "Account deletion failed. Please try again later",
       },
       { status: err?.response?.status || 500 }
     );
