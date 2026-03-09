@@ -26,7 +26,7 @@ interface QuizCardProps {
     onClose: () => void;
     onComplete?: () => void;
     timeLimit?: number;
-    showTimer?: boolean;
+    previewMode?: boolean;
 }
 
 function parseOptions(raw: string): string[] {
@@ -86,7 +86,7 @@ export const QuizCard = ({
     onClose,
     onComplete,
     timeLimit = 30,
-    showTimer = true,
+    previewMode = false,
 }: QuizCardProps) => {
     const questions = node.quizData ?? [];
     const total = questions.length;
@@ -123,9 +123,9 @@ export const QuizCard = ({
         setTimeUp(false);
     }, [currentIndex, timeLimit]);
 
-    // Countdown — skipped entirely when showTimer is false (preview / no-timer mode)
+    // Countdown — skipped entirely when previewMode is true
     useEffect(() => {
-        if (!showTimer) return;
+        if (previewMode) return;
         if (checked || timeUp || finished) return;
         if (timeLeft <= 0) {
             setTimeUp(true);
@@ -133,7 +133,7 @@ export const QuizCard = ({
         }
         const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
         return () => clearTimeout(t);
-    }, [timeLeft, checked, timeUp, finished, showTimer]);
+    }, [timeLeft, checked, timeUp, finished, previewMode]);
 
     // ESC to close
     useEffect(() => {
@@ -159,12 +159,14 @@ export const QuizCard = ({
             const finalScore = score + (isCorrect ? 1 : 0);
             const percentage = Math.round((finalScore / total) * 100);
 
-            api.post("/api/quiz-result", {
-                chapterId: node.id,
-                score: percentage,
-            })
-            .then(() => toast.success("Quiz result saved!"))
-            .catch(() => toast.error("Failed to save quiz result"));
+            if (!previewMode) {
+                api.post("/api/quiz-result", {
+                    chapterId: node.id,
+                    score: percentage,
+                })
+                .then(() => toast.success("Quiz result saved!"))
+                .catch(() => toast.error("Failed to save quiz result"));
+            }
 
             setFinished(true);
         } else {
@@ -317,8 +319,8 @@ export const QuizCard = ({
                                     </p>
                                 </div>
 
-                                {/* Timer ring */}
-                                {!checked && (
+                                {/* Timer ring — hidden in preview mode */}
+                                {!checked && !previewMode && (
                                     <div className="relative w-9 h-9 shrink-0">
                                         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                                             <circle
