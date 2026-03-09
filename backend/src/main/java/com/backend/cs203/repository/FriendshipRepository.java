@@ -1,6 +1,7 @@
 package com.backend.cs203.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +23,46 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
     List<Friendship> findFriendshipsByUserId(
             @Param("userId") Integer userId,
             @Param("status") FriendshipStatus status
-);
+    );
+
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE f.user2.id = :userId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    List<Friendship> findIncomingPending(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE f.user1.id = :userId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    List<Friendship> findOutgoingPending(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE f.user1.id = :requesterId
+        AND f.user2.id = :recipientId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    Optional<Friendship> findIncomingRequest(
+            @Param("requesterId") Integer requesterId,
+            @Param("recipientId") Integer recipientId
+    );
+
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE 
+        (f.user1.id = :user1 AND f.user2.id = :user2)
+        OR
+        (f.user1.id = :user2 AND f.user2.id = :user1)
+    """)
+    Optional<Friendship> findExistingFriendship(
+            @Param("user1") Integer user1,
+            @Param("user2") Integer user2
+    );
+
+    boolean existsByUser1IdAndUser2Id(Integer user1Id, Integer user2Id);
 }
 
 

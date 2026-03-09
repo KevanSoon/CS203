@@ -18,6 +18,9 @@ import {
   BarChart2,
 } from "lucide-react";
 import { Sidebar } from "@/app/components/Sidebar";
+import AddFriendButton from "@/app/components/AddFriendButton";
+import OutgoingFriendCard from "@/app/components/OutgoingFriendCard";
+import IncomingFriendCard from "@/app/components/IncomingFriendCard";
 
 type Profile = {
   username: string;
@@ -26,6 +29,7 @@ type Profile = {
 };
 
 type FriendDto = {
+  id: number,
   username: string;
 };
 
@@ -138,7 +142,7 @@ export default function ProfilePage() {
 
     const timeout = setTimeout(() => {
       verifyPassword(deletePassword);
-    }, 500);
+    }, 200);
 
     return () => clearTimeout(timeout);
   }, [deletePassword]);
@@ -154,6 +158,82 @@ export default function ProfilePage() {
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+
+  const [pendingFriends, setPendingFriends] = useState<FriendDto[]>([]);
+  const [isLoadingPending, setIsLoadingPending] = useState(true);
+  const [pendingError, setPendingError] = useState("");
+  const [outgoingFriends, setOutgoingFriends] = useState<FriendDto[]>([]);
+  const [isLoadingOutgoing, setIsLoadingOutgoing] = useState(true);
+  const [outgoingError, setOutgoingError] = useState("");
+
+  const loadFriends = async () => {
+    setFriendsError("");
+    setIsLoadingFriends(true);
+    try {
+      const res = await fetch("/api/friendship", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load friends");
+      setFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setFriendsError(e?.message || "Failed to load friends");
+      setFriends([]);
+    } finally {
+      setIsLoadingFriends(false);
+    }
+  };
+
+  const loadPending = async () => {
+    setPendingError("");
+    setIsLoadingPending(true);
+    try {
+      const res = await fetch("/api/friendship/pending", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load pending");
+      setPendingFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setPendingError(e?.message || "Failed to load pending");
+      setPendingFriends([]);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  };
+
+  const handleAcceptFriend = async (requesterId: number) => {
+    const acceptedUser = pendingFriends.find(f => f.id === requesterId);
+    if (!acceptedUser) return;
+
+    setPendingFriends(prev => prev.filter(f => f.id !== requesterId));
+    setFriends(prev => [...prev, acceptedUser]);
+
+    try {
+      const res = await fetch(`/api/friendship/accept/${requesterId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) throw new Error();
+      toast.success("Friend request accepted!");
+    } catch {
+      toast.error("Failed to accept friend request");
+      await loadFriends();
+      await loadPending();
+    }
+  };
+
+  const loadOutgoing = async () => {
+    setOutgoingError("");
+    setIsLoadingOutgoing(true);
+    try {
+      const res = await fetch("/api/friendship/pending/outgoing", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load outgoing");
+      setOutgoingFriends(Array.isArray(data) ? data : []);
+    } catch (e: any) {
+      setOutgoingError(e?.message || "Failed to load outgoing");
+      setOutgoingFriends([]);
+    } finally {
+      setIsLoadingOutgoing(false);
+    }
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -184,31 +264,10 @@ export default function ProfilePage() {
       }
     };
 
-    const loadFriends = async () => {
-      setFriendsError("");
-      setIsLoadingFriends(true);
-
-      try {
-        const res = await fetch("/api/friendship", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(
-            data?.message || data?.error || "Failed to load friends"
-          );
-        }
-
-        setFriends(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        setFriendsError(e?.message || "Failed to load friends");
-        setFriends([]);
-      } finally {
-        setIsLoadingFriends(false);
-      }
-    };
-
     loadProfile();
     loadFriends();
+    loadPending();
+    loadOutgoing();
   }, []);
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
@@ -376,6 +435,90 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+                <div className="mt-3 rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Users size={20} className="text-[#6C63FF]" />
+                      <h2 className="text-lg font-extrabold">Friends</h2>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                      {isLoadingFriends ? "..." : friends.length}
+                    </span>
+                  </div>
+
+                  <div className="mb-8">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
+                      Incoming Requests
+                    </p>
+                    {isLoadingPending ? (
+                      <p className="text-sm text-slate-500">Loading...</p>
+                    ) : pendingFriends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No pending requests.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                      {pendingFriends.map((friend) => (
+                        <IncomingFriendCard
+                          key={friend.id}
+                          friend={friend}
+                          onAccept={handleAcceptFriend}
+                          onReject={(id) =>
+                            setPendingFriends((prev) => prev.filter((f) => f.id !== id))
+                          }
+                        />
+                      ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Your Friends
+                    </p>
+
+                    {isLoadingFriends ? (
+                      <p className="text-sm text-slate-500">Loading friends...</p>
+                    ) : friends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No friends yet.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {friends.map((friend) => (
+                          <div
+                            key={friend.username}
+                            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                          >
+                            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 font-bold">
+                              {friend.username[0]?.toUpperCase()}
+                            </div>
+                            <p className="text-sm font-bold truncate">
+                              {friend.username}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-8">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                      Outgoing Requests
+                    </p>
+
+                    {isLoadingOutgoing ? (
+                      <p className="text-sm text-slate-500">Loading...</p>
+                    ) : outgoingFriends.length === 0 ? (
+                      <p className="text-sm text-slate-500">No outgoing requests.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {outgoingFriends.map((friend) => (
+                          <OutgoingFriendCard
+                            key={friend.id}
+                            friend={friend}
+                            onCancel={loadOutgoing}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* ── Right column: cards ── */}
@@ -494,7 +637,6 @@ export default function ProfilePage() {
                     </div>
                   </CollapsibleCard>
                 ) : (
-                  // User: Friends
                   <CollapsibleCard
                     title="Friends"
                     icon={<Users size={20} className="text-[#6C63FF]" />}
@@ -547,24 +689,62 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-2">
                           {searchResults.map((user) => (
                             <div
-                              key={user.id}
-                              className="flex items-center gap-3 rounded-2xl border border-[#6C63FF]/20 bg-[#F6F5FF] px-4 py-3"
-                            >
-                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white border border-[#6C63FF]/20 flex-shrink-0 font-extrabold text-[#6C63FF]">
-                                {user.username[0]?.toUpperCase() ?? "?"}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-extrabold text-slate-900">
-                                  {user.username}
-                                </p>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                  Simi Slang user
-                                </p>
-                              </div>
+                            key={user.id}
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-[#6C63FF]/20 bg-[#F6F5FF] px-4 py-3"
+                          >
+                            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white border border-[#6C63FF]/20 font-extrabold text-[#6C63FF]">
+                              {user.username[0]?.toUpperCase() ?? "?"}
                             </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate text-sm font-extrabold text-slate-900">
+                                {user.username}
+                              </p>
+                              <p className="text-xs text-slate-400">Simi Slang user</p>
+                            </div>
+
+                            {friends.some((f) => f.id === user.id) ? (
+                              <span className="text-xs font-semibold text-green-600">
+                                Already Friends
+                              </span>
+
+                            ) : pendingFriends.some((f) => f.id === user.id) ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAcceptFriend(user.id)}
+                                  className="text-xs font-semibold px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setPendingFriends((prev) =>
+                                      prev.filter((f) => f.id !== user.id)
+                                    )
+                                  }
+                                  className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+
+                            ) : outgoingFriends.some((f) => f.id === user.id) ? (
+                              <AddFriendButton
+                                targetUserId={user.id}
+                                initialSent={true}
+                                onSuccess={loadOutgoing}
+                              />
+
+                            ) : (
+                              <AddFriendButton
+                                targetUserId={user.id}
+                                initialSent={false}
+                                onSuccess={loadOutgoing}
+                              />
+                            )}
+                          </div>
                           ))}
                         </div>
-                        <div className="mt-4 border-t border-slate-200" />
                       </div>
                     )}
 
@@ -574,50 +754,7 @@ export default function ProfilePage() {
                       </div>
                     )}
 
-                    {searchResults.length > 0 && (
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                        Your Friends
-                      </p>
-                    )}
-
-                    {isLoadingFriends ? (
-                      <div className="text-sm text-slate-500">
-                        Loading friends...
-                      </div>
-                    ) : friends.length === 0 ? (
-                      <div className="text-sm text-slate-500">
-                        No friends yet.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {friends.map((friend) => {
-                          const initial = (
-                            friend.username?.[0] || "?"
-                          ).toUpperCase();
-                          return (
-                            <div
-                              key={friend.username}
-                              className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 font-extrabold text-slate-700">
-                                  {initial}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-extrabold text-slate-900">
-                                    {friend.username}
-                                  </p>
-                                  <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF4E8] px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                                    <Flame size={14} />
-                                    Friend
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                  
                   </CollapsibleCard>
                 )}
 

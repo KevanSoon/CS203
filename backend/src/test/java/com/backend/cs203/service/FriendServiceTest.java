@@ -22,6 +22,8 @@ import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserRepository;
 
+import org.springframework.web.server.ResponseStatusException;
+
 @ExtendWith(MockitoExtension.class)
 class FriendServiceTest {
 
@@ -108,5 +110,198 @@ class FriendServiceTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> friendService.getFriends("nonexistent"));
         assertEquals("User not found", ex.getMessage());
+    }
+
+    // ===== getPendingRequests =====
+    @Test
+    void getPendingRequests_returnsIncomingRequests() {
+        User me = User.builder().id(1).username("me").build();
+        User requester = User.builder().id(2).username("requester").build();
+
+        Friendship friendship = new Friendship(requester, me, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findIncomingPending(1)).thenReturn(List.of(friendship));
+
+        List<FriendDto> result = friendService.getPendingRequests("me");
+
+        assertEquals(1, result.size());
+        assertEquals("requester", result.get(0).getUsername());
+    }
+
+    @Test
+    void getPendingRequests_none_returnsEmptyList() {
+        User me = User.builder().id(1).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findIncomingPending(1)).thenReturn(Collections.emptyList());
+
+        List<FriendDto> result = friendService.getPendingRequests("me");
+
+        assertTrue(result.isEmpty());
+    }
+
+
+    // ===== getOutgoingRequests =====
+    @Test
+    void getOutgoingRequests_returnsOutgoingRequests() {
+        User me = User.builder().id(1).username("me").build();
+        User target = User.builder().id(2).username("target").build();
+
+        Friendship friendship = new Friendship(me, target, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findOutgoingPending(1)).thenReturn(List.of(friendship));
+
+        List<FriendDto> result = friendService.getOutgoingRequests("me");
+
+        assertEquals(1, result.size());
+        assertEquals("target", result.get(0).getUsername());
+    }
+
+
+    // ===== sendFriendRequest =====
+    @Test
+    void sendFriendRequest_success_savesFriendship() {
+
+        User me = User.builder().id(1).username("me").build();
+        User target = User.builder().id(2).username("target").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(userRepository.findById(2)).thenReturn(Optional.of(target));
+        when(friendshipRepository.findExistingFriendship(1, 2)).thenReturn(Optional.empty());
+
+        friendService.sendFriendRequest(2, "me");
+    }
+
+    @Test
+    void sendFriendRequest_selfRequest_throwsException() {
+
+        User me = User.builder().id(1).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(userRepository.findById(1)).thenReturn(Optional.of(me));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.sendFriendRequest(1, "me"));
+
+        assertEquals("400 BAD_REQUEST \"Cannot add yourself\"", ex.getMessage());
+    }
+
+    @Test
+    void sendFriendRequest_existingFriendship_throwsException() {
+
+        User me = User.builder().id(1).username("me").build();
+        User target = User.builder().id(2).username("target").build();
+
+        Friendship existing = new Friendship(me, target, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(userRepository.findById(2)).thenReturn(Optional.of(target));
+        when(friendshipRepository.findExistingFriendship(1, 2))
+                .thenReturn(Optional.of(existing));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.sendFriendRequest(2, "me"));
+
+        assertEquals("400 BAD_REQUEST \"Friendship already exists or pending\"", ex.getMessage());
+    }
+
+
+    // ===== cancelOutgoingRequest =====
+    @Test
+    void cancelOutgoingRequest_success_deletesRequest() {
+
+        User me = User.builder().id(1).username("me").build();
+        User target = User.builder().id(2).username("target").build();
+
+        Friendship friendship = new Friendship(me, target, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2))
+                .thenReturn(Optional.of(friendship));
+
+        friendService.cancelOutgoingRequest(2, "me");
+    }
+
+    @Test
+    void cancelOutgoingRequest_notFound_throwsException() {
+
+        User me = User.builder().id(1).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.cancelOutgoingRequest(2, "me"));
+
+        assertEquals("404 NOT_FOUND \"Request not found\"", ex.getMessage());
+    }
+
+
+    // ===== acceptFriendRequest =====
+
+    @Test
+    void acceptFriendRequest_success_setsConfirmed() {
+
+        User requester = User.builder().id(1).username("requester").build();
+        User me = User.builder().id(2).username("me").build();
+
+        Friendship friendship = new Friendship(requester, me, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2))
+                .thenReturn(Optional.of(friendship));
+
+        friendService.acceptFriendRequest(1, "me");
+
+        assertEquals(FriendshipStatus.confirmed, friendship.getStatus());
+    }
+
+    @Test
+    void acceptFriendRequest_notFound_throwsException() {
+
+        User me = User.builder().id(2).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.acceptFriendRequest(1, "me"));
+
+        assertEquals("404 NOT_FOUND \"Friend request not found\"", ex.getMessage());
+    }
+
+    // ===== rejectFriendRequest =====
+    @Test
+    void rejectFriendRequest_success_deletesRequest() {
+
+        User requester = User.builder().id(1).username("requester").build();
+        User me = User.builder().id(2).username("me").build();
+
+        Friendship friendship = new Friendship(requester, me, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findIncomingRequest(1, 2))
+                .thenReturn(Optional.of(friendship));
+
+        friendService.rejectFriendRequest(1, "me");
+    }
+
+    @Test
+    void rejectFriendRequest_notFound_throwsException() {
+
+        User me = User.builder().id(2).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findIncomingRequest(1, 2))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.rejectFriendRequest(1, "me"));
+
+        assertEquals("404 NOT_FOUND \"Friend request not found\"", ex.getMessage());
     }
 }
