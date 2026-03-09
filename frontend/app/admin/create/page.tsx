@@ -742,44 +742,21 @@ function CreateLessonPage() {
         <Sidebar selected={selected} setSelected={setSelected} />
         <div className="flex-1 bg-background overflow-auto">
           {/* ── Hero / Lesson Header ── */}
-          <div className="bg-gradient-to-b from-primary/10 to-background px-6 pt-6 pb-8">
+          <div className="bg-gradient-to-b from-primary/10 to-background px-4 sm:px-6 pt-6 pb-8">
             <div className="flex items-center gap-3 mb-6">
               <button
                 onClick={() => router.push("/admin")}
-                className="p-2 rounded-lg hover:bg-card/80 transition-colors"
+                className="p-2 rounded-lg hover:bg-card/80 transition-colors shrink-0"
               >
                 <ArrowLeft className="h-5 w-5 text-muted-foreground" />
               </button>
-              <div className="flex-1">
-                <h1 className="text-2xl md:text-3xl font-black text-foreground">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-foreground truncate">
                   {isEditMode ? "Edit Lesson" : "Create New Lesson"}
                 </h1>
-                <p className="text-muted-foreground text-sm mt-0.5">
+                <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
                   {"Build your lesson with chapters, flashcards, and quizzes"}
                 </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode("preview")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
-                >
-                  <Eye className="h-4 w-4" />
-                  Preview
-                </button>
-                <CartoonButton
-                  label={
-                    saving
-                      ? "Saving..."
-                      : isEditMode
-                        ? "Update & Re-submit"
-                        : "Submit for Approval"
-                  }
-                  color="bg-success"
-                  textColor="text-white"
-                  size="sm"
-                  disabled={saving}
-                  onClick={handleSubmit}
-                />
               </div>
             </div>
 
@@ -948,7 +925,7 @@ function CreateLessonPage() {
           </div>
 
           {/* ── Chapters ── */}
-          <div className="px-6 py-6">
+          <div className="px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-primary" />
@@ -1382,18 +1359,19 @@ function CreateLessonPage() {
                                                                   t,
                                                                 )
                                                               }
-                                                              className={`px-2.5 py-1 transition-colors ${
+                                                              className={`px-2 sm:px-2.5 py-1 transition-colors ${
                                                                 quiz.quizType ===
                                                                 t
                                                                   ? "bg-warning text-white font-medium"
                                                                   : "bg-card text-muted-foreground hover:bg-warning/10"
                                                               }`}
                                                             >
-                                                              {
-                                                                QUIZ_TYPE_LABELS[
-                                                                  t
-                                                                ]
-                                                              }
+                                                              <span className="sm:hidden">
+                                                                {t === "mcq" ? "MCQ" : t === "true_false" ? "T/F" : "Fill"}
+                                                              </span>
+                                                              <span className="hidden sm:inline">
+                                                                {QUIZ_TYPE_LABELS[t]}
+                                                              </span>
                                                             </button>
                                                           ))}
                                                         </div>
@@ -1760,15 +1738,16 @@ function CreateLessonPage() {
           </div>
 
           {/* Bottom Submit */}
-          <div className="px-6 pb-10 flex justify-end gap-3">
+          <div className="px-4 sm:px-6 pb-10 flex flex-wrap justify-end gap-2">
             <CartoonButton
               label="Cancel"
               color="bg-border"
+              size="sm"
               onClick={() => router.push("/admin")}
             />
             <button
               onClick={() => setViewMode("preview")}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-medium border-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
             >
               <Eye className="h-4 w-4" />
               Preview
@@ -1783,6 +1762,7 @@ function CreateLessonPage() {
               }
               color="bg-success"
               textColor="text-white"
+              size="sm"
               disabled={saving}
               onClick={handleSubmit}
             />

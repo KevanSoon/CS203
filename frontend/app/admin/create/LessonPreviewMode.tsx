@@ -120,7 +120,7 @@ export function LessonPreviewMode({
         <Sidebar
           selected={selected}
           setSelected={setSelected}
-          defaultOpen={true}
+          defaultOpen={false}
           chapters={chapters.map((c: ChapterForm, i: number) => ({
             id: i,
             title: c.title || `Chapter ${i + 1}`,
