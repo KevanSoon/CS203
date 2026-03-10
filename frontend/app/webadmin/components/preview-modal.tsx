@@ -43,9 +43,9 @@ interface PreviewModalProps {
 
 export function PreviewModal({ lesson, lessonDetail, loadingDetail = false, onClose }: PreviewModalProps) {
   const activeLesson = lessonDetail ?? lesson
-  const chapterCount = activeLesson.chapters?.length ?? 0
-  const cardCount = activeLesson.chapters?.reduce((sum, chapter) => sum + (chapter.cards?.length ?? 0), 0) ?? 0
-  const quizCount = activeLesson.chapters?.reduce((sum, chapter) => sum + (chapter.quizQuestions?.length ?? 0), 0) ?? 0
+  const chapterCount = lessonDetail?.chapters?.length ?? 0
+  const cardCount = lessonDetail?.chapters?.reduce((sum: number, chapter: { cards?: Array<{ front: string; back: string }> }) => sum + (chapter.cards?.length ?? 0), 0) ?? 0
+  const quizCount = lessonDetail?.chapters?.reduce((sum: number, chapter: { quizQuestions?: Array<{ question: string }> }) => sum + (chapter.quizQuestions?.length ?? 0), 0) ?? 0
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
