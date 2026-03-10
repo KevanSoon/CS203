@@ -248,6 +248,23 @@ public class LessonService {
         Lesson lesson = lessonRepository.findByTitleAndCreatedBy(lessonTitle, userId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found or you don't have permission to edit it"));
 
+        return buildLessonPageDTO(lesson);
+    }
+
+    /**
+     * Get full lesson page for ROOT review (read-only, any status).
+     */
+    public LessonPageDTO getRootLessonApplicationPage(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Lesson title must be provided");
+        }
+        Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
+                .orElseThrow(() -> new RuntimeException("Lesson application not found"));
+        return buildLessonPageDTO(lesson);
+    }
+
+    private LessonPageDTO buildLessonPageDTO(Lesson lesson) {
+
         List<Chapter> chapters = chapterRepository.findByLessonId(lesson.getId());
 
         List<ChapterDTO> chapterDetails = chapters.stream().map(chapter -> {

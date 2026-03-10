@@ -16,6 +16,9 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     @Query(value = "SELECT * FROM lesson WHERE title = :title AND status = 'approved' AND deleted_at IS NULL", nativeQuery = true)
     Optional<Lesson> findByTitle(@Param("title") String title);
 
+        @Query(value = "SELECT * FROM lesson WHERE title = :title AND deleted_at IS NULL", nativeQuery = true)
+        Optional<Lesson> findByTitleNotDeleted(@Param("title") String title);
+
     @Query(value = "SELECT * FROM lesson WHERE title = :title AND created_by_id = :userId AND deleted_at IS NULL", nativeQuery = true)
     Optional<Lesson> findByTitleAndCreatedBy(@Param("title") String title, @Param("userId") Integer userId);
 
