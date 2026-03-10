@@ -4,39 +4,9 @@ import { Sidebar } from "@/app/components/Sidebar";
 import { LearningPath } from "@/app/lesson/[title]/components/LearningPath";
 import { QuizCard } from "@/app/lesson/[title]/components/QuizCard";
 import { Eye, Pencil, Zap, Code2 } from "lucide-react";
+import { CardForm, ChapterForm } from "./form";
 
-/* ─── Types ─── */
-interface CardForm {
-  id: string;
-  front: string;
-  back: string;
-  mediaUrl?: string;
-}
-
-interface QuizOptionMap {
-  [key: string]: string;
-}
-
-type QuizType = "mcq" | "true_false" | "fill_blank";
-
-interface QuizForm {
-  id: string;
-  title: string;
-  question: string;
-  quizType: QuizType;
-  options: QuizOptionMap;
-  correctAnswer: string;
-}
-
-interface ChapterForm {
-  title: string;
-  description: string;
-  cards: CardForm[];
-  quizzes: QuizForm[];
-  isExpanded: boolean;
-}
-
-interface LessonPreviewModeProps {
+export interface LessonPreviewShellProps {
   title: string;
   description: string;
   chapters: ChapterForm[];
@@ -53,7 +23,7 @@ interface LessonPreviewModeProps {
   onExitPreview: () => void;
 }
 
-export function LessonPreviewMode({
+export function LessonPreviewShell({
   title,
   description,
   chapters,
@@ -68,7 +38,7 @@ export function LessonPreviewMode({
   quizOverlayOpen,
   setQuizOverlayOpen,
   onExitPreview,
-}: LessonPreviewModeProps) {
+}: LessonPreviewShellProps) {
   const currentChapter = chapters[previewChapterIdx];
 
   const pathNodes = currentChapter
@@ -82,7 +52,6 @@ export function LessonPreviewMode({
             back: card.back,
           },
         })),
-        /* Single quiz node at the end of each chapter */
         ...(currentChapter.quizzes.length > 0
           ? [
               {
@@ -104,7 +73,6 @@ export function LessonPreviewMode({
     setPreviewFlipped(false);
   };
 
-  /* Convert QuizForm[] → QuizDTO[] for QuizCard */
   const quizNodeData = currentChapter?.quizzes.map((q) => ({
     id: 0,
     title: q.title,
@@ -136,13 +104,10 @@ export function LessonPreviewMode({
         />
 
         <div className="flex-1 bg-gradient-to-b from-background to-accent-light/10 overflow-x-hidden overflow-y-auto pb-20">
-          {/* Top bar */}
           <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">
-                Preview Mode
-              </span>
+              <span className="text-sm font-semibold text-primary">Preview Mode</span>
             </div>
             <button
               onClick={onExitPreview}
@@ -153,27 +118,22 @@ export function LessonPreviewMode({
             </button>
           </div>
 
-          {/* Lesson Title */}
           <div className="px-4 pt-8 pb-4 text-center">
             <h1 className="text-3xl md:text-4xl font-black text-foreground">
               {title || "Untitled Lesson"}
             </h1>
             {description && (
-              <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
-                {description}
-              </p>
+              <p className="text-muted-foreground mt-2 max-w-lg mx-auto">{description}</p>
             )}
           </div>
 
           {currentChapter && (
             <>
-              {/* Chapter Banner */}
               <div className="px-4 pt-4 pb-8 flex justify-center">
                 <div className="relative w-full max-w-md rounded-xl bg-primary border-2 border-primary-dark px-6 py-3 shadow-[0_4px_0_0_var(--color-primary-dark)] overflow-hidden group">
                   <div className="relative z-10">
                     <p className="text-sm text-white/70">
-                      {currentChapter.title ||
-                        `Chapter ${previewChapterIdx + 1}`}
+                      {currentChapter.title || `Chapter ${previewChapterIdx + 1}`}
                     </p>
                     {currentChapter.description && (
                       <p className="text-lg font-bold text-white mt-1">
@@ -185,7 +145,6 @@ export function LessonPreviewMode({
                 </div>
               </div>
 
-              {/* S-curve LearningPath */}
               <div className="flex justify-center mt-4">
                 <LearningPath
                   nodes={pathNodes}
@@ -194,7 +153,6 @@ export function LessonPreviewMode({
                 />
               </div>
 
-              {/* Flashcard overlay */}
               {previewCardIdx !== null && (
                 <div
                   className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4"
@@ -211,7 +169,6 @@ export function LessonPreviewMode({
                       ✕
                     </button>
 
-                    {/* Flippable Card */}
                     <div
                       className="h-[420px] w-full cursor-pointer"
                       style={{ perspective: "2000px" }}
@@ -221,9 +178,7 @@ export function LessonPreviewMode({
                         className="relative h-full w-full transition-all duration-700"
                         style={{
                           transformStyle: "preserve-3d",
-                          transform: previewFlipped
-                            ? "rotateY(180deg)"
-                            : "rotateY(0deg)",
+                          transform: previewFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
                         }}
                       >
                         <div
@@ -236,14 +191,11 @@ export function LessonPreviewMode({
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
                                 <Zap className="h-4 w-4 text-white" />
                               </div>
-                              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">
-                                Question
-                              </h3>
+                              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">Question</h3>
                             </div>
                             <div className="flex-1 flex items-center">
                               <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                {currentChapter.cards[previewCardIdx]?.front ||
-                                  "No content"}
+                                {currentChapter.cards[previewCardIdx]?.front || "No content"}
                               </p>
                             </div>
                           </div>
@@ -269,14 +221,11 @@ export function LessonPreviewMode({
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80">
                                 <Code2 className="h-4 w-4 text-white" />
                               </div>
-                              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">
-                                Answer
-                              </h3>
+                              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">Answer</h3>
                             </div>
                             <div className="flex-1 flex items-center">
                               <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                {currentChapter.cards[previewCardIdx]?.back ||
-                                  "No content"}
+                                {currentChapter.cards[previewCardIdx]?.back || "No content"}
                               </p>
                             </div>
                           </div>
@@ -287,7 +236,6 @@ export function LessonPreviewMode({
                 </div>
               )}
 
-              {/* Quiz overlay — reuses QuizCard without the timer */}
               {quizOverlayOpen && quizNodeData && quizNodeData.length > 0 && (
                 <QuizCard
                   node={{
