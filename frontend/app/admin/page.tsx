@@ -9,7 +9,7 @@ import { StatsGrid } from "./components/StatsGrid";
 import { MyLessonsCard } from "./components/MyLessonsCard";
 import { FeedbacksCard } from "./components/FeedbacksCard";
 
-type ReportStatus = "reported" | "unresolved" | "closed" | "redirected";
+type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
 export interface Report {
   id: number;
@@ -23,6 +23,7 @@ export interface Report {
   remarks?: string | null;
   createdAt: string;
   updatedAt: string;
+  lastUpdate: string | null;
 }
 
 export interface Lesson {

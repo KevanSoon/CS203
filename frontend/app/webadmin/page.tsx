@@ -11,7 +11,7 @@ import { ReportsTable } from "./components/reports-table";
 
 // Types
 export type LessonStatus = "pending" | "approved" | "rejected";
-export type ReportStatus = "reported" | "closed" | "unresolved" | "redirected";
+export type ReportStatus = "reported" | "closed" | "unresolved";
 export type ReportType = "critical" | "high" | "medium" | "low";
 
 export interface Lesson {
@@ -50,6 +50,7 @@ export interface Report {
 	remarks?: string | null;
 	createdAt: string;
 	updatedAt: string;
+	lastUpdate: string | null;
 }
 
 export default function DashboardPage() {
@@ -61,16 +62,37 @@ export default function DashboardPage() {
 
 	const handleChangeStatus = async (id: number, status: ReportStatus) => {
 		await api.patch("/api/report/root/status", { reportId: id, status });
-		setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: status } : r)));
-		toast.success("Report "+ id + " " + status)
+		setReports((prev) =>
+			prev.map((r) =>
+				r.id === id
+					? {
+							...r,
+							status,
+							lastUpdate: "admin",
+							updatedAt: new Date().toISOString(),
+						}
+					: r,
+			),
+		);
+		toast.success("Report " + id + " " + status);
 	};
 
 	const handleSuspendLesson = async (id: number, status: ReportStatus) => {
 		await api.patch("/api/report/root/suspend", { reportId: id, status });
-		setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: status } : r)));
-		toast.success("Report "+ id + " " + status + ". Lesson has been suspended")
+				setReports((prev) =>
+			prev.map((r) =>
+				r.id === id
+					? {
+							...r,
+							status,
+							lastUpdate: "admin",
+							updatedAt: new Date().toISOString(),
+						}
+					: r,
+			),
+		);
+		toast.success("Report " + id + " " + status + ". Lesson has been suspended");
 	};
-
 
 	useEffect(() => {
 		async function fetchLessons() {

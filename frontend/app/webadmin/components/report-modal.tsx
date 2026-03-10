@@ -79,7 +79,7 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 										title="Redirect Report"
 										onClick={async () => {
 											try {
-												await Promise.resolve(handleChangeStatus(report.id, "redirected"));
+												await Promise.resolve(handleChangeStatus(report.id, "unresolved"));
 											} finally {
 												onClose();
 											}
@@ -91,7 +91,7 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 										title="Close report"
 										onClick={async () => {
 											try {
-												await Promise.resolve(handleChangeStatus(report.id, "redirected"));
+												await Promise.resolve(handleChangeStatus(report.id, "closed"));
 											} finally {
 												onClose();
 											}
@@ -103,7 +103,7 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 										title="Suspend lesson"
 										onClick={async () => {
 											try {
-												await Promise.resolve(onSuspendLesson(report.id, "redirected"));
+												await Promise.resolve(onSuspendLesson(report.id, "closed"));
 											} finally {
 												onClose();
 											}

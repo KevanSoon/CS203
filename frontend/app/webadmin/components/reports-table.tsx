@@ -6,7 +6,7 @@ import { Send, CheckCheck, Ban } from "lucide-react";
 import { Report } from "../page";
 import { SingleReportModal } from "./report-modal";
 
-type ReportStatus = "reported" | "unresolved" | "closed" | "redirected";
+type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
 type FilterValue = "reports" | ReportStatus;
 
@@ -113,6 +113,21 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 												<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(report.status)}`}>{toSentenceCase(report.status)}</span>{" "}
 											</div>
 										</>
+									) : filter === "unresolved" ? (
+										<>
+											{" "}
+											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
+											<div className="mt-2 flex flex-wrap items-center gap-2">
+												<span className="text-xs text-muted-foreground">
+													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+												</span>
+											</div>
+											<div className="mt-2 flex flex-wrap items-center gap-2">
+												<span className="text-xs text-muted-foreground">
+													Updated By Lesson Admin: <span className={report.lastUpdate === "admin"? "font-semibold text-success" : "font-semibold text-destructive"}>{report.lastUpdate === "admin"? "Yes" : "No"}</span> 
+												</span>
+											</div>
+										</>
 									) : (
 										<>
 											{" "}
@@ -133,7 +148,7 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 											<button
 												onClick={(e) => {
 													e.stopPropagation();
-													handleChangeStatus(report.id, "redirected");
+													handleChangeStatus(report.id, "unresolved");
 												}}
 												title="Redirect Report"
 												className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">

@@ -61,8 +61,9 @@ export function ReportsModal({ open, onClose, lessonTitle, reports, onSaveRemark
 			setLocalRemarks((prev) => ({ ...prev, [reportId]: nextRemark }));
 			cancelEdit();
 		} finally {
-			toast.success("Report remarks updated")
+			toast.success("Report remarks updated");
 			setIsSaving(false);
+			onClose();
 		}
 	}
 
@@ -89,7 +90,7 @@ export function ReportsModal({ open, onClose, lessonTitle, reports, onSaveRemark
 				) : (
 					<div className="max-h-[60vh] space-y-3 overflow-auto pr-1">
 						{sortedReports.map((r, idx) => (
-							<div key={r.id ?? idx} className="rounded-md border border-border px-3 py-3 shadow-sm">
+							<div key={r.id ?? idx} className={`rounded-md border border-border px-3 py-3 shadow-sm ${r.lastUpdate === "root" ? "border-2 border-destructive shadow-[0_0_0_1px_hsl(var(--destructive)/0.25)]" : ""}`}>
 								<div className="w-full">
 									<div className="flex w-full items-start justify-between gap-3">
 										<div className="min-w-0 flex-1">
@@ -97,7 +98,11 @@ export function ReportsModal({ open, onClose, lessonTitle, reports, onSaveRemark
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(r.type as ReportType)}`}>{toSentenceCase(r.type)}</span>
 										</div>
 
-										<button type="button" onClick={() => startEdit(r)} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors" aria-label={`Edit remark for report ${r.id}`}>
+										<button
+											type="button"
+											onClick={() => startEdit(r)}
+											className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+											aria-label={`Edit remark for report ${r.id}`}>
 											<Pencil className="h-4 w-4" />
 										</button>
 									</div>
@@ -120,26 +125,27 @@ export function ReportsModal({ open, onClose, lessonTitle, reports, onSaveRemark
 													type="button"
 													onClick={() => saveEdit(r.id)}
 													disabled={isSaving}
-													className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
-												>
+													className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50">
 													{isSaving ? "Saving..." : "Save"}
 												</button>
 												<button
 													type="button"
 													onClick={cancelEdit}
 													disabled={isSaving}
-													className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/50 disabled:opacity-50"
-												>
+													className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/50 disabled:opacity-50">
 													Cancel
 												</button>
 											</div>
 										</div>
 									) : (localRemarks[r.id] ?? r.remarks) ? (
-										<p className="mt-2 text-sm text-muted-foreground">{localRemarks[r.id] ?? r.remarks}</p>
+										<p className="mt-2 text-sm text-muted-foreground">Remarks: {localRemarks[r.id] ?? r.remarks}</p>
 									) : null}
-									<p className="mt-2 text-xs text-muted-foreground">
-										Reported By: {r.reportedBy} · {new Date(r.createdAt).toLocaleString()}
-									</p>
+									<div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+										<p className="min-w-0 truncate">
+											Reported By: {r.reportedBy} · {new Date(r.createdAt).toLocaleString()}
+										</p>
+										<p className="shrink-0 text-right">Last Updated On: {new Date(r.updatedAt).toLocaleString()}</p>
+									</div>
 								</div>
 							</div>
 						))}
