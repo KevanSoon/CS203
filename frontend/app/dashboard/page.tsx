@@ -197,12 +197,6 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-6">No courses available yet.</p>
         )}
 
-        {loading && (
-          <div className="flex justify-center mt-16">
-            <div className="h-8 w-8 rounded-full border-4 border-border border-t-primary animate-spin" />
-          </div>
-        )}
-
         {renderSection("Continue Learning", inProgress)}
         {renderSection("Not Started", notStarted)}
         {renderSection("Completed", completed)}
