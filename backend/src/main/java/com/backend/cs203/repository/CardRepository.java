@@ -14,4 +14,8 @@ public interface CardRepository extends JpaRepository<Card, Integer> {
 
     @Query(value = "SELECT * FROM card WHERE chapter_id = :chapterId ORDER BY display_order ASC", nativeQuery = true)
     List<Card> findByChapterId(@Param("chapterId") Integer chapterId);
+
+    /** Batch: count cards per chapter for ALL chapters. Returns [chapter_id, count]. */
+    @Query(value = "SELECT chapter_id, COUNT(*) FROM card GROUP BY chapter_id", nativeQuery = true)
+    List<Object[]> countCardsGroupedByChapter();
 }

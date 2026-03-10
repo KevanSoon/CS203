@@ -8,6 +8,7 @@ import { AIChatAssistant } from "./components/AIChatAssistant";
 import { MessageCircle } from "lucide-react";
 import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
+import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
 
 // Backend DTO types
 interface CardDTO {
@@ -22,6 +23,7 @@ interface QuizDTO {
   title: string;
   question: string;
   options: string;
+  quizType: "mcq" | "true_false" | "fill_blank";
   correctAnswer: string;
 }
 
@@ -61,13 +63,18 @@ interface Node {
   quizData?: QuizDTO[];
 }
 
-function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
+function mapChaptersFromDTO(dtoChapters: ChapterDTO[], progress?: LessonDetailProgress): Chapter[] {
   return dtoChapters.map((chapter) => {
+    // Find matching chapter progress if available
+    const chapterProgress = progress?.chapters.find((c) => c.chapterId === chapter.id);
+
     const cardNodes: Node[] = [...chapter.cards]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((card) => ({
         id: card.id,
         type: "lesson" as const,
+        // If we have progress data, completed cards come from the backend
+        // We'll refine to "completed" status after the full node list is built
         status: "locked" as const,
         content: {
           front: card.front,
@@ -84,9 +91,34 @@ function mapChaptersFromDTO(dtoChapters: ChapterDTO[]): Chapter[] {
 
     const allNodes = [...cardNodes, quizNode];
 
-    // First node starts as available
-    if (allNodes.length > 0) {
-      allNodes[0].status = "available";
+    if (chapterProgress) {
+      // We know how many cards are completed — mark first N cards as completed
+      const completedCardCount = chapterProgress.completedCards;
+      allNodes.forEach((node, i) => {
+        if (node.type === "lesson") {
+          const cardIndex = i; // cardNodes are the first N nodes
+          if (cardIndex < completedCardCount) {
+            allNodes[i] = { ...node, status: "completed" };
+          } else if (cardIndex === completedCardCount) {
+            allNodes[i] = { ...node, status: "available" };
+          }
+          // else stays locked
+        } else {
+          // quiz node
+          if (chapterProgress.quizCompleted) {
+            allNodes[i] = { ...node, status: "completed" };
+          } else if (completedCardCount === chapterProgress.totalCards) {
+            // All cards done, quiz unlocked
+            allNodes[i] = { ...node, status: "available" };
+          }
+          // else stays locked
+        }
+      });
+    } else {
+      // No progress — first node available, rest locked
+      if (allNodes.length > 0) {
+        allNodes[0].status = "available";
+      }
     }
 
     return {
@@ -110,9 +142,12 @@ export default function LessonRoadmapPage({
   const [chatOpen, setChatOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [lessonId, setLessonId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lessonTitle = decodeURIComponent(title);
+
+  const { lessonProgress, setLessonProgress, markCardCompleted, markQuizCompleted } = useProgressStore();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -129,10 +164,28 @@ export default function LessonRoadmapPage({
     const fetchLessonPage = async () => {
       try {
         setLoading(true);
+        // Fetch lesson content
         const { data } = await api.get<LessonPageDTO>("/api/lesson/page", {
           params: { title: lessonTitle },
         });
-        setChapters(mapChaptersFromDTO(data.chapters));
+
+        setLessonId(data.id);
+
+        // Always fetch fresh progress from backend when opening a lesson
+        // (cache is only used for optimistic updates mid-session)
+        let progress: LessonDetailProgress | undefined;
+        try {
+          const { data: progressData } = await api.get<LessonDetailProgress>(
+            `/api/progress/lesson/${data.id}`
+          );
+          progress = progressData;
+          setLessonProgress(data.id, progressData);
+        } catch {
+          // Progress fetch failed — fall back to cached value if available
+          progress = lessonProgress[data.id];
+        }
+
+        setChapters(mapChaptersFromDTO(data.chapters, progress));
       } catch (err: any) {
         console.error("Failed to fetch lesson page:", err);
         setError(err.response?.data?.error || "Failed to load lesson");
@@ -152,6 +205,21 @@ export default function LessonRoadmapPage({
   };
 
   const handleNodeComplete = (nodeId: number) => {
+    // Determine what action to take BEFORE touching any state
+    let action: { type: "card" | "quiz"; chapterId: number } | null = null;
+
+    const currentNodes = chapters[selectedChapter]?.nodes ?? [];
+    const completedNode = currentNodes.find((n) => n.id === nodeId);
+    if (completedNode && completedNode.status !== "completed" && lessonId !== null) {
+      const chapterId = chapters[selectedChapter].id;
+      if (completedNode.type === "lesson") {
+        action = { type: "card", chapterId };
+      } else if (completedNode.type === "quiz") {
+        action = { type: "quiz", chapterId };
+      }
+    }
+
+    // Update local chapter node states
     setChapters((prev) =>
       prev.map((chapter, chIdx) => {
         if (chIdx !== selectedChapter) return chapter;
@@ -169,6 +237,23 @@ export default function LessonRoadmapPage({
         return { ...chapter, nodes: updatedNodes };
       })
     );
+
+    // Fire side effects AFTER setChapters — never inside the updater
+    if (action && lessonId !== null) {
+      if (action.type === "card") {
+        // Use fetch directly to avoid the global loading spinner interceptor
+        fetch("/api/progress/card/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cardId: nodeId }),
+        }).catch(() => {});
+        markCardCompleted(lessonId, action.chapterId);
+      } else if (action.type === "quiz") {
+        // Quiz completion is handled by QuizCard via /api/quiz-result
+        markQuizCompleted(lessonId, action.chapterId);
+      }
+    }
+
     setSelectedNode(null);
   };
 
@@ -214,21 +299,37 @@ export default function LessonRoadmapPage({
         {!loading && !error && currentChapter && (
           <>
             {/* Chapter Toast Banner */}
-            <div className="px-4 pt-4 pb-8 flex justify-center">
-              <div className="relative w-full max-w-md rounded-xl bg-primary border-2 border-primary-dark px-6 py-3 shadow-[0_4px_0_0_var(--color-primary-dark)] overflow-hidden group">
-                <div className="relative z-10">
-                  <p className="text-sm text-white/70">
-                    {currentChapter.title}
-                  </p>
-                  {currentChapter.description && (
-                    <p className="text-lg font-bold text-white mt-1">
-                      {currentChapter.description}
-                    </p>
-                  )}
+            {(() => {
+              const isChapterComplete = currentChapter.nodes.every(
+                (n) => n.status === "completed"
+              );
+              return (
+                <div className="px-4 pt-4 pb-8 flex justify-center">
+                  <div className={`relative w-full max-w-md rounded-xl border-2 px-6 py-3 overflow-hidden group ${
+                    isChapterComplete
+                      ? "bg-success border-success-shadow shadow-[0_4px_0_0_var(--color-success-shadow)]"
+                      : "bg-primary border-primary-dark shadow-[0_4px_0_0_var(--color-primary-dark)]"
+                  }`}>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-white/70">{currentChapter.title}</p>
+                        {isChapterComplete && (
+                          <span className="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded-full">
+                            ✓ Completed
+                          </span>
+                        )}
+                      </div>
+                      {currentChapter.description && (
+                        <p className="text-lg font-bold text-white mt-1">
+                          {currentChapter.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
+                  </div>
                 </div>
-                <div className="absolute top-1/2 left-[-100%] w-16 h-24 bg-white/50 -translate-y-1/2 rotate-12 transition-all duration-500 ease-in-out group-hover:left-[200%]" />
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Learning Path */}
             <div className="px-4 flex justify-center">

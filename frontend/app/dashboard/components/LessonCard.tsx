@@ -12,8 +12,9 @@ type LessonCardProps = {
  title: string;
  description: string;
  progress: number;
- lessonId: number;   // ADD THIS
+ lessonId: number;
  tags?: string[];
+ status?: "in_progress" | "completed" | "not_started";
 };
 
 
@@ -30,8 +31,9 @@ export default function LessonCard({
  title,
  description,
  progress,
- lessonId,           // ADD THIS
+ lessonId,
  tags = [],
+ status,
 }: LessonCardProps) {
  const router = useRouter();
  const [showModal, setShowModal] = useState(false);
@@ -126,7 +128,7 @@ export default function LessonCard({
            src={image}
            alt={title}
            className="
-             w-full object-cover h-32 sm:h-40
+             w-full object-cover h-44 sm:h-52
              transition-transform duration-500
              md:group-hover:scale-105
            "
@@ -176,6 +178,17 @@ export default function LessonCard({
 
 
          <div className="space-y-2 mt-auto">
+           {status && (
+             <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
+               status === "completed"
+                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                 : status === "in_progress"
+                 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                 : "bg-muted text-muted-foreground"
+             }`}>
+               {status === "completed" ? "Completed" : status === "in_progress" ? "In Progress" : "Not Started"}
+             </span>
+           )}
            <div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
              <span>Completion</span>
              <span>{progress}%</span>

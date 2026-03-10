@@ -5,22 +5,33 @@ import LessonCard from "@/app/dashboard/components/LessonCard";
 import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
 import FilterSearch from "@/app/components/FilterSearch";
+import { useProgressStore, isDashboardStale, DashboardProgress } from "@/app/store/ProgressStore";
 
-interface Lesson {
+/** Shape returned by existing GET /api/lesson (LessonSummaryResponse) */
+interface LessonSummary {
   id: number;
   title: string;
   description: string;
   createdBy: string;
   createdAt: string;
-  tags?: string;
+  tags: string | null;
+  lessonPictureUrl: string | null;
 }
 
-function parseTags(tags?: string): string[] {
+/** Merged view for rendering — lesson metadata + progress overlay */
+interface MergedLesson {
+  lessonId: number;
+  title: string;
+  description: string;
+  lessonPictureUrl: string | null;
+  tags: string | null;
+  status: "in_progress" | "completed" | "not_started";
+  progressPercent: number;
+}
+
+function parseTags(tags?: string | null): string[] {
   if (!tags) return [];
-  return tags
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
+  return tags.split(",").map((t) => t.trim()).filter(Boolean);
 }
 
 function normalize(s: string) {
@@ -29,24 +40,57 @@ function normalize(s: string) {
 
 export default function DashboardPage() {
   const [selected, setSelected] = useState("View Lessons");
-  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<"search" | "tag">("search");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  const [lessons, setLessons] = useState<LessonSummary[]>([]);
+  const { dashboardProgress, setDashboardProgress } = useProgressStore();
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchLessons = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const { data } = await api.get<Lesson[]>("/api/lesson/");
-        setLessons(data);
-      } catch (err: any) {
+        const [lessonsRes, progressRes] = await Promise.all([
+          api.get<LessonSummary[]>("/api/lesson"),
+          isDashboardStale() || dashboardProgress.length === 0
+            ? api.get<DashboardProgress[]>("/api/progress/dashboard")
+            : Promise.resolve(null),
+        ]);
+
+        setLessons(lessonsRes.data);
+
+        if (progressRes) {
+          setDashboardProgress(progressRes.data);
+        }
+      } catch (err: unknown) {
+        console.error(err);
         setError("Failed to load lessons.");
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchLessons();
+    fetchData();
   }, []);
+
+  /** Merge lessons + progress by lessonId */
+  const merged: MergedLesson[] = useMemo(() => {
+    const progressMap = new Map(dashboardProgress.map((p) => [p.lessonId, p]));
+    return lessons.map((lesson) => {
+      const progress = progressMap.get(lesson.id);
+      return {
+        lessonId: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        lessonPictureUrl: lesson.lessonPictureUrl,
+        tags: lesson.tags,
+        status: progress?.status ?? "not_started",
+        progressPercent: progress?.progressPercent ?? 0,
+      };
+    });
+  }, [lessons, dashboardProgress]);
 
   const addTag = (tag: string) => {
     const cleaned = tag.trim();
@@ -66,9 +110,9 @@ export default function DashboardPage() {
   };
 
   const filteredLessons = useMemo(() => {
-    let result = lessons;
+    let result = merged;
 
-    // Tag filters always apply once a tag is added to selectedTags
+    // Tag filters always apply once a tag is committed to selectedTags
     if (selectedTags.length > 0) {
       const selectedNorm = selectedTags.map(normalize);
       result = result.filter((lesson) => {
@@ -88,10 +132,37 @@ export default function DashboardPage() {
     }
 
     return result;
-  }, [lessons, selectedTags, query, mode]);
+  }, [merged, selectedTags, query, mode]);
 
   const isFiltering =
     selectedTags.length > 0 || (mode === "search" && query.trim().length > 0);
+
+  const inProgress = filteredLessons.filter((l) => l.status === "in_progress");
+  const notStarted = filteredLessons.filter((l) => l.status === "not_started");
+  const completed  = filteredLessons.filter((l) => l.status === "completed");
+
+  const renderSection = (title: string, items: MergedLesson[]) => {
+    if (items.length === 0) return null;
+    return (
+      <div className="mt-10">
+        <h2 className="text-lg font-bold mb-4 text-foreground">{title}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((lesson) => (
+            <LessonCard
+              key={lesson.lessonId}
+              lessonId={lesson.lessonId}
+              title={lesson.title}
+              description={lesson.description}
+              image={lesson.lessonPictureUrl ?? "/images/questionmark.jpg"}
+              progress={lesson.progressPercent}
+              status={lesson.status}
+              tags={parseTags(lesson.tags)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex w-full bg-background text-foreground">
@@ -119,30 +190,22 @@ export default function DashboardPage() {
         {error && <p className="text-red-500 mt-6">{error}</p>}
 
         {!error && isFiltering && filteredLessons.length === 0 && (
-          <p className="text-muted-foreground mt-6">
-            No lessons found matching your search.
-          </p>
+          <p className="text-muted-foreground mt-6">No lessons found matching your search.</p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {filteredLessons.map((lesson, i) => (
-            <LessonCard
-              key={`${lesson.title}-${i}`}
-              lessonId={lesson.id}
-              title={lesson.title}
-              description={lesson.description}
-              image={`/images/questionmark.jpg`}
-              progress={0}
-              tags={parseTags(lesson.tags)}
-            />
-          ))}
-        </div>
-
-        {lessons.length === 0 && !error && (
-          <p className="text-muted-foreground mt-6">
-            No courses available yet.
-          </p>
+        {!error && !loading && merged.length === 0 && (
+          <p className="text-muted-foreground mt-6">No courses available yet.</p>
         )}
+
+        {loading && (
+          <div className="flex justify-center mt-16">
+            <div className="h-8 w-8 rounded-full border-4 border-border border-t-primary animate-spin" />
+          </div>
+        )}
+
+        {renderSection("Continue Learning", inProgress)}
+        {renderSection("Not Started", notStarted)}
+        {renderSection("Completed", completed)}
       </div>
     </div>
   );
