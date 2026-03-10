@@ -742,6 +742,11 @@ function CreateLessonPage() {
                     </div>
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Type a custom tag and press{" "}
+                  <kbd className="px-1 py-0.5 rounded border border-border bg-muted font-mono text-[10px]">Enter</kbd>{" "}
+                  to create it.
+                </p>
               </div>
             </div>
           </div>
