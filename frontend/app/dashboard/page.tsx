@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import LessonCard from "@/app/dashboard/components/LessonCard";
 import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
-import TagFilterSearch from "@/app/components/TagFilterSearch";
+import FilterSearch from "@/app/components/FilterSearch";
 import { useProgressStore, isDashboardStale, DashboardProgress } from "@/app/store/ProgressStore";
 
 /** Shape returned by existing GET /api/lesson (LessonSummaryResponse) */
@@ -42,11 +42,10 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState("View Lessons");
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<"search" | "tag">("search");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  /** Lesson metadata from existing LessonController */
   const [lessons, setLessons] = useState<LessonSummary[]>([]);
-
   const { dashboardProgress, setDashboardProgress } = useProgressStore();
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +53,6 @@ export default function DashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Parallel fetch: lesson metadata + lightweight progress
         const [lessonsRes, progressRes] = await Promise.all([
           api.get<LessonSummary[]>("/api/lesson"),
           isDashboardStale() || dashboardProgress.length === 0
@@ -106,16 +104,38 @@ export default function DashboardPage() {
     setSelectedTags((prev) => prev.filter((t) => t !== tag));
   };
 
-  const clearAll = () => setSelectedTags([]);
+  const clearAll = () => {
+    setSelectedTags([]);
+    setQuery("");
+  };
 
   const filteredLessons = useMemo(() => {
-    if (selectedTags.length === 0) return merged;
-    const selectedNorm = selectedTags.map(normalize);
-    return merged.filter((lesson) => {
-      const lessonTags = parseTags(lesson.tags).map(normalize);
-      return selectedNorm.every((sel) => lessonTags.includes(sel));
-    });
-  }, [merged, selectedTags]);
+    let result = merged;
+
+    // Tag filters always apply once a tag is committed to selectedTags
+    if (selectedTags.length > 0) {
+      const selectedNorm = selectedTags.map(normalize);
+      result = result.filter((lesson) => {
+        const lessonTags = parseTags(lesson.tags).map(normalize);
+        return selectedNorm.every((sel) => lessonTags.includes(sel));
+      });
+    }
+
+    // Text search only applies in search mode — typing in tag mode does nothing
+    if (mode === "search" && query.trim()) {
+      const q = normalize(query);
+      result = result.filter(
+        (lesson) =>
+          normalize(lesson.title).includes(q) ||
+          normalize(lesson.description).includes(q)
+      );
+    }
+
+    return result;
+  }, [merged, selectedTags, query, mode]);
+
+  const isFiltering =
+    selectedTags.length > 0 || (mode === "search" && query.trim().length > 0);
 
   const inProgress = filteredLessons.filter((l) => l.status === "in_progress");
   const notStarted = filteredLessons.filter((l) => l.status === "not_started");
@@ -156,9 +176,11 @@ export default function DashboardPage() {
           Enrolled &amp; Available Courses
         </p>
 
-        <TagFilterSearch
+        <FilterSearch
           query={query}
           setQuery={setQuery}
+          mode={mode}
+          setMode={setMode}
           selectedTags={selectedTags}
           addTag={addTag}
           removeTag={removeTag}
@@ -166,6 +188,10 @@ export default function DashboardPage() {
         />
 
         {error && <p className="text-red-500 mt-6">{error}</p>}
+
+        {!error && isFiltering && filteredLessons.length === 0 && (
+          <p className="text-muted-foreground mt-6">No lessons found matching your search.</p>
+        )}
 
         {!error && !loading && merged.length === 0 && (
           <p className="text-muted-foreground mt-6">No courses available yet.</p>
