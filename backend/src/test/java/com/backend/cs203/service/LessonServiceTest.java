@@ -90,7 +90,7 @@ class LessonServiceTest {
     void getUserCreatedLessons_returnsLessonsForUser() {
         when(lessonRepository.findUserCreatedLessons(1)).thenReturn(List.of(mock(LessonApplicationDTO.class)));
 
-        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(1);
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessons(1);
 
         assertEquals(1, result.size());
         verify(lessonRepository).findUserCreatedLessons(1);
@@ -100,7 +100,7 @@ class LessonServiceTest {
     void getUserCreatedLessons_returnsEmptyForUserWithNoLessons() {
         when(lessonRepository.findUserCreatedLessons(999)).thenReturn(Collections.emptyList());
 
-        List<LessonSummaryResponse> result = lessonService.getUserCreatedLessons(999);
+        List<LessonApplicationDTO> result = lessonService.getUserCreatedLessons(999);
 
         assertTrue(result.isEmpty());
     }
