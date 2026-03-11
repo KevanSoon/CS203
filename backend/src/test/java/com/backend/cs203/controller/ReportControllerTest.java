@@ -183,6 +183,11 @@ class ReportControllerTest {
             }
 
             @Override
+            public String getLastUpdate() {
+                return "root";
+            }
+
+            @Override
             public LocalDateTime getCreatedAt() {
                 return LocalDateTime.of(2026, 3, 6, 10, 0);
             }

@@ -35,6 +35,8 @@ public class ReportService {
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
         report.setStatus(Report.ReportStatus.valueOf(status.trim().toLowerCase(Locale.ROOT)));
+        report.setLastUpdate(Report.Updaters.root);
+
         reportRepository.save(report);
     }
 
@@ -43,6 +45,7 @@ public class ReportService {
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
         report.setStatus(Report.ReportStatus.valueOf(status.trim().toLowerCase(Locale.ROOT)));
+        report.setLastUpdate(Report.Updaters.root);
 
         Lesson lesson = report.getLesson();
         if (lesson == null) {
@@ -59,6 +62,7 @@ public class ReportService {
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
         report.setRemarks(remarks.trim());
+        report.setLastUpdate(Report.Updaters.admin);
         reportRepository.save(report);
     }
 }

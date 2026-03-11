@@ -34,6 +34,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 	const [selectedLessonTitle, setSelectedLessonTitle] = useState("");
 	const [selectedReports, setSelectedReports] = useState<Report[]>([]);
+	const [reportOverrides, setReportOverrides] = useState<Record<string, Report[]>>({});
 
 	function openReportsModal(lessonTitle: string, reports?: unknown[]) {
 		setSelectedLessonTitle(lessonTitle);
@@ -59,8 +60,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 	}
 	function renderSuspendedTag() {
 		return (
-			<span
-				className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive-light text-destructive-dark">
+			<span className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive-light text-destructive-dark">
 				<span className="h-1.5 w-1.5 rounded-full bg-destructive" />
 				Suspended
 			</span>
@@ -113,6 +113,8 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 							const tagsArray = parseTags(record.tags);
 							const { visible: visibleTags, remaining } = getVisibleTags(tagsArray);
 							const highestType = getHighestReportType(record.reports as Array<{ type?: string | null }>);
+							const mergedReports = (reportOverrides[record.title] ?? record.reports ?? []) as Report[];
+							const showUpdateDot = mergedReports.some((rep) => (rep.lastUpdate ?? "").toLowerCase() !== "admin");
 							return (
 								<div key={i} className="p-4 rounded-lg border border-border hover:bg-border/50 transition-colors cursor-pointer">
 									<div className="flex items-start gap-3">
@@ -123,7 +125,8 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 											<div className="flex items-start justify-between gap-2">
 												<div className="flex-1">
 													<p className="text-sm font-semibold text-foreground mb-1">
-														{record.title} {record.status === "suspended" ? renderSuspendedTag() : <></>} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
+														{record.title} {record.status === "suspended" ? renderSuspendedTag() : <></>}{" "}
+														{title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
 													</p>
 												</div>
 												{record.status === "pending" ? (
@@ -134,8 +137,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 															onClick={(e) => {
 																e.stopPropagation();
 																router.push(`/admin/create?edit=${encodeURIComponent(record.title)}`);
-															}}
-														>
+															}}>
 															<Pencil className="h-4 w-4" />
 														</button>
 														<button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
@@ -146,13 +148,13 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 													<>
 														<button
 															type="button"
-															onClick={() => openReportsModal(record.title, record.reports as unknown[])}
+															onClick={() => openReportsModal(record.title, mergedReports)}
 															className={`group inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition-all hover:scale-[1.03] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${severityBadgeClass(highestType)}`}
 															title={`${record.reports?.length ?? 0} report(s)`}
 															aria-label={`View ${record.reports?.length ?? 0} reports`}>
 															<BadgeAlert className="h-3.5 w-3.5" />
 															<span>{record.reports?.length ?? 0}</span>
-															<span className="h-1.5 w-1.5 rounded-full bg-current opacity-70 group-hover:opacity-100" />
+															{showUpdateDot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70 group-hover:opacity-100" />}
 														</button>
 													</>
 												) : null}
@@ -179,7 +181,25 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 					</div>
 				</div>
 			</div>
-			<ReportsModal open={isReportModalOpen} onClose={closeReportsModal} lessonTitle={selectedLessonTitle} reports={selectedReports} />
+			<ReportsModal
+				open={isReportModalOpen}
+				onClose={closeReportsModal}
+				lessonTitle={selectedLessonTitle}
+				reports={selectedReports}
+				onSaveRemark={(reportId, remark) => {
+					const now = new Date().toISOString();
+
+					setSelectedReports((prev) => prev.map((r) => (r.id === reportId ? { ...r, remarks: remark, lastUpdate: "admin", updatedAt: now } : r)));
+
+					setReportOverrides((prev) => {
+						const base = prev[selectedLessonTitle] ?? selectedReports;
+						return {
+							...prev,
+							[selectedLessonTitle]: base.map((r) => (r.id === reportId ? { ...r, remarks: remark, lastUpdate: "admin", updatedAt: now } : r)),
+						};
+					});
+				}}
+			/>
 		</div>
 	);
 };
