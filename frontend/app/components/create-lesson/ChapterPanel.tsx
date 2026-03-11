@@ -116,7 +116,7 @@ function CardItem({
                 onUpdateCard("front", e.target.value);
                 clearError(frontKey);
               }}
-              placeholder="Question or term...*"
+              placeholder="Question or term..."
               rows={2}
               className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
                 errors.has(frontKey)
@@ -145,7 +145,7 @@ function CardItem({
                 onUpdateCard("back", e.target.value);
                 clearError(backKey);
               }}
-              placeholder="Answer or definition...*"
+              placeholder="Answer or definition..."
               rows={2}
               className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
                 errors.has(backKey)
