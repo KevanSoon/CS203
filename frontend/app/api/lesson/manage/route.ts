@@ -80,12 +80,11 @@ export async function POST(request: Request) {
     }
 
     try {
-        const body = await request.json();
+        const formData = await request.formData();
 
-        const { data } = await axios.post(`${BACKEND_URL}/api/lesson/create`, body, {
+        const { data } = await axios.post(`${BACKEND_URL}/api/lesson/create`, formData, {
             headers: {
                 Authorization: `Bearer ${jwt}`,
-                "Content-Type": "application/json",
             },
         });
 
@@ -123,12 +122,11 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-        const body = await request.json();
+        const formData = await request.formData();
 
-        const { data } = await axios.put(`${BACKEND_URL}/api/lesson/update`, body, {
+        const { data } = await axios.put(`${BACKEND_URL}/api/lesson/update`, formData, {
             headers: {
                 Authorization: `Bearer ${jwt}`,
-                "Content-Type": "application/json",
             },
             params: { originalTitle },
         });

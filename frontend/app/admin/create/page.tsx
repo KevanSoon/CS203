@@ -64,7 +64,8 @@ function CreateLessonPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-
+  const [lessonImage, setLessonImage] = useState<File | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   /* Tags autocomplete */
   const [allTags, setAllTags] = useState<string[]>([]);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
@@ -176,6 +177,7 @@ function CreateLessonPage() {
       setDescription(data.description || "");
       setTags(data.tags || []);
 
+      if (data.lessonPictureUrl) setThumbnailPreview(data.lessonPictureUrl);
       const mapped: ChapterForm[] = data.chapters.map((ch: any) => {
         const quizzes: QuizForm[] =
           ch.quizQuestions && ch.quizQuestions.length > 0
@@ -253,10 +255,16 @@ function CreateLessonPage() {
       !tags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase()),
   );
 
-  /* ─── Thumbnail placeholder ─── */
+  /* ─── Thumbnail ─── */
   const handleThumbnailSelect = () => {
-    toast("Image upload coming soon! This is a placeholder.", { icon: "📷" });
-    setThumbnailPreview("/images/placeholder-lesson.png");
+    imageInputRef.current?.click();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLessonImage(file);
+    setThumbnailPreview(URL.createObjectURL(file)); // show local preview
   };
 
   /* ─── Chapter helpers ─── */
@@ -475,41 +483,47 @@ function CreateLessonPage() {
 
     setSaving(true);
     try {
-      const payload = {
-        title: title.trim(),
-        description: description.trim(),
-        tags: tags.length > 0 ? tags : null,
-        chapters: chapters.map((ch: ChapterForm) => ({
-          title: ch.title.trim(),
-          description: ch.description.trim(),
-          cards: ch.cards.map((card: CardForm, idx: number) => ({
-            front: card.front.trim(),
-            back: card.back.trim(),
-            displayOrder: idx + 1,
-          })),
-          quizzes: ch.quizzes.map((q: QuizForm) => ({
-            title: q.title.trim() || ch.title.trim() + " Quiz",
-            question: q.question.trim(),
-            quizType: q.quizType,
-            options: JSON.stringify(q.options),
-            correctAnswer: q.correctAnswer,
-          })),
-        })),
-      };
+      const chaptersPayload = chapters.map((ch: ChapterForm) => ({
+        title: ch.title.trim(),
+        description: ch.description.trim(),
+      cards: ch.cards.map((card: CardForm, idx: number) => ({
+        front: card.front.trim(),
+        back: card.back.trim(),
+        displayOrder: idx + 1,
+      })),
+      quizzes: ch.quizzes.map((q: QuizForm) => ({
+        title: q.title.trim() || ch.title.trim() + " Quiz",
+        question: q.question.trim(),
+        quizType: q.quizType,
+        options: JSON.stringify(q.options),
+        correctAnswer: q.correctAnswer,
+      })),
+    }));
 
-      if (isEditMode) {
-        await api.put(
-          `/api/lesson/manage?originalTitle=${encodeURIComponent(editTitle!)}`,
-          payload,
-        );
-        toast.success("Lesson updated and re-submitted for approval!");
-      } else {
-        await api.post("/api/lesson/manage", payload);
-        toast.success("Lesson created and submitted for approval!");
-      }
+    const formData = new FormData();
+    formData.append("title", title.trim());
+    formData.append("description", description.trim());
+    formData.append("chapters", JSON.stringify(chaptersPayload));
+    tags.forEach((tag) => formData.append("tags", tag));
+    if (lessonImage) formData.append("lessonImage", lessonImage);
+
+    if (isEditMode) {
+      await api.put(
+        `/api/lesson/manage?originalTitle=${encodeURIComponent(editTitle!)}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      toast.success("Lesson updated and re-submitted for approval!");
+    } else {
+      await api.post("/api/lesson/manage", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Lesson created and submitted for approval!");
+    }
+    router.push("/admin");
       router.push("/admin");
     } catch (err: any) {
-      console.error("Save lesson failed:", err);
+      toast.error("Save lesson failed:", err);
     } finally {
       setSaving(false);
     }
@@ -589,9 +603,11 @@ function CreateLessonPage() {
                 className="shrink-0 w-full md:w-56 h-36 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 group"
               >
                 {thumbnailPreview ? (
-                  <div className="w-full h-full rounded-xl bg-muted flex items-center justify-center overflow-hidden">
-                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
-                  </div>
+                  <img
+                    src={thumbnailPreview}
+                    alt="Lesson thumbnail"
+                    className="w-full h-full object-cover rounded-xl"
+                  />
                 ) : (
                   <>
                     <Upload className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -600,6 +616,14 @@ function CreateLessonPage() {
                     </span>
                   </>
                 )}
+
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
               </div>
 
               <div className="flex-1 space-y-3 w-full">
