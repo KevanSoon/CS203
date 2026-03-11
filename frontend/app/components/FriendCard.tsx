@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 type FriendDto = {
   id: number;
   username: string;
+  profilePictureUrl?: string;
 };
 
 type Props = {
@@ -42,8 +43,18 @@ export default function FriendCard({ friend, onRemove }: Props) {
     <div className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:shadow-md hover:border-[#6C63FF]/30">
       
       <div className="flex items-center gap-3 min-w-0">
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#F3F1FF] text-[#6C63FF] font-bold">
-          {friend.username[0]?.toUpperCase()}
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-2xl bg-white">
+          {friend.profilePictureUrl ? (
+            <img
+              src={friend.profilePictureUrl}
+              alt={friend.username}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center font-bold text-[#6C63FF]">
+              {friend.username[0]?.toUpperCase()}
+            </div>
+          )}
         </div>
 
         <p className="text-sm font-bold text-slate-900 truncate">

@@ -57,12 +57,16 @@ export async function POST(
   }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest, 
+  context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
-    if (!id) return NextResponse.json({ error: "Missing friend ID" }, { status: 400 });
+    const { params } = context;
+    const resolvedParams = await params;
 
-    const numericId = parseInt(id, 10);
+    if (!resolvedParams.id) return NextResponse.json({ error: "Missing friend ID" }, { status: 400 });
+
+    const numericId = parseInt(resolvedParams.id, 10);
     if (isNaN(numericId)) return NextResponse.json({ error: "Invalid friend ID" }, { status: 400 });
 
     const jwt = await getJwt();
