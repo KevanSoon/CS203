@@ -544,7 +544,6 @@ function CreateLessonPage() {
       <LessonPreviewShell
         title={title}
         description={description}
-        thumbnail={thumbnailPreview}
         chapters={chapters}
         selected={selected}
         setSelected={setSelected}
