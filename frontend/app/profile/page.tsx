@@ -435,6 +435,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+                {!isAdmin && (
                 <div className="mt-3 rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
@@ -445,6 +446,7 @@ export default function ProfilePage() {
                       {isLoadingFriends ? "..." : friends.length}
                     </span>
                   </div>
+                  
 
                   <div className="mb-8">
                     <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6C63FF]">
@@ -519,6 +521,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
+                )}
               </div>
 
               {/* ── Right column: cards ── */}

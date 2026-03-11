@@ -204,23 +204,32 @@ export default function LessonCard({
            </div>
 
 
-           <div className="text-sm sm:text-base text-muted-foreground">
-             {ratingData ? (
-               <span className="flex items-center gap-1.5">
-                 <span className="text-yellow-500 text-lg sm:text-xl tracking-wide">
-                   {getRatingStars(ratingData.averageRating)}
-                 </span>
-                 <span className="font-semibold text-foreground">
-                   {ratingData.averageRating.toFixed(1)}
-                 </span>
-                 <span className="text-xs text-muted-foreground">
-                   ({ratingData.ratingCount})
-                 </span>
-               </span>
-             ) : (
-               <span className="text-xs">Loading rating...</span>
-             )}
-           </div>
+          <div className="text-sm sm:text-base text-muted-foreground">
+            {ratingData ? (
+              ratingData.ratingCount === 0 ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="text-yellow-500 text-lg sm:text-xl tracking-wide">
+                    {getRatingStars(0)}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground italic">Unrated</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <span className="text-yellow-500 text-lg sm:text-xl tracking-wide">
+                    {getRatingStars(ratingData.averageRating)}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {ratingData.averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({ratingData.ratingCount})
+                  </span>
+                </span>
+              )
+            ) : (
+              <span className="text-xs">Loading rating...</span>
+            )}
+          </div>
 
            {submitError && (
              <p className="text-[11px] text-red-500">{submitError}</p>
