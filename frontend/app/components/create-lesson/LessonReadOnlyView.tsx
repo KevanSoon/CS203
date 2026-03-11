@@ -18,6 +18,7 @@ export interface LessonPageDTO {
   id?: number;
   title: string;
   description: string;
+  lessonPictureUrl?: string | null;
   createdBy: string;
   createdAt: string;
   tags?: string[] | null;
@@ -173,10 +174,18 @@ export function LessonReadOnlyView({
 
             {/* Metadata row */}
             <div className="flex flex-col md:flex-row gap-6 items-start">
-              {/* Thumbnail placeholder */}
-              <div className="shrink-0 w-full md:w-56 h-36 rounded-xl border-2 border-border bg-card flex flex-col items-center justify-center gap-2 text-muted-foreground/50">
-                <span className="text-xs">No thumbnail</span>
-              </div>
+              {/* Thumbnail */}
+              {lesson.lessonPictureUrl ? (
+                <img
+                  src={lesson.lessonPictureUrl}
+                  alt={lesson.title}
+                  className="shrink-0 w-full md:w-56 h-36 rounded-xl border-2 border-border object-cover"
+                />
+              ) : (
+                <div className="shrink-0 w-full md:w-56 h-36 rounded-xl border-2 border-border bg-card flex flex-col items-center justify-center gap-2 text-muted-foreground/50">
+                  <span className="text-xs">No thumbnail</span>
+                </div>
+              )}
 
               <div className="flex-1 space-y-3 w-full">
                 {/* Title */}

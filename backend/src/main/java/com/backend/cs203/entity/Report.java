@@ -42,6 +42,10 @@ public class Report {
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String remarks;
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Updaters lastUpdate;
+
 	@ManyToOne
 	@JoinColumn(name = "reported_by", nullable = false)
 	private User reportedBy;
@@ -76,7 +80,6 @@ public class Report {
 		reported,
 		closed,
 		unresolved,
-		redirected
 	}
 
 	public enum ReportType {
@@ -84,5 +87,10 @@ public class Report {
 		high,
 		medium,
 		low
+	}
+
+	public enum Updaters {
+		root,
+		admin
 	}
 }

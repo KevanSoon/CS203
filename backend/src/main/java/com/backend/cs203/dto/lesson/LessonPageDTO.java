@@ -14,6 +14,7 @@ public class LessonPageDTO {
     private Integer id;
     private String title;
     private String description;
+    private String lessonPictureUrl;
     private String createdBy;
     private LocalDateTime createdAt;
     private List<ChapterDTO> chapters;
@@ -22,6 +23,11 @@ public class LessonPageDTO {
     /** Backwards-compatible constructor (no tags). */
     public LessonPageDTO(Integer id, String title, String description, String createdBy,
                          LocalDateTime createdAt, List<ChapterDTO> chapters) {
-        this(id, title, description, createdBy, createdAt, chapters, null);
+        this(id, title, description, null, createdBy, createdAt, chapters, null);
+    }
+
+    public LessonPageDTO(Integer id, String title, String description, String lessonPictureUrl, String createdBy,
+                         LocalDateTime createdAt, List<ChapterDTO> chapters) {
+        this(id, title, description, lessonPictureUrl, createdBy, createdAt, chapters, null);
     }
 }

@@ -2,17 +2,15 @@ package com.backend.cs203.controller;
 
 import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +26,7 @@ import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.LessonService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class LessonController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user-lessons/")
-    public ResponseEntity<List<LessonSummaryResponse>> getUserCreatedLessons(Authentication authentication) {
+    public ResponseEntity<List<LessonApplicationDTO>> getUserCreatedLessons(Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
@@ -104,7 +103,7 @@ public class LessonController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<CreateLessonResponse> createLesson(
-            @Valid @RequestBody CreateLessonRequest request,
+            @Valid @ModelAttribute CreateLessonRequest request,
             Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
@@ -134,7 +133,7 @@ public class LessonController {
     @PutMapping("/update")
     public ResponseEntity<CreateLessonResponse> updateLesson(
             @RequestParam String originalTitle,
-            @Valid @RequestBody CreateLessonRequest request,
+            @Valid @ModelAttribute CreateLessonRequest request,
             Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)

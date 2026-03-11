@@ -1,8 +1,6 @@
 package com.backend.cs203.dto.lesson;
 
-import java.util.List;
-
-import com.backend.cs203.dto.chapter.CreateChapterRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -16,11 +14,11 @@ public class CreateLessonRequest {
 
     private String description;
 
-    private String lessonPictureUrl;
-
     @NotEmpty(message = "A lesson must have at least one chapter")
     @Valid
-    private List<CreateChapterRequest> chapters;
+    private String chapters;
 
-    private List<String> tags;
+    private String tags;
+
+    private MultipartFile lessonPictureUrl;
 }
