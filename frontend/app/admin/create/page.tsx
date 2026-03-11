@@ -66,7 +66,6 @@ function CreateLessonPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [lessonImage, setLessonImage] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
   /* Tags autocomplete */
   const [allTags, setAllTags] = useState<string[]>([]);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
@@ -178,6 +177,7 @@ function CreateLessonPage() {
       setDescription(data.description || "");
       setTags(data.tags || []);
 
+      if (data.lessonPictureUrl) setThumbnailPreview(data.lessonPictureUrl);
       const mapped: ChapterForm[] = data.chapters.map((ch: any) => {
         const quizzes: QuizForm[] =
           ch.quizQuestions && ch.quizQuestions.length > 0
@@ -544,6 +544,7 @@ function CreateLessonPage() {
       <LessonPreviewShell
         title={title}
         description={description}
+        thumbnail={thumbnailPreview}
         chapters={chapters}
         selected={selected}
         setSelected={setSelected}
