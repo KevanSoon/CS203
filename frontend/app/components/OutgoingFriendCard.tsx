@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 type FriendDto = {
   id: number;
   username: string;
+  profilePictureUrl?: string;
 };
 
 type Props = {
@@ -20,7 +21,7 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
   const handleCancel = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/friendship/${friend.id}`, {
+      const res = await fetch(`/api/friendship/pending/outgoing/${friend.id}`, {
         method: "DELETE",
       });
 
@@ -42,10 +43,20 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
       className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3"
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-2xl bg-white font-bold text-amber-600">
-          {friend.username[0]?.toUpperCase()}
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-2xl bg-white">
+          {friend.profilePictureUrl ? (
+            <img
+              src={friend.profilePictureUrl}
+              alt={friend.username}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center font-bold text-[#6C63FF]">
+              {friend.username[0]?.toUpperCase()}
+            </div>
+          )}
         </div>
-
+        
         <p className="text-sm font-bold text-amber-700 truncate max-w-[140px]">
           {friend.username}
         </p>

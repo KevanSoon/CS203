@@ -23,6 +23,23 @@ public class FriendService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final SupabaseStorageService supabaseStorageService;
+
+    private FriendDto toFriendDto(User user) {
+    String profileUrl = null;
+
+    try {
+        String storedPath = user.getProfilePictureUrl();
+        if (storedPath != null && !storedPath.isBlank()) {
+        profileUrl = supabaseStorageService.getSignedUrl(storedPath, 3600);
+        }
+
+    } catch (Exception e) {
+        profileUrl = null;
+    }
+
+    return new FriendDto(user.getId(), user.getUsername(), profileUrl);
+    }
 
     public List<FriendDto> getFriends(String username) {
         User user = userRepository.findByUsername(username)
@@ -36,15 +53,9 @@ public class FriendService {
         return friendships.stream()
             .map(f -> {
                 if (f.getUser1().getId().equals(user.getId())) {
-                    return new FriendDto(
-                        f.getUser2().getId(),
-                        f.getUser2().getUsername()
-                    );
+                    return toFriendDto(f.getUser2());
                 } else {
-                    return new FriendDto(
-                        f.getUser1().getId(),
-                        f.getUser1().getUsername()
-                    );
+                    return toFriendDto(f.getUser1());
                 }
             })
             .toList();
@@ -59,10 +70,7 @@ public class FriendService {
                 .findIncomingPending(user.getId());
 
         return incoming.stream()
-                .map(f -> new FriendDto(
-                    f.getUser1().getId(),
-                    f.getUser1().getUsername()
-                ))
+                .map(f -> toFriendDto(f.getUser1()))
                 .toList();
     }
 
@@ -75,10 +83,7 @@ public class FriendService {
                 .findOutgoingPending(user.getId());
 
         return outgoing.stream()
-                .map(f -> new FriendDto(
-                    f.getUser2().getId(),
-                    f.getUser2().getUsername()
-                ))
+                .map(f -> toFriendDto(f.getUser2()))
                 .toList();
     }
 
@@ -182,6 +187,29 @@ public class FriendService {
                         HttpStatus.NOT_FOUND,
                         "Friend request not found"
                 ));
+
+        friendshipRepository.delete(friendship);
+    }
+
+    @Transactional
+    public void removeFriend(Integer friendId, String currentUsername) {
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Friendship friendship = friendshipRepository
+                .findExistingFriendship(currentUser.getId(), friendId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Friendship not found"
+                ));
+
+        if (friendship.getStatus() != FriendshipStatus.confirmed) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot remove non-confirmed friendship"
+            );
+        }
 
         friendshipRepository.delete(friendship);
     }
