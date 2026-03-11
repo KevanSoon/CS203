@@ -1,6 +1,18 @@
 "use client";
 
 import { api } from "@/app/api/api";
+import {
+  OPTION_KEYS_MCQ,
+  emptyCard,
+  emptyChapter,
+  emptyQuiz,
+  optionKeysForType,
+  CardForm,
+  ChapterForm,
+  QuizForm,
+  QuizOptionMap,
+  QuizType,
+} from "@/app/components/create-lesson/form";
 import { CartoonButton } from "@/app/components/CartoonButton";
 import { Sidebar } from "@/app/components/Sidebar";
 import {
@@ -13,216 +25,26 @@ import {
 } from "@dnd-kit/core";
 import {
     arrayMove,
-    rectSortingStrategy,
     SortableContext,
-    useSortable,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
     AlertTriangle,
     ArrowLeft,
     Check,
-    ChevronDown,
-    ChevronUp,
-    Code2,
-    Crown,
     Eye,
-    GripVertical,
     ImagePlus,
     Layers,
     Plus,
-    Star,
-    Trash2,
     Upload,
     X,
-    Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { LessonPreviewMode } from "./LessonPreviewMode";
-
-/* ─── Constants ─── */
-const OPTION_KEYS_MCQ = ["A", "B", "C", "D"] as const;
-const OPTION_KEYS_TF = ["A", "B"] as const;
-
-type QuizType = "mcq" | "true_false" | "fill_blank";
-
-const QUIZ_TYPE_LABELS: Record<QuizType, string> = {
-  mcq: "Multiple Choice",
-  true_false: "True / False",
-  fill_blank: "Fill in the Blank",
-};
-
-/* ─── Types ─── */
-interface CardForm {
-  id: string;
-  front: string;
-  back: string;
-  mediaUrl?: string;
-}
-
-interface QuizOptionMap {
-  [key: string]: string;
-}
-
-interface QuizForm {
-  id: string;
-  title: string;
-  question: string;
-  quizType: QuizType;
-  options: QuizOptionMap;
-  correctAnswer: string;
-}
-
-interface ChapterForm {
-  title: string;
-  description: string;
-  cards: CardForm[];
-  quizzes: QuizForm[];
-  isExpanded: boolean;
-}
-
-/* ─── Helpers ─── */
-function emptyCard(): CardForm {
-  return { id: crypto.randomUUID(), front: "", back: "" };
-}
-
-function emptyQuiz(type: QuizType = "mcq"): QuizForm {
-  return {
-    id: crypto.randomUUID(),
-    title: "",
-    question: "",
-    quizType: type,
-    options:
-      type === "true_false"
-        ? { A: "True", B: "False" }
-        : { A: "", B: "", C: "", D: "" }, // mcq and fill_blank both use A/B/C/D word bank
-    correctAnswer: "",
-  };
-}
-
-function emptyChapter(): ChapterForm {
-  return {
-    title: "",
-    description: "",
-    cards: [emptyCard()],
-    quizzes: [emptyQuiz()],
-    isExpanded: true,
-  };
-}
-
-function optionKeysForType(type: QuizType) {
-  if (type === "true_false") return OPTION_KEYS_TF;
-  return OPTION_KEYS_MCQ; // mcq and fill_blank both use A/B/C/D
-}
-
-/* ─── Shared transform helper: translate only, no scale distortion ─── */
-function translateOnly(
-  transform: Parameters<typeof CSS.Transform.toString>[0],
-) {
-  if (!transform) return undefined;
-  return CSS.Transform.toString({ ...transform, scaleX: 1, scaleY: 1 });
-}
-
-/* ─── Sortable card item wrapper ─── */
-function SortableCard({
-  id,
-  className,
-  children,
-}: {
-  id: string;
-  className?: string;
-  children: (
-    dragHandleProps: React.HTMLAttributes<HTMLElement>,
-    isDragging: boolean,
-  ) => React.ReactNode;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id,
-    animateLayoutChanges: () => false,
-  });
-  const style: React.CSSProperties = {
-    transform: translateOnly(transform),
-    transition: isDragging ? "none" : (transition ?? undefined),
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : undefined,
-    position: "relative",
-  };
-  return (
-    <div ref={setNodeRef} style={style} className={className}>
-      {children({ ...attributes, ...listeners }, isDragging)}
-    </div>
-  );
-}
-
-/* ─── Sortable quiz item wrapper ─── */
-function SortableQuiz({
-  id,
-  children,
-}: {
-  id: string;
-  children: (
-    dragHandleProps: React.HTMLAttributes<HTMLElement>,
-    isDragging: boolean,
-  ) => React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useSortable({
-      id,
-      animateLayoutChanges: () => false,
-    });
-  const style: React.CSSProperties = {
-    transform: translateOnly(transform),
-    transition: "none",
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 50 : undefined,
-    position: "relative",
-  };
-  return (
-    <div ref={setNodeRef} style={style}>
-      {children({ ...attributes, ...listeners }, isDragging)}
-    </div>
-  );
-}
-
-/* ─── Sortable chapter item wrapper ─── */
-function SortableChapter({
-  id,
-  children,
-}: {
-  id: string;
-  children: (
-    dragHandleProps: React.HTMLAttributes<HTMLElement>,
-    isDragging: boolean,
-  ) => React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useSortable({
-      id,
-      animateLayoutChanges: () => false,
-    });
-  const style: React.CSSProperties = {
-    transform: translateOnly(transform),
-    transition: "none",
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 50 : undefined,
-    position: "relative",
-  };
-  return (
-    <div ref={setNodeRef} style={style}>
-      {children({ ...attributes, ...listeners }, isDragging)}
-    </div>
-  );
-}
+import { ChapterPanel } from "@/app/components/create-lesson/ChapterPanel";
+import { SortableChapter } from "@/app/components/create-lesson/SortableWrappers";
+import { LessonPreviewShell } from "@/app/components/create-lesson/LessonPreviewShell";
 
 /* ───────────────────────────────────────────────── */
 function CreateLessonPage() {
@@ -719,7 +541,7 @@ function CreateLessonPage() {
      ════════════════════════════════════════════════════ */
   if (viewMode === "preview") {
     return (
-      <LessonPreviewMode
+      <LessonPreviewShell
         title={title}
         description={description}
         chapters={chapters}
@@ -944,6 +766,11 @@ function CreateLessonPage() {
                     </div>
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Type a custom tag and press{" "}
+                  <kbd className="px-1 py-0.5 rounded border border-border bg-muted font-mono text-[10px]">Enter</kbd>{" "}
+                  to create it.
+                </p>
               </div>
             </div>
           </div>
@@ -987,767 +814,40 @@ function CreateLessonPage() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-5">
-                  {chapters.map((chapter: ChapterForm, ci: number) => {
-                    const chapterHasErr = Array.from(errors).some((k) =>
-                      k.startsWith(`chapter-${ci}-`),
-                    );
-                    return (
-                      <SortableChapter
-                        key={`chapter-${ci}`}
-                        id={`chapter-${ci}`}
-                      >
-                        {(chapterDragHandleProps, chapterIsDragging) => (
-                          <div
-                            className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${
-                              chapterHasErr
-                                ? "border-destructive/50"
-                                : "border-border"
-                            } ${chapterIsDragging ? "shadow-xl" : ""}`}
-                          >
-                            {/* Chapter Header */}
-                            <div
-                              className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
-                                chapter.isExpanded
-                                  ? "bg-primary/10 border-b border-primary/20"
-                                  : "hover:bg-border/30"
-                              }`}
-                              onClick={() => toggleChapter(ci)}
-                            >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                {/* Chapter drag handle */}
-                                <div
-                                  {...chapterDragHandleProps}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="shrink-0 cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                                >
-                                  <GripVertical className="h-4 w-4" />
-                                </div>
-                                <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-sm font-bold shrink-0">
-                                  {ci + 1}
-                                </span>
-                                {chapter.isExpanded ? (
-                                  <input
-                                    type="text"
-                                    value={chapter.title}
-                                    data-field={`chapter-${ci}-title`}
-                                    onChange={(e) => {
-                                      updateChapter(
-                                        ci,
-                                        "title",
-                                        e.target.value,
-                                      );
-                                      clearError(`chapter-${ci}-title`);
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    placeholder={`Chapter ${ci + 1} title *`}
-                                    className={`flex-1 bg-transparent font-semibold text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-0 border-b-2 pb-0.5 transition-colors ${
-                                      errors.has(`chapter-${ci}-title`)
-                                        ? "border-destructive"
-                                        : "border-transparent focus:border-primary"
-                                    }`}
-                                  />
-                                ) : (
-                                  <span className="font-semibold text-foreground truncate">
-                                    {chapter.title || `Chapter ${ci + 1}`}
-                                  </span>
-                                )}
-                                <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                                  {chapter.cards.length} card
-                                  {chapter.cards.length !== 1 ? "s" : ""}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeChapter(ci);
-                                  }}
-                                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                                {chapter.isExpanded ? (
-                                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Chapter Body */}
-                            {chapter.isExpanded && (
-                              <div className="p-5 space-y-6">
-                                <input
-                                  type="text"
-                                  value={chapter.description}
-                                  onChange={(e) =>
-                                    updateChapter(
-                                      ci,
-                                      "description",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Chapter description (optional)"
-                                  className="w-full text-sm bg-transparent border-b border-border/50 outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors"
-                                />
-
-                                {/* ── Flashcards ── */}
-                                <div>
-                                  <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                      <Star className="h-4 w-4 text-primary" />
-                                      Flashcards ({chapter.cards.length})
-                                    </h3>
-                                    <button
-                                      onClick={() => addCard(ci)}
-                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                                    >
-                                      <Plus className="h-3.5 w-3.5" />
-                                      Add Card
-                                    </button>
-                                  </div>
-
-                                  <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={(event: DragEndEvent) => {
-                                      const { active, over } = event;
-                                      if (over && active.id !== over.id) {
-                                        const oldIdx = chapter.cards.findIndex(
-                                          (c: CardForm) => c.id === active.id,
-                                        );
-                                        const newIdx = chapter.cards.findIndex(
-                                          (c: CardForm) => c.id === over.id,
-                                        );
-                                        if (oldIdx !== -1 && newIdx !== -1)
-                                          reorderCards(ci, oldIdx, newIdx);
-                                      }
-                                    }}
-                                  >
-                                    <SortableContext
-                                      items={chapter.cards.map(
-                                        (c: CardForm) => c.id,
-                                      )}
-                                      strategy={rectSortingStrategy}
-                                    >
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {chapter.cards.map(
-                                          (card: CardForm, cardIdx: number) => {
-                                            const fk = `chapter-${ci}-card-${cardIdx}-front`;
-                                            const bk = `chapter-${ci}-card-${cardIdx}-back`;
-                                            const cardHasErr =
-                                              errors.has(fk) || errors.has(bk);
-                                            return (
-                                              <SortableCard
-                                                key={card.id}
-                                                id={card.id}
-                                              >
-                                                {(
-                                                  dragHandleProps,
-                                                  isDragging,
-                                                ) => (
-                                                  <div
-                                                    className={`relative rounded-2xl border-2 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 shadow-sm overflow-hidden group transition-colors ${
-                                                      cardHasErr
-                                                        ? "border-destructive/60"
-                                                        : "border-border"
-                                                    } ${isDragging ? "shadow-xl border-primary" : ""}`}
-                                                  >
-                                                    {/* Drag handle */}
-                                                    <div
-                                                      {...dragHandleProps}
-                                                      className="absolute top-3 left-3 z-10 cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                                                    >
-                                                      <GripVertical className="h-4 w-4" />
-                                                    </div>
-                                                    <div className="absolute top-3 left-8 z-10">
-                                                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                                                        {cardIdx + 1}
-                                                      </span>
-                                                    </div>
-                                                    <button
-                                                      onClick={() =>
-                                                        removeCard(ci, cardIdx)
-                                                      }
-                                                      className="absolute top-3 right-3 z-10 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
-                                                    >
-                                                      <Trash2 className="h-3.5 w-3.5" />
-                                                    </button>
-
-                                                    <div className="p-4 pt-10 space-y-3">
-                                                      <div data-field={fk}>
-                                                        <div className="flex items-center gap-1.5 mb-1">
-                                                          <Zap className="h-3 w-3 text-primary" />
-                                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                                                            Front
-                                                          </span>
-                                                        </div>
-                                                        <textarea
-                                                          value={card.front}
-                                                          onChange={(e) => {
-                                                            updateCard(
-                                                              ci,
-                                                              cardIdx,
-                                                              "front",
-                                                              e.target.value,
-                                                            );
-                                                            clearError(fk);
-                                                          }}
-                                                          placeholder="Question or term..."
-                                                          rows={2}
-                                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                                                            errors.has(fk)
-                                                              ? "border-destructive ring-1 ring-destructive/50"
-                                                              : "border-border/50"
-                                                          }`}
-                                                        />
-                                                      </div>
-                                                      <div data-field={bk}>
-                                                        <div className="flex items-center gap-1.5 mb-1">
-                                                          <Code2 className="h-3 w-3 text-primary" />
-                                                          <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                                                            Back
-                                                          </span>
-                                                        </div>
-                                                        <textarea
-                                                          value={card.back}
-                                                          onChange={(e) => {
-                                                            updateCard(
-                                                              ci,
-                                                              cardIdx,
-                                                              "back",
-                                                              e.target.value,
-                                                            );
-                                                            clearError(bk);
-                                                          }}
-                                                          placeholder="Answer or definition..."
-                                                          rows={2}
-                                                          className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                                                            errors.has(bk)
-                                                              ? "border-destructive ring-1 ring-destructive/50"
-                                                              : "border-border/50"
-                                                          }`}
-                                                        />
-                                                      </div>
-                                                      <button
-                                                        onClick={() =>
-                                                          toast(
-                                                            "Card media upload coming soon!",
-                                                            { icon: "🖼️" },
-                                                          )
-                                                        }
-                                                        className="w-full py-2 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1.5"
-                                                      >
-                                                        <ImagePlus className="h-3 w-3" />
-                                                        Add Media
-                                                      </button>
-                                                    </div>
-                                                  </div>
-                                                )}
-                                              </SortableCard>
-                                            );
-                                          },
-                                        )}
-
-                                        <button
-                                          onClick={() => addCard(ci)}
-                                          className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-2 min-h-[200px] text-muted-foreground hover:text-primary"
-                                        >
-                                          <Plus className="h-8 w-8" />
-                                          <span className="text-sm font-medium">
-                                            Add Card
-                                          </span>
-                                        </button>
-                                      </div>
-                                    </SortableContext>
-                                  </DndContext>
-                                </div>
-
-                                {/* ── Quiz Section (multi-question) ── */}
-                                <div>
-                                  <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                      <Crown className="h-4 w-4 text-warning" />
-                                      Quiz Questions ({chapter.quizzes.length})
-                                    </h3>
-                                    <div className="flex gap-1.5">
-                                      <button
-                                        onClick={() => addQuiz(ci, "mcq")}
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        MCQ
-                                      </button>
-                                      <button
-                                        onClick={() =>
-                                          addQuiz(ci, "true_false")
-                                        }
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        T/F
-                                      </button>
-                                      <button
-                                        onClick={() =>
-                                          addQuiz(ci, "fill_blank")
-                                        }
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:bg-warning/20 transition-colors"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        Fill
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={(event: DragEndEvent) => {
-                                      const { active, over } = event;
-                                      if (over && active.id !== over.id) {
-                                        const oldIdx =
-                                          chapter.quizzes.findIndex(
-                                            (q: QuizForm) => q.id === active.id,
-                                          );
-                                        const newIdx =
-                                          chapter.quizzes.findIndex(
-                                            (q: QuizForm) => q.id === over.id,
-                                          );
-                                        reorderQuizzes(ci, oldIdx, newIdx);
-                                      }
-                                    }}
-                                  >
-                                    <SortableContext
-                                      items={chapter.quizzes.map(
-                                        (q: QuizForm) => q.id,
-                                      )}
-                                      strategy={verticalListSortingStrategy}
-                                    >
-                                      <div className="space-y-4">
-                                        {chapter.quizzes.map(
-                                          (quiz: QuizForm, qi: number) => {
-                                            const keys = optionKeysForType(
-                                              quiz.quizType,
-                                            );
-                                            const qHasErr = Array.from(
-                                              errors,
-                                            ).some((k) =>
-                                              k.startsWith(
-                                                `chapter-${ci}-quiz-${qi}`,
-                                              ),
-                                            );
-
-                                            return (
-                                              <SortableQuiz
-                                                key={quiz.id}
-                                                id={quiz.id}
-                                              >
-                                                {(
-                                                  dragHandleProps,
-                                                  isDragging,
-                                                ) => (
-                                                  <div
-                                                    className={`rounded-2xl border-2 bg-warning/5 p-5 space-y-4 transition-colors ${
-                                                      qHasErr
-                                                        ? "border-destructive/50"
-                                                        : "border-warning/30"
-                                                    } ${isDragging ? "shadow-xl" : ""}`}
-                                                  >
-                                                    {/* Quiz question header */}
-                                                    <div className="flex items-center justify-between">
-                                                      <div className="flex items-center gap-2">
-                                                        {/* Drag handle */}
-                                                        <div
-                                                          {...dragHandleProps}
-                                                          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors touch-none"
-                                                        >
-                                                          <GripVertical className="h-4 w-4" />
-                                                        </div>
-                                                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-warning/20 text-warning text-xs font-bold">
-                                                          Q{qi + 1}
-                                                        </span>
-                                                        {/* Type toggle */}
-                                                        <div className="flex rounded-lg border border-border overflow-hidden text-xs">
-                                                          {(
-                                                            Object.keys(
-                                                              QUIZ_TYPE_LABELS,
-                                                            ) as QuizType[]
-                                                          ).map((t) => (
-                                                            <button
-                                                              key={t}
-                                                              type="button"
-                                                              onClick={() =>
-                                                                changeQuizType(
-                                                                  ci,
-                                                                  qi,
-                                                                  t,
-                                                                )
-                                                              }
-                                                              className={`px-2 sm:px-2.5 py-1 transition-colors ${
-                                                                quiz.quizType ===
-                                                                t
-                                                                  ? "bg-warning text-white font-medium"
-                                                                  : "bg-card text-muted-foreground hover:bg-warning/10"
-                                                              }`}
-                                                            >
-                                                              <span className="sm:hidden">
-                                                                {t === "mcq" ? "MCQ" : t === "true_false" ? "T/F" : "Fill"}
-                                                              </span>
-                                                              <span className="hidden sm:inline">
-                                                                {QUIZ_TYPE_LABELS[t]}
-                                                              </span>
-                                                            </button>
-                                                          ))}
-                                                        </div>
-                                                      </div>
-                                                      <button
-                                                        onClick={() =>
-                                                          removeQuiz(ci, qi)
-                                                        }
-                                                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
-                                                      >
-                                                        <Trash2 className="h-4 w-4" />
-                                                      </button>
-                                                    </div>
-
-                                                    {/* Question text */}
-                                                    <div
-                                                      data-field={`chapter-${ci}-quiz-${qi}-question`}
-                                                    >
-                                                      <textarea
-                                                        value={quiz.question}
-                                                        onChange={(e) => {
-                                                          updateQuiz(
-                                                            ci,
-                                                            qi,
-                                                            "question",
-                                                            e.target.value,
-                                                          );
-                                                          clearError(
-                                                            `chapter-${ci}-quiz-${qi}-question`,
-                                                          );
-                                                        }}
-                                                        placeholder={
-                                                          quiz.quizType ===
-                                                          "fill_blank"
-                                                            ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
-                                                            : "Write your quiz question here... *"
-                                                        }
-                                                        rows={2}
-                                                        className={`w-full bg-card/50 rounded-xl border px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 resize-none transition-colors ${
-                                                          errors.has(
-                                                            `chapter-${ci}-quiz-${qi}-question`,
-                                                          )
-                                                            ? "border-destructive"
-                                                            : "border-border/50"
-                                                        }`}
-                                                      />
-                                                      {/* Live sentence preview for fill_blank */}
-                                                      {quiz.quizType ===
-                                                        "fill_blank" &&
-                                                        quiz.question.trim() && (
-                                                          <div className="mt-2 px-4 py-2.5 rounded-xl bg-warning/5 border border-warning/20 text-sm text-foreground">
-                                                            <span className="text-[10px] font-semibold text-warning uppercase tracking-wide block mb-1">
-                                                              Preview
-                                                            </span>
-                                                            {quiz.question
-                                                              .split("___")
-                                                              .map(
-                                                                (
-                                                                  part,
-                                                                  idx,
-                                                                  arr,
-                                                                ) => (
-                                                                  <span
-                                                                    key={idx}
-                                                                  >
-                                                                    {part}
-                                                                    {idx <
-                                                                      arr.length -
-                                                                        1 && (
-                                                                      <span className="inline-block mx-1 px-3 py-0.5 rounded-md bg-warning/20 border-b-2 border-warning text-warning font-semibold text-xs">
-                                                                        {quiz.options[
-                                                                          quiz
-                                                                            .correctAnswer
-                                                                        ]?.trim()
-                                                                          ? quiz
-                                                                              .options[
-                                                                              quiz
-                                                                                .correctAnswer
-                                                                            ]
-                                                                          : "______"}
-                                                                      </span>
-                                                                    )}
-                                                                  </span>
-                                                                ),
-                                                              )}
-                                                          </div>
-                                                        )}
-                                                      {quiz.quizType ===
-                                                        "fill_blank" &&
-                                                        quiz.question.trim() &&
-                                                        !quiz.question.includes(
-                                                          "___",
-                                                        ) && (
-                                                          <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
-                                                            ⚠ Add{" "}
-                                                            <code className="bg-warning/10 px-1 rounded">
-                                                              ___
-                                                            </code>{" "}
-                                                            to mark where the
-                                                            blank goes
-                                                          </p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Options / Answer */}
-                                                    {quiz.quizType ===
-                                                    "fill_blank" ? (
-                                                      /* Fill in the Blank — word bank (A/B/C/D) + mark correct */
-                                                      <div
-                                                        data-field={`chapter-${ci}-quiz-${qi}-options`}
-                                                      >
-                                                        <p className="text-xs font-medium text-muted-foreground mb-2">
-                                                          Word Bank — click the
-                                                          letter to mark the
-                                                          correct word
-                                                          {errors.has(
-                                                            `chapter-${ci}-quiz-${qi}-answer`,
-                                                          ) && (
-                                                            <span className="text-destructive ml-2">
-                                                              ← Select the
-                                                              correct word
-                                                            </span>
-                                                          )}
-                                                        </p>
-                                                        <div className="space-y-2.5">
-                                                          {OPTION_KEYS_MCQ.map(
-                                                            (key) => (
-                                                              <div
-                                                                key={key}
-                                                                className="flex items-center gap-2.5"
-                                                              >
-                                                                <button
-                                                                  type="button"
-                                                                  onClick={() => {
-                                                                    updateQuiz(
-                                                                      ci,
-                                                                      qi,
-                                                                      "correctAnswer",
-                                                                      key,
-                                                                    );
-                                                                    clearError(
-                                                                      `chapter-${ci}-quiz-${qi}-answer`,
-                                                                    );
-                                                                  }}
-                                                                  className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                                                                    quiz.correctAnswer ===
-                                                                    key
-                                                                      ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
-                                                                      : errors.has(
-                                                                            `chapter-${ci}-quiz-${qi}-answer`,
-                                                                          )
-                                                                        ? "bg-card border-2 border-destructive/50 text-muted-foreground"
-                                                                        : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
-                                                                  }`}
-                                                                >
-                                                                  {quiz.correctAnswer ===
-                                                                  key ? (
-                                                                    <Check className="h-4 w-4" />
-                                                                  ) : (
-                                                                    key
-                                                                  )}
-                                                                </button>
-                                                                <input
-                                                                  type="text"
-                                                                  value={
-                                                                    quiz
-                                                                      .options[
-                                                                      key
-                                                                    ] || ""
-                                                                  }
-                                                                  onChange={(
-                                                                    e,
-                                                                  ) => {
-                                                                    updateQuizOption(
-                                                                      ci,
-                                                                      qi,
-                                                                      key,
-                                                                      e.target
-                                                                        .value,
-                                                                    );
-                                                                    clearError(
-                                                                      `chapter-${ci}-quiz-${qi}-options`,
-                                                                    );
-                                                                  }}
-                                                                  placeholder={`Word ${key}`}
-                                                                  className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
-                                                                    errors.has(
-                                                                      `chapter-${ci}-quiz-${qi}-options`,
-                                                                    )
-                                                                      ? "border-destructive/50"
-                                                                      : "border-border/50"
-                                                                  }`}
-                                                                />
-                                                              </div>
-                                                            ),
-                                                          )}
-                                                        </div>
-                                                      </div>
-                                                    ) : (
-                                                      /* MCQ / True-False — option buttons */
-                                                      <div
-                                                        data-field={`chapter-${ci}-quiz-${qi}-options`}
-                                                      >
-                                                        <p className="text-xs font-medium text-muted-foreground mb-2">
-                                                          Options — click the
-                                                          letter to mark correct
-                                                          answer
-                                                          {errors.has(
-                                                            `chapter-${ci}-quiz-${qi}-answer`,
-                                                          ) && (
-                                                            <span className="text-destructive ml-2">
-                                                              ← Select a correct
-                                                              answer
-                                                            </span>
-                                                          )}
-                                                        </p>
-                                                        <div className="space-y-2.5">
-                                                          {keys.map((key) => (
-                                                            <div
-                                                              key={key}
-                                                              className="flex items-center gap-2.5"
-                                                              data-field={
-                                                                key ===
-                                                                quiz.correctAnswer
-                                                                  ? `chapter-${ci}-quiz-${qi}-answer`
-                                                                  : undefined
-                                                              }
-                                                            >
-                                                              <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                  updateQuiz(
-                                                                    ci,
-                                                                    qi,
-                                                                    "correctAnswer",
-                                                                    key,
-                                                                  );
-                                                                  clearError(
-                                                                    `chapter-${ci}-quiz-${qi}-answer`,
-                                                                  );
-                                                                }}
-                                                                className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                                                                  quiz.correctAnswer ===
-                                                                  key
-                                                                    ? "bg-success text-white shadow-[0_3px_0_0_var(--color-success-shadow)] -translate-y-0.5"
-                                                                    : errors.has(
-                                                                          `chapter-${ci}-quiz-${qi}-answer`,
-                                                                        )
-                                                                      ? "bg-card border-2 border-destructive/50 text-muted-foreground"
-                                                                      : "bg-card border-2 border-border text-muted-foreground hover:border-warning hover:text-warning"
-                                                                }`}
-                                                              >
-                                                                {quiz.correctAnswer ===
-                                                                key ? (
-                                                                  <Check className="h-4 w-4" />
-                                                                ) : (
-                                                                  key
-                                                                )}
-                                                              </button>
-                                                              <input
-                                                                type="text"
-                                                                value={
-                                                                  quiz.options[
-                                                                    key
-                                                                  ] || ""
-                                                                }
-                                                                onChange={(
-                                                                  e,
-                                                                ) => {
-                                                                  updateQuizOption(
-                                                                    ci,
-                                                                    qi,
-                                                                    key,
-                                                                    e.target
-                                                                      .value,
-                                                                  );
-                                                                  clearError(
-                                                                    `chapter-${ci}-quiz-${qi}-options`,
-                                                                  );
-                                                                }}
-                                                                disabled={
-                                                                  quiz.quizType ===
-                                                                  "true_false"
-                                                                }
-                                                                placeholder={
-                                                                  quiz.quizType ===
-                                                                  "true_false"
-                                                                    ? key ===
-                                                                      "A"
-                                                                      ? "True"
-                                                                      : "False"
-                                                                    : `Option ${key}`
-                                                                }
-                                                                className={`flex-1 rounded-xl border bg-card/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 transition-colors ${
-                                                                  quiz.quizType ===
-                                                                  "true_false"
-                                                                    ? "bg-muted/30 cursor-not-allowed"
-                                                                    : ""
-                                                                } ${
-                                                                  errors.has(
-                                                                    `chapter-${ci}-quiz-${qi}-options`,
-                                                                  )
-                                                                    ? "border-destructive/50"
-                                                                    : "border-border/50"
-                                                                }`}
-                                                              />
-                                                            </div>
-                                                          ))}
-                                                        </div>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                )}
-                                              </SortableQuiz>
-                                            );
-                                          },
-                                        )}
-                                      </div>
-                                    </SortableContext>
-                                  </DndContext>
-
-                                  {/* Add another question — bottom shortcut */}
-                                  <div className="flex gap-1.5 mt-3">
-                                    {(
-                                      [
-                                        "mcq",
-                                        "true_false",
-                                        "fill_blank",
-                                      ] as const
-                                    ).map((t) => (
-                                      <button
-                                        key={t}
-                                        onClick={() => addQuiz(ci, t)}
-                                        className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-warning/30 hover:border-warning hover:bg-warning/5 transition-colors flex items-center justify-center gap-1.5 text-muted-foreground hover:text-warning text-xs font-medium"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                        {t === "mcq"
-                                          ? "MCQ"
-                                          : t === "true_false"
-                                            ? "T/F"
-                                            : "Fill"}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </SortableChapter>
-                    );
-                  })}
+                  {chapters.map((chapter: ChapterForm, ci: number) => (
+                    <SortableChapter
+                      key={`chapter-${ci}`}
+                      id={`chapter-${ci}`}
+                    >
+                      {(chapterDragProps, chapterIsDragging) => (
+                        <ChapterPanel
+                          chapter={chapter}
+                          ci={ci}
+                          errors={errors}
+                          sensors={sensors}
+                          chapterDragProps={chapterDragProps}
+                          chapterIsDragging={chapterIsDragging}
+                          callbacks={{
+                            onToggle: () => toggleChapter(ci),
+                            onRemove: () => removeChapter(ci),
+                            onUpdateTitle: (v) => updateChapter(ci, "title", v),
+                            onUpdateDescription: (v) => updateChapter(ci, "description", v),
+                            onAddCard: () => addCard(ci),
+                            onRemoveCard: (cardIdx) => removeCard(ci, cardIdx),
+                            onUpdateCard: (cardIdx, field, value) => updateCard(ci, cardIdx, field, value),
+                            onReorderCards: (oldIdx, newIdx) => reorderCards(ci, oldIdx, newIdx),
+                            onAddQuiz: (type) => addQuiz(ci, type),
+                            onRemoveQuiz: (qi) => removeQuiz(ci, qi),
+                            onUpdateQuiz: (qi, field, value) => updateQuiz(ci, qi, field, value),
+                            onUpdateQuizOption: (qi, key, value) => updateQuizOption(ci, qi, key, value),
+                            onChangeQuizType: (qi, newType) => changeQuizType(ci, qi, newType),
+                            onReorderQuizzes: (oldIdx, newIdx) => reorderQuizzes(ci, oldIdx, newIdx),
+                            clearError,
+                          }}
+                        />
+                      )}
+                    </SortableChapter>
+                  ))}
                 </div>
               </SortableContext>
             </DndContext>

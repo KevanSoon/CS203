@@ -1,5 +1,6 @@
 package com.backend.cs203.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
@@ -247,6 +248,109 @@ class LessonControllerTest {
                 .andExpect(status().is5xxServerError());
 
         verify(lessonService, never()).getUserCreatedLessonApplications(anyInt());
+    }
+
+    // ===== GET /api/lesson/admin/page (requires ADMIN role) =====
+
+    @Test
+    void getAdminLessonPage_withAdminRole_returns200() throws Exception {
+        User user = User.builder().id(1).username("adminuser").build();
+        LessonPageDTO pageDTO = new LessonPageDTO(
+                1, "My Lesson", "Desc", "adminuser",
+                LocalDateTime.of(2024, 1, 1, 0, 0),
+                Collections.emptyList()
+        );
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+        when(lessonService.getAdminLessonPage("My Lesson", 1)).thenReturn(pageDTO);
+
+        mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("My Lesson"));
+
+        verify(lessonService).getAdminLessonPage("My Lesson", 1);
+    }
+
+    @Test
+    void getAdminLessonPage_withRootRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
+                        .with(user("root").roles("ROOT")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getAdminLessonPage_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
+                        .with(user("testuser").roles("USER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getAdminLessonPage_userNotFound_returns500() throws Exception {
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().is5xxServerError());
+
+        verify(lessonService, never()).getAdminLessonPage(any(), anyInt());
+    }
+
+    @Test
+    void getAdminLessonPage_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ===== GET /api/lesson/root/page (requires ROOT role) =====
+
+    @Test
+    void getRootLessonPage_withRootRole_returns200() throws Exception {
+        LessonPageDTO pageDTO = new LessonPageDTO(
+                2, "Pending Lesson", "Awaiting review", "author",
+                LocalDateTime.of(2024, 6, 1, 0, 0),
+                Collections.emptyList()
+        );
+        when(lessonService.getRootLessonApplicationPage("Pending Lesson")).thenReturn(pageDTO);
+
+        mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
+                        .with(user("root").roles("ROOT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2))
+                .andExpect(jsonPath("$.title").value("Pending Lesson"));
+
+        verify(lessonService).getRootLessonApplicationPage("Pending Lesson");
+    }
+
+    @Test
+    void getRootLessonPage_withAdminRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getRootLessonPage_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
+                        .with(user("testuser").roles("USER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getRootLessonPage_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getRootLessonPage_lessonNotFound_returns500() throws Exception {
+        when(lessonService.getRootLessonApplicationPage("Ghost Lesson"))
+                .thenThrow(new RuntimeException("Lesson application not found"));
+
+        mockMvc.perform(get("/api/lesson/root/page").param("title", "Ghost Lesson")
+                        .with(user("root").roles("ROOT")))
+                .andExpect(status().is5xxServerError());
     }
 
     // ===== Helper methods =====

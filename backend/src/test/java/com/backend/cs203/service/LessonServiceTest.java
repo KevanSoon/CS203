@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -227,6 +228,95 @@ class LessonServiceTest {
         assertEquals("What is 1+1?", result.getChapters().get(0).getQuizQuestions().get(0).getQuestion());
         assertEquals("1,2,3,4", result.getChapters().get(0).getQuizQuestions().get(0).getOptions());
         assertEquals("2", result.getChapters().get(0).getQuizQuestions().get(0).getCorrectAnswer());
+    }
+
+    // ===== getAdminLessonPage =====
+
+    @Test
+    void getAdminLessonPage_returnsLessonPageForOwner() {
+        User user = User.builder().id(1).username("admin").build();
+
+        Lesson lesson = new Lesson();
+        lesson.setId(5);
+        lesson.setTitle("Admin Lesson");
+        lesson.setDescription("Desc");
+        lesson.setCreatedBy(user);
+        lesson.setCreatedAt(LocalDateTime.of(2024, 3, 1, 0, 0));
+
+        when(lessonRepository.findByTitleAndCreatedBy("Admin Lesson", 1)).thenReturn(Optional.of(lesson));
+        when(chapterRepository.findByLessonId(5)).thenReturn(Collections.emptyList());
+
+        LessonPageDTO result = lessonService.getAdminLessonPage("Admin Lesson", 1);
+
+        assertEquals(5, result.getId());
+        assertEquals("Admin Lesson", result.getTitle());
+        assertTrue(result.getChapters().isEmpty());
+        verify(lessonRepository).findByTitleAndCreatedBy("Admin Lesson", 1);
+    }
+
+    @Test
+    void getAdminLessonPage_throwsWhenLessonNotFoundOrNotOwned() {
+        when(lessonRepository.findByTitleAndCreatedBy("Other Lesson", 99)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> lessonService.getAdminLessonPage("Other Lesson", 99));
+
+        assertEquals("Lesson not found or you don't have permission to edit it", ex.getMessage());
+        verify(chapterRepository, never()).findByLessonId(anyInt());
+    }
+
+    // ===== getRootLessonApplicationPage =====
+
+    @Test
+    void getRootLessonApplicationPage_returnsLessonPage() {
+        User user = User.builder().id(2).username("author").build();
+
+        Lesson lesson = new Lesson();
+        lesson.setId(7);
+        lesson.setTitle("Pending Lesson");
+        lesson.setDescription("Review me");
+        lesson.setCreatedBy(user);
+        lesson.setCreatedAt(LocalDateTime.of(2024, 5, 1, 0, 0));
+        lesson.setStatus(Lesson.LessonStatus.pending);
+
+        when(lessonRepository.findByTitleNotDeleted("Pending Lesson")).thenReturn(Optional.of(lesson));
+        when(chapterRepository.findByLessonId(7)).thenReturn(Collections.emptyList());
+
+        LessonPageDTO result = lessonService.getRootLessonApplicationPage("Pending Lesson");
+
+        assertEquals(7, result.getId());
+        assertEquals("Pending Lesson", result.getTitle());
+        assertEquals("author", result.getCreatedBy());
+        verify(lessonRepository).findByTitleNotDeleted("Pending Lesson");
+    }
+
+    @Test
+    void getRootLessonApplicationPage_throwsWhenLessonNotFound() {
+        when(lessonRepository.findByTitleNotDeleted("Ghost")).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> lessonService.getRootLessonApplicationPage("Ghost"));
+
+        assertEquals("Lesson application not found", ex.getMessage());
+        verify(chapterRepository, never()).findByLessonId(anyInt());
+    }
+
+    @Test
+    void getRootLessonApplicationPage_throwsWhenTitleIsNull() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> lessonService.getRootLessonApplicationPage(null));
+
+        assertEquals("Lesson title must be provided", ex.getMessage());
+        verify(lessonRepository, never()).findByTitleNotDeleted(any());
+    }
+
+    @Test
+    void getRootLessonApplicationPage_throwsWhenTitleIsBlank() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> lessonService.getRootLessonApplicationPage("   "));
+
+        assertEquals("Lesson title must be provided", ex.getMessage());
+        verify(lessonRepository, never()).findByTitleNotDeleted(any());
     }
 
     @Test

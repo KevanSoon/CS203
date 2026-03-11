@@ -1,18 +1,21 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { LessonRow } from "./lesson-row"
 import { FilterTabs } from "./filter-tabs"
-import { PreviewModal } from "./preview-modal"
 
 type LessonStatus = "pending" | "approved" | "rejected"
 
 interface Lesson {
+  id?: number
   title: string
   description: string
   createdBy: string
   createdAt: string
   status: LessonStatus
+  tags?: string[] | string | null
+  lessonPictureUrl?: string | null
 }
 
 type FilterValue = "all" | LessonStatus
@@ -28,13 +31,17 @@ export function LessonsTable({
   onApprove,
   onReject,
 }: LessonsTableProps) {
+  const router = useRouter()
   const [filter, setFilter] = useState<FilterValue>("pending")
-  const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null)
 
-  // Filter by status and sort by most recent submission first
   const filteredLessons = useMemo(() => {
-    const filtered = filter === "all" ? lessons.filter((l) => l.status !== "pending") : lessons.filter((l) => l.status === filter)
-    return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    const filtered =
+      filter === "all"
+        ? lessons.filter((l) => l.status !== "pending")
+        : lessons.filter((l) => l.status === filter)
+    return [...filtered].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
   }, [lessons, filter])
 
   const counts = {
@@ -42,6 +49,10 @@ export function LessonsTable({
     pending: lessons.filter((l) => l.status === "pending").length,
     approved: lessons.filter((l) => l.status === "approved").length,
     rejected: lessons.filter((l) => l.status === "rejected").length,
+  }
+
+  const handlePreview = (lesson: Lesson) => {
+    router.push(`/webadmin/review?title=${encodeURIComponent(lesson.title)}`)
   }
 
   return (
@@ -70,22 +81,14 @@ export function LessonsTable({
         ) : (
           filteredLessons.map((lesson) => (
             <LessonRow
-              key={lesson.title}
+              key={lesson.id ?? lesson.title}
               lesson={lesson}
               onApprove={onApprove}
               onReject={onReject}
-              onPreview={setPreviewLesson}
-            />
+              onPreview={handlePreview}            />
           ))
         )}
       </div>
-
-      {previewLesson && (
-        <PreviewModal
-          lesson={previewLesson}
-          onClose={() => setPreviewLesson(null)}
-        />
-      )}
     </div>
   )
 }
