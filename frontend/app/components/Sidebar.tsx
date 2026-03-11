@@ -21,9 +21,10 @@ export interface SidebarProps {
   chapters?: ChapterItem[];
   selectedChapter?: number;
   onChapterSelect?: (index: number) => void;
+  completedChapterIds?: number[];
 }
 
-export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect }: SidebarProps) => {
+export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect, completedChapterIds = [] }: SidebarProps) => {
   const [open, setOpen] = useState(defaultOpen);
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   const router = useRouter();
@@ -149,7 +150,11 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
                   }`}
                 >
                   <div className="grid h-full w-12 place-content-center">
-                    <BookMarked className="h-4 w-4" />
+                    {completedChapterIds.includes(chapter.id) ? (
+                      <span className="text-success font-bold text-sm">✓</span>
+                    ) : (
+                      <BookMarked className="h-4 w-4" />
+                    )}
                   </div>
                   {open && (
                     <span className="text-sm font-medium truncate pr-2">
