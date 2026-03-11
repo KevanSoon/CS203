@@ -148,7 +148,8 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
           <h2 className="font-bold text-foreground flex-1">AI Study Buddy</h2>
           <button
             onClick={startNewChat}
-            className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            disabled={loading}
+            className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
             title="New chat"
           >
             <Plus className="h-4 w-4" />
@@ -166,7 +167,8 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
         <div className="relative mt-1">
           <button
             onClick={() => setShowThreads(!showThreads)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            disabled={loading}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             <span className="truncate max-w-[200px]">
               {threads.find((t) => t.thread_id === threadId)
