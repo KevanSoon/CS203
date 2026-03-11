@@ -266,6 +266,10 @@ export default function LessonRoadmapPage({
         chapters={chapters.map((c) => ({ id: c.id, title: c.title, description: c.description }))}
         selectedChapter={selectedChapter}
         onChapterSelect={setSelectedChapter}
+        completedChapterIds={chapters
+          .filter((c) => c.nodes.length > 0 && c.nodes.every((n) => n.status === "completed"))
+          .map((c) => c.id)
+  }
       />
 
       {/* Left: Roadmap */}
@@ -361,8 +365,8 @@ export default function LessonRoadmapPage({
         )}
       </div>
 
-      {/* Right: AI Chat Assistant - Desktop (z-[60] to stay above FlippableCard overlay) */}
-      <div className="hidden lg:block w-96 shrink-0 relative z-[60]">
+      {/* Right: AI Chat Assistant*/}
+      <div className={`hidden lg:block w-96 shrink-0 relative ${selectedNode?.type === "quiz" ? "z-40" : "z-[60]"}`}>
         <div className="sticky top-0 h-screen">
           <AIChatAssistant />
         </div>
