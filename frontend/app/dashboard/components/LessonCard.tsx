@@ -168,9 +168,12 @@ export default function LessonCard({
                  </span>
                ))}
                {remaining > 0 && (
-                 <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+                 <button
+                   onClick={(e) => { e.stopPropagation(); openModal(); }}
+                   className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                 >
                    +{remaining}
-                 </span>
+                 </button>
                )}
              </div>
            );
@@ -247,6 +250,18 @@ export default function LessonCard({
            <p className="text-sm text-muted-foreground leading-relaxed">
              {description}
            </p>
+           {tags.length > 0 && (
+             <div className="flex flex-wrap gap-1.5 mt-3">
+               {tags.map((tag) => (
+                 <span
+                   key={tag}
+                   className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-semibold border border-primary/20 whitespace-nowrap"
+                 >
+                   {tag}
+                 </span>
+               ))}
+             </div>
+           )}
          </div>
        </div>
      )}
