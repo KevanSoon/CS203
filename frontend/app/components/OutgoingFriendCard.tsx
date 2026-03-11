@@ -20,7 +20,7 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
   const handleCancel = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/friendship/${friend.id}`, {
+      const res = await fetch(`/api/friendship/pending/outgoing/${friend.id}`, {
         method: "DELETE",
       });
 

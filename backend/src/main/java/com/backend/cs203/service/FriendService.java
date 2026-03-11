@@ -185,4 +185,27 @@ public class FriendService {
 
         friendshipRepository.delete(friendship);
     }
+
+    @Transactional
+    public void removeFriend(Integer friendId, String currentUsername) {
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Friendship friendship = friendshipRepository
+                .findExistingFriendship(currentUser.getId(), friendId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Friendship not found"
+                ));
+
+        if (friendship.getStatus() != FriendshipStatus.confirmed) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot remove non-confirmed friendship"
+            );
+        }
+
+        friendshipRepository.delete(friendship);
+    }
 }

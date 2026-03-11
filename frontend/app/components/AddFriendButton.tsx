@@ -23,7 +23,7 @@ export default function AddFriendButton({
       setLoading(true);
       setError("");
 
-      const res = await fetch(`/api/friendship/${targetUserId}`, {
+      const res = await fetch(`/api/friendship/pending/outgoing/${targetUserId}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to send request");
@@ -43,7 +43,7 @@ export default function AddFriendButton({
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/friendship/${targetUserId}`, {
+      const res = await fetch(`/api/friendship/outgoing/pending/${targetUserId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to cancel request");

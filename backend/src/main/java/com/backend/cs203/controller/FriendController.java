@@ -44,7 +44,7 @@ public class FriendController {
         );
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/pending/outgoing/{id}")
     public ResponseEntity<Void> sendFriendRequest(
             @PathVariable Integer id,
             Authentication authentication
@@ -54,7 +54,7 @@ public class FriendController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/pending/outgoing/{id}")
     public ResponseEntity<Void> cancelRequest(
             @PathVariable Integer id,
             Authentication authentication
@@ -64,7 +64,7 @@ public class FriendController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/accept/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<Void> acceptFriend(
             @PathVariable Integer id,
             Authentication authentication
@@ -89,6 +89,16 @@ public class FriendController {
 
         friendService.rejectFriendRequest(id, authentication.getName());
 
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> removeFriend(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        validateAuth(authentication);
+        friendService.removeFriend(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }

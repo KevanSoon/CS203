@@ -21,6 +21,7 @@ import { Sidebar } from "@/app/components/Sidebar";
 import AddFriendButton from "@/app/components/AddFriendButton";
 import OutgoingFriendCard from "@/app/components/OutgoingFriendCard";
 import IncomingFriendCard from "@/app/components/IncomingFriendCard";
+import FriendCard from "@/app/components/FriendCard";
 
 type Profile = {
   username: string;
@@ -206,7 +207,7 @@ export default function ProfilePage() {
     setFriends(prev => [...prev, acceptedUser]);
 
     try {
-      const res = await fetch(`/api/friendship/accept/${requesterId}`, {
+      const res = await fetch(`/api/friendship/${requesterId}`, {
         method: "POST",
       });
 
@@ -217,6 +218,10 @@ export default function ProfilePage() {
       await loadFriends();
       await loadPending();
     }
+  };
+
+  const handleRemoveFriend = (id: number) => {
+    setFriends((prev) => prev.filter((f) => f.id !== id));
   };
 
   const loadOutgoing = async () => {
@@ -441,9 +446,6 @@ export default function ProfilePage() {
                       <Users size={20} className="text-[#6C63FF]" />
                       <h2 className="text-lg font-extrabold">Friends</h2>
                     </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                      {isLoadingFriends ? "..." : friends.length}
-                    </span>
                   </div>
 
                   <div className="mb-8">
@@ -482,17 +484,11 @@ export default function ProfilePage() {
                     ) : (
                       <div className="flex flex-col gap-3">
                         {friends.map((friend) => (
-                          <div
-                            key={friend.username}
-                            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                          >
-                            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 font-bold">
-                              {friend.username[0]?.toUpperCase()}
-                            </div>
-                            <p className="text-sm font-bold truncate">
-                              {friend.username}
-                            </p>
-                          </div>
+                          <FriendCard
+                            key={friend.id}
+                            friend={friend}
+                            onRemove={handleRemoveFriend}
+                          />
                         ))}
                       </div>
                     )}
@@ -638,13 +634,8 @@ export default function ProfilePage() {
                   </CollapsibleCard>
                 ) : (
                   <CollapsibleCard
-                    title="Friends"
+                    title="Find Friends"
                     icon={<Users size={20} className="text-[#6C63FF]" />}
-                    rightBadge={
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                        {isLoadingFriends ? "..." : friends.length}
-                      </span>
-                    }
                     defaultOpen={true}
                   >
                     <div className="flex gap-2 mb-5">
