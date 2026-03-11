@@ -114,7 +114,7 @@ class FriendControllerTest {
     @Test
     void sendFriendRequest_returns201() throws Exception {
 
-        mockMvc.perform(post("/api/friendship/5").with(user("testuser").roles("USER")))
+        mockMvc.perform(post("/api/friendship/pending/outgoing/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isCreated());
     }
 
@@ -123,7 +123,7 @@ class FriendControllerTest {
     @Test
     void cancelFriendRequest_returns204() throws Exception {
 
-        mockMvc.perform(delete("/api/friendship/5").with(user("testuser").roles("USER")))
+        mockMvc.perform(delete("/api/friendship/pending/outgoing/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isNoContent());
     }
 
@@ -132,7 +132,7 @@ class FriendControllerTest {
     @Test
     void acceptFriendRequest_returns200() throws Exception {
 
-        mockMvc.perform(post("/api/friendship/accept/5").with(user("testuser").roles("USER")))
+        mockMvc.perform(post("/api/friendship/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk());
     }
 
