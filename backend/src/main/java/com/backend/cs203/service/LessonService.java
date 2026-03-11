@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.backend.cs203.dto.card.CardDTO;
 import com.backend.cs203.dto.card.CreateCardRequest;
@@ -31,6 +32,8 @@ import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -122,9 +125,11 @@ public class LessonService {
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
+                lesson.getLessonPictureUrl(),
                 lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
-                chapterDetails
+                chapterDetails,
+                null
         );
     }
 
@@ -169,12 +174,33 @@ public class LessonService {
         lesson.setDescription(request.getDescription());
         lesson.setStatus(Lesson.LessonStatus.pending);
         lesson.setCreatedBy(user);
-        lesson.setLessonPictureUrl(request.getLessonPictureUrl());
         lesson = lessonRepository.save(lesson);
 
+        ObjectMapper mapper = new ObjectMapper();
+        List<CreateChapterRequest> chapterList;
+        try {
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid chapters format");
+        }
+        List<String> tagList = null;
+        try {
+            if (request.getTags() != null && !request.getTags().isBlank()) {
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid tags format");
+        }
+        MultipartFile lessonImage = request.getLessonPictureUrl();
+        if (lessonImage != null && !lessonImage.isEmpty()) {
+            String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
+            lesson.setLessonPictureUrl(imagePath);
+            lesson = lessonRepository.save(lesson); 
+        }
+
         // 2. Save tags if provided
-        if (request.getTags() != null && !request.getTags().isEmpty()) {
-            for (String tagName : request.getTags()) {
+        if (tagList != null && !tagList.isEmpty()) {
+            for (String tagName : tagList) {
                 String trimmed = tagName.trim();
                 if (trimmed.isEmpty()) continue;
                 // Insert tag if it doesn't exist
@@ -192,7 +218,7 @@ public class LessonService {
         }
 
         // 3. Create chapters with their cards and quiz
-        for (CreateChapterRequest chapterReq : request.getChapters()) {
+        for (CreateChapterRequest chapterReq : chapterList) {
             Chapter chapter = new Chapter();
             chapter.setTitle(chapterReq.getTitle());
             chapter.setDescription(chapterReq.getDescription());
@@ -247,8 +273,36 @@ public class LessonService {
     public LessonPageDTO getAdminLessonPage(String lessonTitle, Integer userId) {
         Lesson lesson = lessonRepository.findByTitleAndCreatedBy(lessonTitle, userId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found or you don't have permission to edit it"));
+        List<Chapter> chapters = chapterRepository.findByLessonId(lesson.getId());
 
-        return buildLessonPageDTO(lesson);
+        List<ChapterDTO> chapterDetails = chapters.stream().map(chapter -> {
+            List<CardDTO> cards = cardRepository.findByChapterId(chapter.getId())
+                    .stream()
+                    .map(card -> new CardDTO(card.getId(), card.getFront(), card.getBack(), card.getDisplayOrder()))
+                    .collect(Collectors.toList());
+            List<QuizDTO> quizzes = quizRepository.findByChapterId(chapter.getId())
+                    .stream()
+                    .map(quiz -> new QuizDTO(quiz.getId(), quiz.getTitle(), quiz.getQuestion(), quiz.getQuizType().name(), quiz.getOptions(), quiz.getCorrectAnswer()))
+                    .collect(Collectors.toList());
+            return new ChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getDescription(), cards, quizzes);
+        }).collect(Collectors.toList());
+
+        List<String> tags = lessonRepository.findTagsByLessonId(lesson.getId());
+
+        String signedUrl = lesson.getLessonPictureUrl() != null
+                ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
+                : null;
+
+        return new LessonPageDTO(
+                lesson.getId(),
+                lesson.getTitle(),
+                lesson.getDescription(),
+                signedUrl,
+                lesson.getCreatedBy().getUsername(),
+                lesson.getCreatedAt(),
+                chapterDetails,
+                tags
+        );
     }
 
     /**
@@ -286,6 +340,7 @@ public class LessonService {
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
+                lesson.getLessonPictureUrl(),
                 lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails,
@@ -301,6 +356,22 @@ public class LessonService {
         Lesson lesson = lessonRepository.findByTitleAndCreatedBy(originalTitle, user.getId())
                 .orElseThrow(() -> new RuntimeException("Lesson not found or you don't have permission to edit it"));
 
+        ObjectMapper mapper = new ObjectMapper();
+        List<CreateChapterRequest> chapterList;
+        try {
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid chapters format");
+        }
+        List<String> tagList = null;
+        try {
+            if (request.getTags() != null && !request.getTags().isBlank()) {
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid tags format");
+        }
+
         // Only allow editing pending or rejected lessons
         if (lesson.getStatus() != Lesson.LessonStatus.pending && lesson.getStatus() != Lesson.LessonStatus.rejected) {
             throw new RuntimeException("Only pending or rejected lessons can be edited");
@@ -309,7 +380,19 @@ public class LessonService {
         // Update lesson fields
         lesson.setTitle(request.getTitle());
         lesson.setDescription(request.getDescription());
-        lesson.setLessonPictureUrl(request.getLessonPictureUrl());
+        MultipartFile lessonImage = request.getLessonPictureUrl();
+        if (lessonImage != null && !lessonImage.isEmpty()) {
+            String existingUrl = lesson.getLessonPictureUrl();
+            if (existingUrl != null) {
+                try {
+                    supabaseStorageService.deleteFile(existingUrl);
+                } catch (Exception e) {
+                    // don't block the update if delete fails
+                }
+            }
+            String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
+            lesson.setLessonPictureUrl(imagePath);
+        }
         lesson.setStatus(Lesson.LessonStatus.pending); // re-submit for approval
         lessonRepository.save(lesson);
 
@@ -319,8 +402,8 @@ public class LessonService {
             .setParameter("lessonId", lesson.getId())
             .executeUpdate();
 
-        if (request.getTags() != null && !request.getTags().isEmpty()) {
-            for (String tagName : request.getTags()) {
+        if (tagList != null && !tagList.isEmpty()) {
+            for (String tagName : tagList) {
                 String trimmed = tagName.trim();
                 if (trimmed.isEmpty()) continue;
                 entityManager.createNativeQuery(
@@ -348,7 +431,7 @@ public class LessonService {
                 .setParameter("lessonId", lesson.getId()).executeUpdate();
 
         // Re-create chapters with cards and quizzes
-        for (CreateChapterRequest chapterReq : request.getChapters()) {
+        for (CreateChapterRequest chapterReq : chapterList) {
             Chapter chapter = new Chapter();
             chapter.setTitle(chapterReq.getTitle());
             chapter.setDescription(chapterReq.getDescription());
