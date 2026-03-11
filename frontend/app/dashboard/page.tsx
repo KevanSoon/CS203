@@ -7,7 +7,6 @@ import { api } from "@/app/api/api";
 import FilterSearch from "@/app/components/FilterSearch";
 import { useProgressStore, isDashboardStale, DashboardProgress } from "@/app/store/ProgressStore";
 
-/** Shape returned by existing GET /api/lesson (LessonSummaryResponse) */
 interface LessonSummary {
   id: number;
   title: string;
@@ -18,7 +17,6 @@ interface LessonSummary {
   lessonPictureUrl: string | null;
 }
 
-/** Merged view for rendering — lesson metadata + progress overlay */
 interface MergedLesson {
   lessonId: number;
   title: string;
@@ -75,7 +73,6 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  /** Merge lessons + progress by lessonId */
   const merged: MergedLesson[] = useMemo(() => {
     const progressMap = new Map(dashboardProgress.map((p) => [p.lessonId, p]));
     return lessons.map((lesson) => {
@@ -91,6 +88,11 @@ export default function DashboardPage() {
       };
     });
   }, [lessons, dashboardProgress]);
+
+  const availableTags = useMemo(() => {
+    const all = merged.flatMap((l) => parseTags(l.tags));
+    return [...new Set(all)].sort();
+  }, [merged]);
 
   const addTag = (tag: string) => {
     const cleaned = tag.trim();
@@ -112,7 +114,6 @@ export default function DashboardPage() {
   const filteredLessons = useMemo(() => {
     let result = merged;
 
-    // Tag filters always apply once a tag is committed to selectedTags
     if (selectedTags.length > 0) {
       const selectedNorm = selectedTags.map(normalize);
       result = result.filter((lesson) => {
@@ -121,7 +122,6 @@ export default function DashboardPage() {
       });
     }
 
-    // Text search only applies in search mode — typing in tag mode does nothing
     if (mode === "search" && query.trim()) {
       const q = normalize(query);
       result = result.filter(
@@ -185,6 +185,7 @@ export default function DashboardPage() {
           addTag={addTag}
           removeTag={removeTag}
           clearAll={clearAll}
+          availableTags={availableTags}
         />
 
         {error && <p className="text-red-500 mt-6">{error}</p>}

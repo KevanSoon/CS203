@@ -14,6 +14,7 @@ type TagFilterSearchProps = {
   addTag: (tag: string) => void;
   removeTag: (tag: string) => void;
   clearAll: () => void;
+  availableTags?: string[];
 };
 
 const options: { value: Mode; label: string; icon: React.ReactNode }[] = [
@@ -30,18 +31,30 @@ export default function TagFilterSearch({
   addTag,
   removeTag,
   clearAll,
+  availableTags = [],
 }: TagFilterSearchProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const trimmed = query.trim();
   const hasSelected = selectedTags.length > 0;
   const current = options.find((o) => o.value === mode)!;
 
+  const filteredSuggestions =
+    mode === "tag" && trimmed
+      ? availableTags.filter(
+          (t) =>
+            t.toLowerCase().includes(trimmed.toLowerCase()) &&
+            !selectedTags.includes(t)
+        )
+      : [];
+
   const switchMode = (newMode: Mode) => {
     setMode(newMode);
     setQuery("");
     setDropdownOpen(false);
+    setSuggestionsOpen(false);
     inputRef.current?.focus();
   };
 
@@ -50,13 +63,18 @@ export default function TagFilterSearch({
     if (mode === "tag" && trimmed) {
       addTag(trimmed);
       setQuery("");
+      setSuggestionsOpen(false);
     }
   };
 
-  const placeholder =
-    mode === "search"
-      ? "Search lessons…"
-      : "Add a tag…";
+  const handleSelectSuggestion = (tag: string) => {
+    addTag(tag);
+    setQuery("");
+    setSuggestionsOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const placeholder = mode === "search" ? "Search lessons…" : "Add a tag…";
 
   return (
     <div className="w-full max-w-2xl">
@@ -135,21 +153,26 @@ export default function TagFilterSearch({
           )}
         </div>
 
-        {/* Text input */}
         <input
           ref={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSuggestionsOpen(true);
+          }}
+          onFocus={() => {
+            if (mode === "tag" && trimmed) setSuggestionsOpen(true);
+          }}
           placeholder={placeholder}
           className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none"
           style={{ color: "var(--color-foreground)" }}
+          autoComplete="off"
         />
 
-        {/* Clear X */}
         {trimmed.length > 0 && (
           <button
             type="button"
-            onClick={() => setQuery("")}
+            onClick={() => { setQuery(""); setSuggestionsOpen(false); }}
             className="shrink-0 mr-2 p-1.5 rounded-lg transition"
             style={{ color: "var(--color-muted-foreground)" }}
             aria-label="Clear input"
@@ -157,9 +180,36 @@ export default function TagFilterSearch({
             <X size={15} />
           </button>
         )}
+
+        {mode === "tag" && suggestionsOpen && filteredSuggestions.length > 0 && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setSuggestionsOpen(false)} />
+            <div
+              className="absolute left-0 top-full mt-1.5 z-20 w-full rounded-xl border overflow-hidden"
+              style={{
+                backgroundColor: "var(--color-card)",
+                borderColor: "var(--color-border)",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+              }}
+            >
+              {filteredSuggestions.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSelectSuggestion(tag)}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors hover:bg-background"
+                  style={{ color: "var(--color-foreground)" }}
+                >
+                  <Tag size={13} style={{ color: "var(--color-primary)", flexShrink: 0 }} />
+                  <span className="font-medium">{tag}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </form>
 
-      {/* Selected tags — only shown when tags exist */}
       {hasSelected && (
         <div className="mt-3 flex items-start gap-3">
           <div className="flex-1 flex flex-wrap gap-2">

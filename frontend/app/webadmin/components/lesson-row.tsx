@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, X, Eye, MoreHorizontal, BookOpen } from "lucide-react"
+import { Check, X, Eye, BookOpen, MoreHorizontal } from "lucide-react"
 import { StatusBadge } from "./status-badge"
 import { parseTags, getVisibleTags } from "@/app/utils/tags"
 
@@ -71,7 +71,6 @@ export function LessonRow({
                   (() => {
                     const tagsArr = parseTags(lesson.tags)
                     const { visible, remaining } = getVisibleTags(tagsArr)
-
                     return (
                       <div className="flex flex-wrap gap-1">
                         {visible.map((t) => (
@@ -93,7 +92,38 @@ export function LessonRow({
                 )}
               </div>
             </div>
-            <div className="relative shrink-0" ref={menuRef}>
+
+            {/* Desktop: inline buttons */}
+            <div className="hidden sm:flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => onPreview(lesson)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Preview
+              </button>
+              {lesson.status !== "approved" && (
+                <button
+                  onClick={() => onApprove(lesson.title)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-green-200 text-green-600 hover:bg-green-50 transition-colors"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Approve
+                </button>
+              )}
+              {lesson.status !== "rejected" && (
+                <button
+                  onClick={() => onReject(lesson.title)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Reject
+                </button>
+              )}
+            </div>
+
+            {/* Mobile: ... dropdown */}
+            <div className="relative shrink-0 sm:hidden" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors"
@@ -105,10 +135,7 @@ export function LessonRow({
               {menuOpen && (
                 <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-lg border border-border bg-card py-1 shadow-lg">
                   <button
-                    onClick={() => {
-                      onPreview(lesson)
-                      setMenuOpen(false)
-                    }}
+                    onClick={() => { onPreview(lesson); setMenuOpen(false) }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-background"
                   >
                     <Eye className="h-4 w-4" />
@@ -116,10 +143,7 @@ export function LessonRow({
                   </button>
                   {lesson.status !== "approved" && (
                     <button
-                      onClick={() => {
-                        onApprove(lesson.title)
-                        setMenuOpen(false)
-                      }}
+                      onClick={() => { onApprove(lesson.title); setMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success transition-colors hover:bg-success-light"
                     >
                       <Check className="h-4 w-4" />
@@ -128,10 +152,7 @@ export function LessonRow({
                   )}
                   {lesson.status !== "rejected" && (
                     <button
-                      onClick={() => {
-                        onReject(lesson.title)
-                        setMenuOpen(false)
-                      }}
+                      onClick={() => { onReject(lesson.title); setMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive-light"
                     >
                       <X className="h-4 w-4" />
@@ -142,6 +163,7 @@ export function LessonRow({
               )}
             </div>
           </div>
+
           <p className="text-sm text-muted-foreground mb-1">
             {truncatedDesc}
             {isLongDesc && (
@@ -179,6 +201,7 @@ export function LessonRow({
               </div>
             </div>
           )}
+
           <p className="text-xs text-muted-foreground">
             {lesson.createdBy} · Created: {formatDate(lesson.createdAt)}
           </p>
