@@ -124,6 +124,12 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.getAdminLessonPage(title, user.getId()));
     }
 
+    @PreAuthorize("hasRole('ROOT')")
+    @GetMapping("/root/page")
+    public ResponseEntity<LessonPageDTO> getRootLessonPage(@RequestParam String title) {
+        return ResponseEntity.ok(lessonService.getRootLessonApplicationPage(title));
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update")
     public ResponseEntity<CreateLessonResponse> updateLesson(

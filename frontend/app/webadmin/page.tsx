@@ -15,11 +15,14 @@ export type ReportStatus = "reported" | "closed" | "unresolved" | "redirected";
 export type ReportType = "critical" | "high" | "medium" | "low";
 
 export interface Lesson {
+	id?: number;
 	title: string;
 	description: string;
 	createdBy: string;
 	createdAt: string;
 	status: LessonStatus;
+	tags?: string | null;
+	lessonPictureUrl?: string | null;
 }
 
 export interface LessonStats {
