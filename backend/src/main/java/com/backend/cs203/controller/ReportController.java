@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.backend.cs203.service.ReportService;
+import com.backend.cs203.dto.report.ReportCreateDTO;
 import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
@@ -26,6 +29,23 @@ public class ReportController {
     public ReportController(ReportService reportService, UserRepository userRepository) {
         this.reportService = reportService;
         this.userRepository = userRepository;
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/user")
+    public ResponseEntity<Void> createReport(
+            @RequestBody ReportCreateDTO dto,
+            Authentication authentication
+    ) {
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        reportService.createReport(dto, user);
+
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")

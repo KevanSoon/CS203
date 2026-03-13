@@ -1,9 +1,9 @@
 "use client";
 
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import { getVisibleTags } from "@/app/utils/tags";
 
 
@@ -41,6 +41,7 @@ export default function LessonCard({
  const [hoveredStar, setHoveredStar] = useState(0);
  const [submitting, setSubmitting] = useState(false);
  const [submitError, setSubmitError] = useState("");
+ const [hovered, setHovered] = useState(false);
 
 
  // Fetch rating on mount
@@ -99,6 +100,11 @@ export default function LessonCard({
    router.push(`/lesson/${encodeURIComponent(title)}`);
  };
 
+ const handleReportClick = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  router.push(`/lesson/${encodeURIComponent(title)}?report=true`);
+ }
+
 
  const openModal = () => setShowModal(true);
  const closeModal = () => setShowModal(false);
@@ -122,6 +128,8 @@ export default function LessonCard({
          shadow-sm transition-all duration-300 cursor-pointer
          md:hover:shadow-xl md:hover:-translate-y-1
        "
+       onMouseEnter={() => setHovered(true)}
+       onMouseLeave={() => setHovered(false)}
      >
        <div className="overflow-hidden">
          <img
@@ -133,8 +141,18 @@ export default function LessonCard({
              md:group-hover:scale-105
            "
          />
+        <button
+          onClick={handleReportClick}
+          className={`
+            absolute top-2 right-2 p-2 rounded-full bg-white/80 text-red-600
+            hover:bg-white transition-opacity duration-200 cursor-pointer
+            ${hovered ? "opacity-100" : "opacity-0"}
+          `}
+          title="Report this lesson"
+        >
+          <AlertTriangle size={20} />
+        </button>
        </div>
-
 
        <div className="p-3 sm:p-4 space-y-3 flex flex-col">
          <div>

@@ -7,6 +7,7 @@ import { SidebarToggle } from "@/app/components/SidebarToggle";
 import { api } from "@/app/api/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
+import { AlertTriangle } from "lucide-react";
 
 export interface ChapterItem {
   id: number;
@@ -22,9 +23,10 @@ export interface SidebarProps {
   selectedChapter?: number;
   onChapterSelect?: (index: number) => void;
   completedChapterIds?: number[];
+  onReportClick?: () => void;
 }
 
-export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect, completedChapterIds = [] }: SidebarProps) => {
+export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect, completedChapterIds = [], onReportClick }: SidebarProps) => {
   const [open, setOpen] = useState(defaultOpen);
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   const router = useRouter();
@@ -166,6 +168,30 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
             </>
           )}
         </div>
+
+        {chapters && chapters.length > 0 && (
+          <button
+            onClick={() => {
+              setSelected("Report");
+              onReportClick?.();
+            }}
+            className={`relative flex h-11 w-full items-center rounded-md transition-all duration-200 ${
+              selected === "Report"
+                ? "bg-red-500/10 text-red-600 shadow-sm border-l-2 border-red-600"
+                : "text-red-500 hover:bg-red-500/10"
+            }`}
+          >
+            <div className="grid h-full w-12 place-content-center">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+
+            {open && (
+              <span className="text-sm font-medium truncate pr-2">
+                Report Issue
+              </span>
+            )}
+          </button>
+        )}
         
         {/* Logout button at the bottom - only show if user is logged in */}
         {/* for now no check for user login, but userstore logic still above */}
