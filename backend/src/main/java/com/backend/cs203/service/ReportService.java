@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.ReportRepository;
-import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.dto.report.ReportCreateDTO;
 import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.entity.Chapter;

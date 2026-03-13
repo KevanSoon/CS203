@@ -20,8 +20,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.backend.cs203.entity.Report;
+import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
+import com.backend.cs203.entity.User;
+import com.backend.cs203.dto.report.ReportCreateDTO;
 import com.backend.cs203.dto.report.ReportDTO;
+import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.ReportRepository;
 
@@ -34,8 +38,96 @@ class ReportServiceTest {
     @Mock
     private LessonRepository lessonRepository;
 
+    @Mock
+    private ChapterRepository chapterRepository;
+
     @InjectMocks
     private ReportService reportService;
+
+    @Test
+    void createReport_withLessonAndChapter_savesReportCorrectly() {
+        // Arrange
+        User user = User.builder().id(1).username("alice").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+        Chapter chapter = new Chapter();
+        chapter.setId(5);
+
+        ReportCreateDTO dto = new ReportCreateDTO();
+        dto.setTitle("  Broken card  ");
+        dto.setDescription("  Card content incorrect  ");
+        dto.setType("high");
+        dto.setLessonId(lesson.getId());
+        dto.setChapterId(chapter.getId());
+
+        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(chapterRepository.findById(chapter.getId())).thenReturn(Optional.of(chapter));
+
+        // Act
+        reportService.createReport(dto, user);
+
+        // Assert
+        verify(reportRepository).save(any(Report.class));
+    }
+
+    @Test
+    void createReport_withLessonOnly_savesReportWithoutChapter() {
+        // Arrange
+        User user = User.builder().id(1).username("alice").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+
+        ReportCreateDTO dto = new ReportCreateDTO();
+        dto.setTitle("  Missing lesson chapter  ");
+        dto.setDescription("  Card content incorrect  ");
+        dto.setType("medium");
+        dto.setLessonId(lesson.getId());
+        dto.setChapterId(null); // no chapter
+
+        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+
+        // Act
+        reportService.createReport(dto, user);
+
+        // Assert
+        verify(reportRepository).save(any(Report.class));
+    }
+
+    @Test
+    void createReport_lessonNotFound_throwsRuntimeException() {
+        User user = User.builder().id(1).username("alice").build();
+        ReportCreateDTO dto = new ReportCreateDTO();
+        dto.setLessonId(999); 
+
+        when(lessonRepository.findById(999)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> reportService.createReport(dto, user));
+        assertEquals("Lesson not found", ex.getMessage());
+        verify(reportRepository, never()).save(any(Report.class));
+    }
+
+    @Test
+    void createReport_chapterNotFound_throwsRuntimeException() {
+        User user = User.builder().id(1).username("alice").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+
+        ReportCreateDTO dto = new ReportCreateDTO();
+        dto.setLessonId(lesson.getId());
+        dto.setChapterId(999);
+        dto.setTitle("Broken chapter");
+        dto.setDescription("Details");
+        dto.setType("low");
+
+        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        when(chapterRepository.findById(999)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> reportService.createReport(dto, user));
+        assertEquals("Chapter not found", ex.getMessage());
+        verify(reportRepository, never()).save(any(Report.class));
+    }
 
     @Test
     void getUserCreatedLessonReports_returnsListFromRepository() {
