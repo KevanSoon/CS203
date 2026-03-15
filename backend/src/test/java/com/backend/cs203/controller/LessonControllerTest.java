@@ -18,10 +18,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -29,6 +25,7 @@ import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
@@ -47,19 +44,14 @@ class LessonControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
+    private ReviewRepository reviewRepository;
+
+    @MockitoBean
     private JwtUtil jwtUtil;
 
     @MockitoBean
-    private UserDetailsService userDetailsService;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @MockitoBean 
-    private AuthenticationManager authenticationManager;
-
-    @MockitoBean 
-    private PasswordEncoder passwordEncoder;
-
-    @MockitoBean 
-    private AuthenticationConfiguration authenticationConfiguration;
 
     // ===== GET /api/lesson/ (requires USER role) =====
 
