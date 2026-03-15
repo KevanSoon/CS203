@@ -25,7 +25,6 @@ import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
-import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
@@ -44,14 +43,7 @@ class LessonControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
-    private ReviewRepository reviewRepository;
-
-    @MockitoBean
     private JwtUtil jwtUtil;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
 
     // ===== GET /api/lesson/ (requires USER role) =====
 
