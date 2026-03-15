@@ -9,6 +9,7 @@ import { MessageCircle } from "lucide-react";
 import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
+import ReviewModal from "@/app/components/ReviewModal";
 
 // Backend DTO types
 interface CardDTO {
@@ -146,8 +147,9 @@ export default function LessonRoadmapPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lessonTitle = decodeURIComponent(title);
-
   const { lessonProgress, setLessonProgress, markCardCompleted, markQuizCompleted } = useProgressStore();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -256,6 +258,28 @@ export default function LessonRoadmapPage({
 
     setSelectedNode(null);
   };
+
+  const lessonCompleted =
+    chapters.length > 0 &&
+    chapters.every((chapter) =>
+      chapter.nodes.length > 0 &&
+      chapter.nodes.every((node) => node.status === "completed")
+    );
+  
+  useEffect(() => {
+    const checkReview = async () => {
+      if (!lessonCompleted || !lessonId || reviewSubmitted) return;
+      try {
+        const { data } = await api.get(`/api/lesson/${lessonId}/review`);
+        if (!data.hasReviewed) {
+          setShowReviewModal(true);
+        }
+      } catch (err) {
+        console.error (err);
+      }
+    };
+    checkReview();
+  }, [lessonCompleted, lessonId, reviewSubmitted]);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -389,6 +413,14 @@ export default function LessonRoadmapPage({
             <AIChatAssistant onClose={() => setChatOpen(false)} />
           </div>
         </div>
+      )}
+
+      {showReviewModal && lessonId && (
+        <ReviewModal
+          lessonId={lessonId}
+          onClose={() => setShowReviewModal(false)}
+          onSubmitted={() => setReviewSubmitted(true)}
+        />
       )}
     </div>
   );

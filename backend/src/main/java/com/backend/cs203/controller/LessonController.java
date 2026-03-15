@@ -1,6 +1,8 @@
 package com.backend.cs203.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +24,11 @@ import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
+import com.backend.cs203.dto.review.ReviewDTO;
+import com.backend.cs203.dto.review.ReviewRequestDTO;
+import com.backend.cs203.entity.Review;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.LessonService;
 
@@ -35,6 +42,7 @@ public class LessonController {
 
     private final LessonService lessonService;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/")
@@ -90,14 +98,36 @@ public class LessonController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{lessonId}/review")
+    @SuppressWarnings("CallToPrintStackTrace")
     public ResponseEntity<String> submitReview(
             @PathVariable Integer lessonId,
-            @RequestParam int rating,
+            @RequestBody ReviewRequestDTO request,
             Authentication authentication) {
+        try {
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
+            return ResponseEntity.ok("Review submitted successfully");
+        } catch (Exception e) {
+            e.printStackTrace(); // <-- print stack trace to see real cause
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to submit review: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{lessonId}/review")
+    public ResponseEntity<Map<String, Boolean>> getUserReview(
+            @PathVariable Integer lessonId,
+            Authentication authentication) {
+
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        lessonService.submitReview(lessonId, user.getId(), rating);
-        return ResponseEntity.ok("Review submitted successfully");
+        
+        Optional<Review> review = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
+        boolean hasReviewed = review.isPresent();
+
+        return ResponseEntity.ok(Map.of("hasReviewed", hasReviewed));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
