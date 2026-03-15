@@ -22,9 +22,21 @@ export interface SidebarProps {
   selectedChapter?: number;
   onChapterSelect?: (index: number) => void;
   completedChapterIds?: number[];
+  showReviewTab?: boolean;
+  onReviewSelect?: () => void;
 }
 
-export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, selectedChapter, onChapterSelect, completedChapterIds = [] }: SidebarProps) => {
+export const Sidebar = ({ 
+    selected, 
+    setSelected, 
+    defaultOpen = false, 
+    chapters, 
+    selectedChapter, 
+    onChapterSelect, 
+    completedChapterIds = [], 
+    showReviewTab,
+    onReviewSelect
+  }: SidebarProps) => {
   const [open, setOpen] = useState(defaultOpen);
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   const router = useRouter();
@@ -164,6 +176,28 @@ export const Sidebar = ({ selected, setSelected, defaultOpen = false, chapters, 
                 </button>
               ))}
             </>
+          )}
+          
+          {showReviewTab && (
+            <button
+              onClick={() => {
+                onReviewSelect?.();
+                if (window.innerWidth < 768) setOpen(false);
+              }}
+              className="relative flex h-11 w-full items-center rounded-md transition-all duration-200
+                        bg-yellow-100 text-yellow-700 border-l-2 border-yellow-500
+                        hover:bg-yellow-200"
+            >
+              <div className="grid h-full w-12 place-content-center">
+                ⭐
+              </div>
+
+              {open && (
+                <span className="text-sm font-semibold truncate pr-2">
+                  Your Review
+                </span>
+              )}
+            </button>
           )}
         </div>
         

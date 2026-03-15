@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 
 interface Props {
     lessonId: number;
-    onClose(): () => void;
+    onClose: () => void;
     onSubmitted: () => void;
 }
 
@@ -27,6 +27,7 @@ export default function ReviewModal({ lessonId, onClose, onSubmitted }: Props) {
             });
             onSubmitted();
             onClose();
+            toast.success("Your review has been submitted!")
         } catch (err: any) {
             toast.error("Failed to submit review");
         } finally {

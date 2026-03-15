@@ -1,8 +1,8 @@
 package com.backend.cs203.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +26,6 @@ import com.backend.cs203.dto.lesson.LessonRatingDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.dto.review.ReviewRequestDTO;
-import com.backend.cs203.entity.Review;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
@@ -98,7 +97,6 @@ public class LessonController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{lessonId}/review")
-    @SuppressWarnings("CallToPrintStackTrace")
     public ResponseEntity<String> submitReview(
             @PathVariable Integer lessonId,
             @RequestBody ReviewRequestDTO request,
@@ -109,7 +107,6 @@ public class LessonController {
             lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
             return ResponseEntity.ok("Review submitted successfully");
         } catch (Exception e) {
-            e.printStackTrace(); // <-- print stack trace to see real cause
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to submit review: " + e.getMessage());
         }
@@ -117,17 +114,22 @@ public class LessonController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{lessonId}/review")
-    public ResponseEntity<Map<String, Boolean>> getUserReview(
+    public ResponseEntity<Map<String, Object>> getUserReview(
             @PathVariable Integer lessonId,
             Authentication authentication) {
 
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        Optional<Review> review = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
-        boolean hasReviewed = review.isPresent();
+        boolean hasReviewed = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("hasReviewed", hasReviewed);
+        if (hasReviewed) {
+            ReviewDTO reviewDto = lessonService.getUserReview(lessonId, user.getId());
+            response.put("review", reviewDto);
+        }
 
-        return ResponseEntity.ok(Map.of("hasReviewed", hasReviewed));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -86,7 +86,7 @@ export async function GET(
         const { data } = await axios.get(`${BACKEND_URL}/api/lesson/${lessonId}/review`,
             { headers: { Authorization: `Bearer ${jwt}` } }
         );
-        return Response.json(data);
+        return Response.json({ review: data });
     } catch (err: any) {
         return Response.json(
             {

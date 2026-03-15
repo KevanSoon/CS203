@@ -10,6 +10,7 @@ import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
 import ReviewModal from "@/app/components/ReviewModal";
+import ReviewViewModal from "@/app/components/ReviewViewModal";
 
 // Backend DTO types
 interface CardDTO {
@@ -150,6 +151,7 @@ export default function LessonRoadmapPage({
   const { lessonProgress, setLessonProgress, markCardCompleted, markQuizCompleted } = useProgressStore();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [showReviewView, setShowReviewView] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -271,7 +273,9 @@ export default function LessonRoadmapPage({
       if (!lessonCompleted || !lessonId || reviewSubmitted) return;
       try {
         const { data } = await api.get(`/api/lesson/${lessonId}/review`);
-        if (!data.hasReviewed) {
+        if (data?.review?.hasReviewed) {
+          setReviewSubmitted(true);
+        } else {
           setShowReviewModal(true);
         }
       } catch (err) {
@@ -293,7 +297,9 @@ export default function LessonRoadmapPage({
         completedChapterIds={chapters
           .filter((c) => c.nodes.length > 0 && c.nodes.every((n) => n.status === "completed"))
           .map((c) => c.id)
-  }
+        }
+        showReviewTab={reviewSubmitted}
+        onReviewSelect={() => setShowReviewView(true)}
       />
 
       {/* Left: Roadmap */}
@@ -420,6 +426,13 @@ export default function LessonRoadmapPage({
           lessonId={lessonId}
           onClose={() => setShowReviewModal(false)}
           onSubmitted={() => setReviewSubmitted(true)}
+        />
+      )}
+
+      {showReviewView && lessonId && (
+        <ReviewViewModal
+          lessonId={lessonId}
+          onClose={() => setShowReviewView(false)}
         />
       )}
     </div>
