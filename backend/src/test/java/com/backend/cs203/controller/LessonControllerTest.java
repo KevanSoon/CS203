@@ -31,7 +31,6 @@ import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
 
 @WebMvcTest(LessonController.class)
-@AutoConfigureMockMvc(addFilters = false)
 @Import(SecurityConfig.class)
 class LessonControllerTest {
 
