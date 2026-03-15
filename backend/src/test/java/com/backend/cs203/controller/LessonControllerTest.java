@@ -18,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -44,6 +45,9 @@ class LessonControllerTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     // ===== GET /api/lesson/ (requires USER role) =====
 
