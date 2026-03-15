@@ -18,7 +18,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -48,6 +51,15 @@ class LessonControllerTest {
 
     @MockitoBean
     private UserDetailsService userDetailsService;
+
+    @MockitoBean 
+    private AuthenticationManager authenticationManager;
+
+    @MockitoBean 
+    private PasswordEncoder passwordEncoder;
+
+    @MockitoBean 
+    private AuthenticationConfiguration authenticationConfiguration;
 
     // ===== GET /api/lesson/ (requires USER role) =====
 
