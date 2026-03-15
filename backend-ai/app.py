@@ -84,6 +84,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from verification.models import VerifyRequest, VerifyResponse
+from verification import verify_content
+
+
 @app.get("/")
 def root():
     return {
@@ -216,6 +220,16 @@ async def chat_history(thread_id: str, user_id: str = "default_user"):
                 })
 
         return {"thread_id": thread_id, "messages": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/verify", response_model=VerifyResponse)
+async def verify_slang(request: VerifyRequest):
+    """Verify whether a Gen Alpha slang term is real or AI-generated slop."""
+    try:
+        result = await verify_content(request)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

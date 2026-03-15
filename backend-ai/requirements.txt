@@ -8,3 +8,5 @@ langchain-ollama
 langgraph
 langgraph-checkpoint-postgres
 psycopg[binary]
+deepeval
+openai
