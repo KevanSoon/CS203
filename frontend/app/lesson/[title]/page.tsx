@@ -11,6 +11,8 @@ import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
 import ReviewModal from "@/app/components/ReviewModal";
 import ReviewViewModal from "@/app/components/ReviewViewModal";
+import { ReportModal } from "@/app/components/ReportModal";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // Backend DTO types
 interface CardDTO {
@@ -153,6 +155,11 @@ export default function LessonRoadmapPage({
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewView, setShowReviewView] = useState(false);
 
+  const [reportOpen, setReportOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const router = useRouter();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -200,6 +207,21 @@ export default function LessonRoadmapPage({
 
     fetchLessonPage();
   }, [lessonTitle]);
+
+  useEffect(() => {
+    if (searchParams.get("report") === "true") {
+      setReportOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleReportClose = () => {
+    setReportOpen(false);
+    setSelected("");
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("report")
+    router.replace(`/lesson/${encodeURIComponent(lessonTitle)}?${params.toString()}`)
+  }
 
   const currentChapter = chapters[selectedChapter];
 
@@ -300,6 +322,7 @@ export default function LessonRoadmapPage({
         }
         showReviewTab={reviewSubmitted}
         onReviewSelect={() => setShowReviewView(true)}
+        onReportClick={() => setReportOpen(true)}
       />
 
       {/* Left: Roadmap */}
@@ -433,6 +456,14 @@ export default function LessonRoadmapPage({
         <ReviewViewModal
           lessonId={lessonId}
           onClose={() => setShowReviewView(false)}
+        />
+      )}
+      
+      {reportOpen && (
+        <ReportModal
+          lessonId={lessonId}
+          chapters={chapters.map(c => ({ id: c.id, title: c.title}))}
+          onClose={handleReportClose}
         />
       )}
     </div>
