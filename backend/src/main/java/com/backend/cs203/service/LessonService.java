@@ -20,6 +20,7 @@ import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.quiz.CreateQuizRequest;
 import com.backend.cs203.dto.quiz.QuizDTO;
+import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
@@ -144,7 +145,13 @@ public class LessonService {
         );
     }
 
-    public void submitReview(Integer lessonId, Integer userId, int rating) {
+    public void submitReview(Integer lessonId, Integer userId, int rating, String feedback) {
+        
+        System.out.println("lessonId: " + lessonId);
+        System.out.println("userId: " + userId);
+        System.out.println("rating: " + rating);
+        System.out.println("feedback: " + feedback);
+        
         if (reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)) {
             throw new RuntimeException("You have already reviewed this lesson");
         }
@@ -159,9 +166,23 @@ public class LessonService {
 
         Review review = new Review();
         review.setRating((byte) rating);
+        review.setFeedback(feedback);
         review.setLesson(lesson);
         review.setReviewedBy(user);
         reviewRepository.save(review);
+    }
+
+    public ReviewDTO getUserReview(Integer lessonId, Integer userId) {
+        Review review = reviewRepository
+                .findByReviewedByIdAndLessonId(userId, lessonId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        return new ReviewDTO(
+                lessonId,
+                userId,
+                review.getRating(),
+                review.getFeedback()
+        );
     }
 
     @Transactional

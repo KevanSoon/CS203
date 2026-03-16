@@ -11,27 +11,26 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-
 @Data
 @Entity
 @Table(name = "review")
 public class Review {
+
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Integer id;
 
-
    @Column(nullable = false)
    private Byte rating;
 
+   @Column(length = 1000)
+   private String feedback;
 
    @ManyToOne
    @JoinColumn(name = "reviewed_by", nullable = false)
    private User reviewedBy;
 
-
    @ManyToOne
    @JoinColumn(name = "lesson_id", nullable = false)
    private Lesson lesson;
 }
-

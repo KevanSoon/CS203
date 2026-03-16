@@ -1,5 +1,6 @@
 package com.backend.cs203.repository;
 
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,5 +20,7 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
    @Query("SELECT COUNT(r) FROM Review r WHERE r.lesson.id = :lessonId")
    Integer findRatingCountByLessonId(Integer lessonId);
+
+   Optional<Review> findByReviewedByIdAndLessonId(Integer userId, Integer lessonId);
 }
 
