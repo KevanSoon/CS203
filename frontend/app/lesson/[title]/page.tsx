@@ -9,6 +9,8 @@ import { MessageCircle } from "lucide-react";
 import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
+import { ReportModal } from "@/app/components/ReportModal";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // Backend DTO types
 interface CardDTO {
@@ -149,6 +151,11 @@ export default function LessonRoadmapPage({
 
   const { lessonProgress, setLessonProgress, markCardCompleted, markQuizCompleted } = useProgressStore();
 
+  const [reportOpen, setReportOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const router = useRouter();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -196,6 +203,21 @@ export default function LessonRoadmapPage({
 
     fetchLessonPage();
   }, [lessonTitle]);
+
+  useEffect(() => {
+    if (searchParams.get("report") === "true") {
+      setReportOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleReportClose = () => {
+    setReportOpen(false);
+    setSelected("");
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("report")
+    router.replace(`/lesson/${encodeURIComponent(lessonTitle)}?${params.toString()}`)
+  }
 
   const currentChapter = chapters[selectedChapter];
 
@@ -269,7 +291,8 @@ export default function LessonRoadmapPage({
         completedChapterIds={chapters
           .filter((c) => c.nodes.length > 0 && c.nodes.every((n) => n.status === "completed"))
           .map((c) => c.id)
-  }
+        }
+        onReportClick={() => setReportOpen(true)}
       />
 
       {/* Left: Roadmap */}
@@ -389,6 +412,14 @@ export default function LessonRoadmapPage({
             <AIChatAssistant onClose={() => setChatOpen(false)} />
           </div>
         </div>
+      )}
+
+      {reportOpen && (
+        <ReportModal
+          lessonId={lessonId}
+          chapters={chapters.map(c => ({ id: c.id, title: c.title}))}
+          onClose={handleReportClose}
+        />
       )}
     </div>
   );
