@@ -101,15 +101,11 @@ public class LessonController {
             @PathVariable Integer lessonId,
             @RequestBody ReviewRequestDTO request,
             Authentication authentication) {
-        try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
-            return ResponseEntity.ok("Review submitted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to submit review: " + e.getMessage());
-        }
+
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
+        return ResponseEntity.ok("Review submitted successfully");
     }
 
     @PreAuthorize("hasRole('USER')")

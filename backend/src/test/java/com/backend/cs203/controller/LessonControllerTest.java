@@ -18,7 +18,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
