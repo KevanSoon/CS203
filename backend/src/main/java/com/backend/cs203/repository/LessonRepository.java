@@ -102,4 +102,12 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     @Query(value = "SELECT COUNT(*) FROM lesson WHERE title = :title AND deleted_at IS NULL", nativeQuery = true)
     long countByTitleNotDeleted(@Param("title") String title);
 
+    /** Count pending and approved lessons created by an admin (not deleted). */
+    @Query(value = "SELECT COUNT(*) FROM lesson WHERE created_by_id = :userId AND status IN ('pending', 'approved') AND deleted_at IS NULL", nativeQuery = true)
+    long countPendingAndApprovedByUserId(@Param("userId") Integer userId);
+
+    /** Count published (approved) lessons created by an admin. */
+    @Query(value = "SELECT COUNT(*) FROM lesson WHERE created_by_id = :userId AND status = 'approved' AND deleted_at IS NULL", nativeQuery = true)
+    long countPublishedByUserId(@Param("userId") Integer userId);
+
 }
