@@ -52,7 +52,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
 
     @Query(value = """
             SELECT l.title AS title, l.description AS description, l.status AS status,
-                   u.username AS createdBy, l.created_at AS createdAt
+                   u.username AS createdBy, l.created_at AS createdAt,
                    GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags
             FROM lesson l
             JOIN user u ON l.created_by_id = u.id
