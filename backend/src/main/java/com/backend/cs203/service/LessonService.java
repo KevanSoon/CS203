@@ -108,7 +108,8 @@ public class LessonService {
                 dto.getCreatedAt(),
                 dto.getTags(),
                 signedUrl,
-                dto.getDeletedAt()
+                dto.getDeletedAt(),
+                dto.getStatus()
         );
     }
 

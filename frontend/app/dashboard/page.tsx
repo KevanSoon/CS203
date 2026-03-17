@@ -17,6 +17,7 @@ interface LessonSummary {
 	tags: string | null;
 	lessonPictureUrl: string | null;
 	deletedAt: string | null;
+	status: "approved" | "suspended";
 }
 
 interface MergedLesson {
@@ -26,6 +27,7 @@ interface MergedLesson {
 	lessonPictureUrl: string | null;
 	tags: string | null;
 	status: "in_progress" | "completed" | "not_started";
+	lessonStatus: "approved" | "suspended";
 	progressPercent: number;
 	deletedAt: string | null;
 }
@@ -88,6 +90,7 @@ export default function DashboardPage() {
 				lessonPictureUrl: lesson.lessonPictureUrl,
 				tags: lesson.tags,
 				status: progress?.status ?? "not_started",
+				lessonStatus: lesson.status,
 				progressPercent: progress?.progressPercent ?? 0,
 				deletedAt: lesson.deletedAt,
 			};
@@ -160,7 +163,7 @@ export default function DashboardPage() {
 				<h2 className="text-lg font-bold mb-4 text-foreground">{title}</h2>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					{items.map((lesson) =>
-						lesson.deletedAt ? (
+						lesson.deletedAt || lesson.lessonStatus == "suspended" ? (
 							<div
 								key={lesson.lessonId}
 								className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
@@ -175,7 +178,7 @@ export default function DashboardPage() {
 								</div>
 								<div className="p-3 sm:p-4 space-y-3 flex flex-col">
 									<div>
-										<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{lesson.title} (Deleted)</h3>
+										<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{lesson.title} {lesson.deletedAt ? "(Deleted)" : "(Suspended)"}</h3>
 										<p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.description}</p>
 									</div>
 									<div className="space-y-2 mt-auto">
