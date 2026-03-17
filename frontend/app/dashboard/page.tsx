@@ -150,7 +150,7 @@ export default function DashboardPage() {
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					{items.map((lesson) =>
 						lesson.deletedAt ? (
-							<div className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
+							<div key={lesson.lessonId} className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
 								<div className="overflow-hidden">
 									<img src={lesson.lessonPictureUrl ?? "/images/questionmark.jpg"} alt={title} className="w-full object-cover h-44 sm:h-52 transition-transform duration-500" />
 								</div>
