@@ -15,4 +15,5 @@ public class LessonSummaryResponse {
     private final LocalDateTime createdAt;
     private final String tags;
     private final String lessonPictureUrl;
+    private final LocalDateTime deletedAt;
 }

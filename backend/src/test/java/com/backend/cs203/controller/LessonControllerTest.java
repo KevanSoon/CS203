@@ -52,7 +52,7 @@ class LessonControllerTest {
     // ===== GET /api/lesson/ (requires USER role) =====
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
-        LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null);
+        LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null, LocalDateTime.now());
         when(lessonService.getAllLessons()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/lesson/").with(user("testuser").roles("USER")))

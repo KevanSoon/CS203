@@ -15,4 +15,5 @@ public interface ReportDTO {
     String getChapterTitle();
     LocalDateTime getCreatedAt();
     LocalDateTime getUpdatedAt();
+    LocalDateTime getLessonDeletedAt();
 }

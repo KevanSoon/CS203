@@ -11,4 +11,5 @@ public interface LessonSummaryDTO {
     LocalDateTime getCreatedAt();
     String getTags();
     String getLessonPictureUrl();
+    LocalDateTime getDeletedAt();
 }
