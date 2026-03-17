@@ -59,8 +59,8 @@ public class UserProgressService {
 
         // 1 query: all approved lessons
         List<Lesson> allLessons = lessonRepository.findAll().stream()
-                .filter(l -> l.getStatus() == Lesson.LessonStatus.approved)
-                .toList();
+            .filter(l -> l.getStatus() == Lesson.LessonStatus.approved || l.getStatus() == Lesson.LessonStatus.suspended)
+            .toList();
 
         // 1 query: all chapters (we'll group by lessonId in memory)
         List<Chapter> allChapters = chapterRepository.findAll();

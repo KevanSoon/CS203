@@ -26,11 +26,11 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             SELECT l.id AS id, l.title AS title, l.description AS description,
                    u.username AS createdBy, l.created_at AS createdAt,
                    GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags,
-                   l.lesson_picture_url AS lessonPictureUrl, l.deleted_at AS deletedAt
+                   l.lesson_picture_url AS lessonPictureUrl, l.deleted_at AS deletedAt, l.status as status
             FROM lesson l
             JOIN user u ON l.created_by_id = u.id
             LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
-            WHERE l.status = 'approved'
+            WHERE l.status IN ('approved','suspended')
             GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url
             ORDER BY l.created_at DESC
             """, nativeQuery = true)
@@ -67,7 +67,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             SELECT l.id AS id, l.title AS title, l.description AS description,
                    u.username AS createdBy, l.created_at AS createdAt,
                    GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags,
-                   l.lesson_picture_url AS lessonPictureUrl
+                   l.lesson_picture_url AS lessonPictureUrl, l.status as status
             FROM lesson l
             JOIN user u ON l.created_by_id = u.id
             LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL

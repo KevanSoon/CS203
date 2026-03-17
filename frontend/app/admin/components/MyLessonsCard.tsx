@@ -146,7 +146,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 												<div className="flex-1">
 													<p className="text-sm font-semibold text-foreground mb-1">
 														{record.title} {record.deletedAt ? "(Deleted on " + new Date(record.createdAt).toUTCString().slice(0, -4) + ")" : ""}
-														{record.status === "suspended" ? renderSuspendedTag() : <></>} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
+														{record.status === "suspended" && !record.deletedAt ? renderSuspendedTag() : <></>} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
 													</p>
 												</div>
 												{record.status === "pending" ? (
