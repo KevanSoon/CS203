@@ -446,11 +446,11 @@ class LessonControllerTest {
     }
 
     @Test
-    void getAdminLessonStats_userNotFound_returns500() throws Exception {
+    void getAdminLessonStats_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/lesson/admin/stats").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
 
         verify(lessonService, never()).getAdminLessonStats(anyInt());
     }
