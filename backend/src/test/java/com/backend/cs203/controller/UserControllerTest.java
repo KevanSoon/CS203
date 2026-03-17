@@ -69,12 +69,12 @@ class UserControllerTest {
     }
 
     @Test
-    void getProfile_serviceThrowsException_returns500() throws Exception {
+    void getProfile_serviceThrowsException_returns400() throws Exception {
         when(userService.getMyProfile())
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         mockMvc.perform(get("/api/profile").with(user("testuser").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     // ===== PATCH /api/profile =====
@@ -125,7 +125,7 @@ class UserControllerTest {
     }
 
     @Test
-    void deleteMyAccount_incorrectPassword_returns500() throws Exception {
+    void deleteMyAccount_incorrectPassword_returns400() throws Exception {
         doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password"))
                 .when(userService).deleteMyAccount(any(DeleteAccountRequest.class));
 
@@ -134,7 +134,7 @@ class UserControllerTest {
                         .content("{\"password\":\"wrongPassword\"}")
                         .with(user("testuser").roles("USER"))
                         .with(csrf()))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     // ===== GET /api/users/search =====
