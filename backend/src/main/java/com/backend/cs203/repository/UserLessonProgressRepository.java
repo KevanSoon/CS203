@@ -18,19 +18,19 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     Optional<UserLessonProgress> findByUserIdAndLessonId(Integer userId, Integer lessonId);
 
-    /** Count all attempts (any status) across lessons created by the given admin. */
+    /** Count all attempts (any status) across approved lessons created by the given admin. */
     @Query(value = """
             SELECT COUNT(*) FROM user_lesson_progress ulp
             JOIN lesson l ON ulp.lesson_id = l.id
-            WHERE l.created_by_id = :adminId AND l.deleted_at IS NULL
+            WHERE l.created_by_id = :adminId AND l.status = 'approved' AND l.deleted_at IS NULL
             """, nativeQuery = true)
     long countAttemptsByAdminId(@Param("adminId") Integer adminId);
 
-    /** Count completed attempts across lessons created by the given admin. */
+    /** Count completed attempts across approved lessons created by the given admin. */
     @Query(value = """
             SELECT COUNT(*) FROM user_lesson_progress ulp
             JOIN lesson l ON ulp.lesson_id = l.id
-            WHERE l.created_by_id = :adminId AND ulp.status = 'completed' AND l.deleted_at IS NULL
+            WHERE l.created_by_id = :adminId AND l.status = 'approved' AND ulp.status = 'completed' AND l.deleted_at IS NULL
             """, nativeQuery = true)
     long countCompletionsByAdminId(@Param("adminId") Integer adminId);
     void deleteByUserIdAndLessonId(Integer userId, Integer lessonId);
