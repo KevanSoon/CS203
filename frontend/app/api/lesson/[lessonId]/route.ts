@@ -26,7 +26,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ less
     } catch (err: any) {
         console.error("Backend request failed:", err.message);
         return Response.json(
-            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Lesson retrieval failed. Please try again" },
+            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.message || "Lesson Deletion failed. Please try again" },
             { status: err?.response?.status || 500 }
         );
     }

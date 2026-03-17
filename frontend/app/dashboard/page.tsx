@@ -6,6 +6,7 @@ import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
 import FilterSearch from "@/app/components/FilterSearch";
 import { useProgressStore, isDashboardStale, DashboardProgress } from "@/app/store/ProgressStore";
+import toast from "react-hot-toast";
 
 interface LessonSummary {
 	id: number;
@@ -134,12 +135,22 @@ export default function DashboardPage() {
 		return result;
 	}, [merged, selectedTags, query, mode]);
 
+	const handleDeleteProgress = async (lessonId: number) => {
+		try {
+			await api.delete(`/api/progress/lesson/${lessonId}`);
+			setLessons((prev) => prev.map((l) => (l.id === lessonId ? { ...l, progressPercent: 0 } : l)));
+			const newProgress = dashboardProgress.map((p) => (p.lessonId === lessonId ? { ...p, progressPercent: 0, status: "not_started" as "not_started" } : p));
+			setDashboardProgress(newProgress);
+		} catch (err) {
+			toast.error("Failed to remove deleted lesson");
+		}
+	};
+
 	const isFiltering = selectedTags.length > 0 || (mode === "search" && query.trim().length > 0);
 
 	const inProgress = filteredLessons.filter((l) => l.status === "in_progress");
 	const notStarted = filteredLessons.filter((l) => l.status === "not_started" && !l.deletedAt);
 	const completed = filteredLessons.filter((l) => l.status === "completed" && !l.deletedAt);
-	console.log(inProgress);
 
 	const renderSection = (title: string, items: MergedLesson[]) => {
 		if (items.length === 0) return null;
@@ -150,9 +161,17 @@ export default function DashboardPage() {
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					{items.map((lesson) =>
 						lesson.deletedAt ? (
-							<div key={lesson.lessonId} className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
+							<div
+								key={lesson.lessonId}
+								className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
 								<div className="overflow-hidden">
 									<img src={lesson.lessonPictureUrl ?? "/images/questionmark.jpg"} alt={title} className="w-full object-cover h-44 sm:h-52 transition-transform duration-500" />
+									<button
+										className="absolute top-2 right-2 p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 pointer-events-auto"
+										title="Remove this lesson"
+										onClick={() => handleDeleteProgress(lesson.lessonId)}>
+										X
+									</button>
 								</div>
 								<div className="p-3 sm:p-4 space-y-3 flex flex-col">
 									<div>
