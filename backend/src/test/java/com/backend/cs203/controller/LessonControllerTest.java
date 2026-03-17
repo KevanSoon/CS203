@@ -112,7 +112,7 @@ class LessonControllerTest {
     // ===== GET /api/lesson/applications/ (requires ROOT role) =====
     @Test
     void getAllLessonApplications_withRootRole_returns200() throws Exception {
-        LessonApplicationDTO dto = createApplicationDTO("Pending Lesson", "A lesson", "author", LocalDateTime.now(), "java", "pending");
+        LessonApplicationDTO dto = createApplicationDTO("Pending Lesson", "A lesson", "author", LocalDateTime.now(), "java", "pending", LocalDateTime.now());
         when(lessonService.getAllLessonApplications()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/lesson/applications/").with(user("root").roles("ROOT")))
@@ -196,7 +196,7 @@ class LessonControllerTest {
     void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
         LessonApplicationDTO dto = createApplicationDTO(
-                "Pending Lesson", "A lesson", "adminuser", LocalDateTime.now(), "java", "pending");
+                "Pending Lesson", "A lesson", "adminuser", LocalDateTime.now(), "java", "pending", LocalDateTime.now());
 
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
         when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(List.of(dto));
@@ -408,7 +408,7 @@ class LessonControllerTest {
 
     // ===== Helper methods =====
     private LessonApplicationDTO createApplicationDTO(String title, String description, String createdBy,
-            LocalDateTime createdAt, String tags, String status) {
+            LocalDateTime createdAt, String tags, String status, LocalDateTime deletedAt) {
         return new LessonApplicationDTO() {
             @Override
             public Integer getId() {
@@ -448,6 +448,10 @@ class LessonControllerTest {
             @Override
             public String getStatus() {
                 return status;
+            }
+            @Override
+            public LocalDateTime getDeletedAt() {
+                return createdAt;
             }
         };
     }
