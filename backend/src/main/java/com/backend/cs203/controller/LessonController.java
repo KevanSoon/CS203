@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -116,7 +117,7 @@ public class LessonController {
 
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         boolean hasReviewed = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
         Map<String, Object> response = new HashMap<>();
         response.put("hasReviewed", hasReviewed);
@@ -182,5 +183,16 @@ public class LessonController {
         boolean taken = lessonService.isTitleTaken(title);
         return ResponseEntity.ok(java.util.Map.of("available", !taken));
     }
-}
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{lessonId}")
+    public ResponseEntity<String> deleteLesson(
+            @PathVariable Integer lessonId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+        lessonService.deleteLesson(lessonId, user.getId());
+        return ResponseEntity.ok("Lesson deleted successfully");
+    }
+}

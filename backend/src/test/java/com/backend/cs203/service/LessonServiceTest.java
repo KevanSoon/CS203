@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions;
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
@@ -425,5 +427,64 @@ class LessonServiceTest {
 
         assertEquals("No Chapters", result.getTitle());
         assertTrue(result.getChapters().isEmpty());
+    }
+        @Test
+    void deleteLesson_setsDeletedAt_whenCreator() {
+        User creator = new User();
+        creator.setId(123);
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setCreatedBy(creator);
+        lesson.setDeletedAt(null);
+
+        when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+
+        lessonService.deleteLesson(1, 123);
+
+        assertNotNull(lesson.getDeletedAt());
+        verify(lessonRepository).save(lesson);
+    }
+
+    @Test
+    void deleteLesson_notCreator_throwsException() {
+        User creator = new User();
+        creator.setId(999);
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setCreatedBy(creator);
+
+        when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
+
+        Exception ex = assertThrows(RuntimeException.class, () -> {
+            lessonService.deleteLesson(1, 123);
+        });
+        assertTrue(ex.getMessage().contains("permission"));
+    }
+
+    @Test
+    void deleteLesson_alreadyDeleted_throwsException() {
+        User creator = new User();
+        creator.setId(123);
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setCreatedBy(creator);
+        lesson.setDeletedAt(LocalDateTime.now());
+
+        when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
+
+        Exception ex = assertThrows(RuntimeException.class, () -> {
+            lessonService.deleteLesson(1, 123);
+        });
+        assertTrue(ex.getMessage().contains("already deleted"));
+    }
+
+    @Test
+    void deleteLesson_notFound_throwsException() {
+        when(lessonRepository.findById(1)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            lessonService.deleteLesson(1, 123);
+        });
     }
 }
