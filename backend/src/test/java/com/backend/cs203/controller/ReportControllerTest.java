@@ -80,7 +80,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void createReport_userNotFound_returns500() throws Exception {
+    void createReport_userNotFound_returns400() throws Exception {
         // Arrange
         when(userRepository.findByUsername("missinguser")).thenReturn(Optional.empty());
 
@@ -100,7 +100,7 @@ class ReportControllerTest {
                         .with(user("missinguser").roles("USER"))
                         .contentType("application/json")
                         .content(requestBody))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
 
         verify(reportService, never()).createReport(any(ReportCreateDTO.class), any(User.class));
     }
@@ -161,11 +161,11 @@ class ReportControllerTest {
     }
 
     @Test
-    void getUserCreatedLessonReports_userNotFound_returns500() throws Exception {
+    void getUserCreatedLessonReports_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/report/admin").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
 
         verify(reportService, never()).getUserCreatedLessonReports(anyInt());
     }
@@ -275,6 +275,11 @@ class ReportControllerTest {
             public LocalDateTime getUpdatedAt() {
                 return LocalDateTime.of(2026, 3, 6, 11, 0);
             }
+
+            @Override
+            public LocalDateTime getLessonDeletedAt() {
+                return LocalDateTime.of(2026, 3, 6, 11, 0);
+            }
         };
     }
     // ===== PATCH /api/report/root =====
@@ -313,7 +318,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportStatus_serviceThrows_returns500() throws Exception {
+    void updateReportStatus_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportStatus(999, "closed");
 
@@ -322,7 +327,7 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("status", "closed")
                         .with(user("rootuser").roles("ROOT"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 
     // ===== PATCH /api/report/root/suspend =====
@@ -361,7 +366,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportStatusAndSuspendLesson_serviceThrows_returns500() throws Exception {
+    void updateReportStatusAndSuspendLesson_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportStatusAndSuspendLesson(999, "resolved");
 
@@ -370,7 +375,7 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("status", "resolved")
                         .with(user("rootuser").roles("ROOT"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 
     // ===== PATCH /api/report/admin/remarks =====
@@ -419,7 +424,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportRemarks_serviceThrows_returns500() throws Exception {
+    void updateReportRemarks_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportRemarks(999, "Reviewed and fixed");
 
@@ -428,6 +433,6 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("remarks", "Reviewed and fixed")
                 .with(user("adminuser").roles("ADMIN"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 }

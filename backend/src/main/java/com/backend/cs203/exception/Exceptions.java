@@ -116,12 +116,31 @@ public class Exceptions {
                 .timestamp(Instant.now())
                 .status(HttpStatus.FORBIDDEN.value())
                 .error(HttpStatus.FORBIDDEN.getReasonPhrase())
-                .message("Access denied: insufficient permissions")
+                .message(ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : "Incorrect Permissions")
                 .path(req.getRequestURI())
                 .build();
 
             return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
+                .body(body);
+        }
+        @ExceptionHandler(RuntimeException.class)
+        public ResponseEntity<ErrorResponse> handleCaughtExceptions(
+                RuntimeException ex,
+                HttpServletRequest req) {
+
+            log.warn("Caught exception occured at {}: {}", req.getRequestURI(), ex.getMessage());
+
+            ErrorResponse body = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : "Unknown caught error")
+                .path(req.getRequestURI())
+                .build();
+
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(body);
         }
 

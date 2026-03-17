@@ -49,7 +49,7 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 					<p className="mb-0 text-md font-semibold text-foreground">Report Details</p>
 					<p className="text-sm text-muted-foreground whitespace-pre-wrap">{report.description}</p>
 
-					{report.status === "unresolved" ? (
+					{report.status === "unresolved" || report.status === "closed" ? (
 						<>
 							<p className="text-md font-semibold text-foreground">Lesson Admin Remarks</p>
 							<div className="rounded-md border border-border bg-background p-3 min-h-24 flex flex-col">
