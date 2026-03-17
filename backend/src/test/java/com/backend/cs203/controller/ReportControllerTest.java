@@ -275,6 +275,11 @@ class ReportControllerTest {
             public LocalDateTime getUpdatedAt() {
                 return LocalDateTime.of(2026, 3, 6, 11, 0);
             }
+
+            @Override
+            public LocalDateTime getLessonDeletedAt() {
+                return LocalDateTime.of(2026, 3, 6, 11, 0);
+            }
         };
     }
     // ===== PATCH /api/report/root =====
