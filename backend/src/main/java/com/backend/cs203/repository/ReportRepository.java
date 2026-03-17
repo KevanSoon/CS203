@@ -21,4 +21,7 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
     @Query(value = SUMMARY + "FROM report r INNER JOIN user u ON r.reported_by = u.id INNER JOIN lesson l on r.lesson_id = l.id LEFT JOIN chapter c on r.chapter_id = c.id WHERE l.created_by_id = :userId AND r.status = 'unresolved'", nativeQuery = true)
     List<ReportDTO> findUserCreatedLessonReports(@Param("userId") Integer userId);
 
+    @Query(value = "SELECT * FROM report WHERE lesson_id = :lessonId AND status != 'closed'", nativeQuery = true)
+    List<Report> findNotClosedReportsByLessonId(@Param("lessonId") Integer lessonId);
+
 }

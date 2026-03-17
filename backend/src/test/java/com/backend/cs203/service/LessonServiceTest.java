@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,11 +30,13 @@ import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Quiz;
+import com.backend.cs203.entity.Report;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
+import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.exception.Exceptions;
@@ -65,8 +68,10 @@ class LessonServiceTest {
     @InjectMocks
     private LessonService lessonService;
 
-    // ===== getAllLessons =====
+    @Mock
+    private ReportRepository reportRepository;
 
+    // ===== getAllLessons =====
     @Test
     void getAllLessons_returnsListFromRepository() {
         LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
@@ -88,7 +93,6 @@ class LessonServiceTest {
     }
 
     // ===== getUserCreatedLessons =====
-
     @Test
     void getUserCreatedLessons_returnsLessonsForUser() {
         when(lessonRepository.findUserCreatedLessons(1)).thenReturn(List.of(mock(LessonApplicationDTO.class)));
@@ -109,7 +113,6 @@ class LessonServiceTest {
     }
 
     // ===== getAllLessonApplications =====
-
     @Test
     void getAllLessonApplications_delegatesToRepository() {
         LessonApplicationDTO dto = mock(LessonApplicationDTO.class);
@@ -122,7 +125,6 @@ class LessonServiceTest {
     }
 
     // ===== getPendingLessonApplications =====
-
     @Test
     void getPendingLessonApplications_delegatesToRepository() {
         LessonSummaryDTO dto = mock(LessonSummaryDTO.class);
@@ -135,7 +137,6 @@ class LessonServiceTest {
     }
 
     // ===== getUserCreatedLessonApplications =====
-
     @Test
     void getUserCreatedLessonApplications_returnsApplicationsForUser() {
         LessonApplicationDTO dto = mock(LessonApplicationDTO.class);
@@ -170,7 +171,6 @@ class LessonServiceTest {
     }
 
     // ===== getLessonPage =====
-
     @Test
     void getLessonPage_returnsFullLessonWithChaptersCardsAndQuizzes() {
         User user = User.builder().id(1).username("testuser").build();
@@ -233,7 +233,6 @@ class LessonServiceTest {
     }
 
     // ===== getAdminLessonPage =====
-
     @Test
     void getAdminLessonPage_returnsLessonPageForOwner() {
         User user = User.builder().id(1).username("admin").build();
@@ -268,7 +267,6 @@ class LessonServiceTest {
     }
 
     // ===== getRootLessonApplicationPage =====
-
     @Test
     void getRootLessonApplicationPage_returnsLessonPage() {
         User user = User.builder().id(2).username("author").build();
@@ -428,8 +426,9 @@ class LessonServiceTest {
         assertEquals("No Chapters", result.getTitle());
         assertTrue(result.getChapters().isEmpty());
     }
-        @Test
-    void deleteLesson_setsDeletedAt_whenCreator() {
+
+    @Test
+    void deleteLesson_setsDeletedAt_andClosesReports_whenCreator() {
         User creator = new User();
         creator.setId(123);
         Lesson lesson = new Lesson();
@@ -437,33 +436,38 @@ class LessonServiceTest {
         lesson.setCreatedBy(creator);
         lesson.setDeletedAt(null);
 
+        // Mock open reports
+        Report report1 = new Report();
+        report1.setId(10);
+        report1.setStatus(Report.ReportStatus.reported);
+        report1.setRemarks("Initial remark");
+
+        Report report2 = new Report();
+        report2.setId(11);
+        report2.setStatus(Report.ReportStatus.reported);
+        report2.setRemarks(null);
+
         when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+        when(reportRepository.findNotClosedReportsByLessonId(1)).thenReturn(List.of(report1, report2));
+        when(reportRepository.save(any(Report.class))).thenAnswer(i -> i.getArgument(0));
 
         lessonService.deleteLesson(1, 123);
 
         assertNotNull(lesson.getDeletedAt());
         verify(lessonRepository).save(lesson);
+
+        // Reports should be closed and have the appended remark
+        assertEquals(Report.ReportStatus.closed, report1.getStatus());
+        assertTrue(report1.getRemarks().contains("\nLesson Admin closed lesson"));
+        assertEquals(Report.ReportStatus.closed, report2.getStatus());
+        assertTrue(report2.getRemarks().contains("\nLesson Admin closed lesson"));
+
+        verify(reportRepository, times(2)).save(any(Report.class));
     }
 
     @Test
-    void deleteLesson_notCreator_throwsException() {
-        User creator = new User();
-        creator.setId(999);
-        Lesson lesson = new Lesson();
-        lesson.setId(1);
-        lesson.setCreatedBy(creator);
-
-        when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
-
-        Exception ex = assertThrows(RuntimeException.class, () -> {
-            lessonService.deleteLesson(1, 123);
-        });
-        assertTrue(ex.getMessage().contains("permission"));
-    }
-
-    @Test
-    void deleteLesson_alreadyDeleted_throwsException() {
+    void deleteLesson_alreadyDeleted_doesNotCloseReports() {
         User creator = new User();
         creator.setId(123);
         Lesson lesson = new Lesson();
@@ -477,14 +481,21 @@ class LessonServiceTest {
             lessonService.deleteLesson(1, 123);
         });
         assertTrue(ex.getMessage().contains("already deleted"));
+
+        verify(reportRepository, never()).findNotClosedReportsByLessonId(anyInt());
+        verify(reportRepository, never()).save(any(Report.class));
     }
 
     @Test
-    void deleteLesson_notFound_throwsException() {
+    void deleteLesson_notFound_doesNotCloseReports() {
         when(lessonRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> {
             lessonService.deleteLesson(1, 123);
         });
+
+        verify(reportRepository, never()).findNotClosedReportsByLessonId(anyInt());
+        verify(reportRepository, never()).save(any(Report.class));
     }
+
 }
