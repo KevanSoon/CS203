@@ -40,8 +40,8 @@ type UserSearchResult = {
 };
 
 type AdminStats = {
-  lessonsCreated: number;
-  usersAttempted: number;
+  publishedLessons: number;
+  totalAttempts: number;
 };
 
 // ✅ Mock learning progress (still mock)
@@ -51,11 +51,6 @@ const MOCK_PROGRESS = {
   totalHours: 24,
 };
 
-// ✅ Mock admin stats (replace with real API later)
-const MOCK_ADMIN_STATS: AdminStats = {
-  lessonsCreated: 8,
-  usersAttempted: 142,
-};
 
 function CollapsibleCard({
   title,
@@ -152,8 +147,7 @@ export default function ProfilePage() {
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState("");
 
-  // ✅ Mock admin stats — swap to real API fetch when ready
-  const [adminStats] = useState<AdminStats>(MOCK_ADMIN_STATS);
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -261,7 +255,13 @@ export default function ProfilePage() {
         });
 
         // Set usertype from API response (JWT is httpOnly, can't read from browser)
-        setUserType(data?.usertype || "user");
+        const resolvedType = data?.usertype || "user";
+        setUserType(resolvedType);
+
+        if (resolvedType === "admin") {
+          const statsResult = await api.get("/api/lesson/admin/stats");
+          setAdminStats(statsResult.data);
+        }
       } catch (e: any) {
         setProfileError(e?.message || "Something went wrong 💀");
       } finally {
@@ -612,7 +612,7 @@ export default function ProfilePage() {
                               Lessons Created
                             </p>
                             <p className="text-xl font-black">
-                              {adminStats.lessonsCreated}
+                              {adminStats?.publishedLessons ?? "--"}
                             </p>
                           </div>
                         </div>
@@ -628,7 +628,7 @@ export default function ProfilePage() {
                               Users Attempted
                             </p>
                             <p className="text-xl font-black">
-                              {adminStats.usersAttempted}
+                              {adminStats?.totalAttempts ?? "--"}
                             </p>
                           </div>
                         </div>
