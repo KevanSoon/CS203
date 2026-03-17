@@ -12,27 +12,29 @@ import { FeedbacksCard } from "./components/FeedbacksCard";
 type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
 export interface Report {
-  id: number;
-  title: string;
-  description: string;
-  status: ReportStatus;
-  type: ReportType;
-  reportedBy: string;
-  lessonTitle: string;
-  chapterTitle?: string | null;
-  remarks?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lastUpdate: string | null;
+	id: number;
+	title: string;
+	description: string;
+	status: ReportStatus;
+	type: ReportType;
+	reportedBy: string;
+	lessonTitle: string;
+	chapterTitle?: string | null;
+	remarks?: string | null;
+	createdAt: string;
+	updatedAt: string;
+	lastUpdate: string | null;
 }
 
 export interface Lesson {
+	id: number;
 	createdAt: string;
 	title: string;
 	description: string;
 	tags?: string[] | string | null;
-  status?: string | null;
-  reports?: Array<Object>;
+	status?: string | null;
+	reports?: Array<Object>;
+	deletedAt?: string | null;
 }
 
 export interface LessonContentProps {
@@ -47,33 +49,39 @@ export const AdminLessonPage = () => {
 	const [reports, setReports] = useState([]);
 	const [applications, setApplications] = useState([]);
 
-
 	useEffect(() => {
 		const fetchLessons = async () => {
 			try {
 				//calls route.ts
 				const lessonResult = await api.get("/api/lesson/user-lessons/");
 				const applicationsResult = await api.get("/api/lesson/user-applications/");
-				const reportResult = await api.get("/api/report/admin/")
+				const reportResult = await api.get("/api/report/admin/");
 
-				const reportsByLesson = (reportResult.data ?? []).reduce(
-					(acc: Record<string, Report[]>, report: Report) => {
+				const reportsByLesson = (reportResult.data ?? []).reduce((acc: Record<string, Report[]>, report: Report) => {
 					const key = report.lessonTitle;
 					if (!acc[key]) acc[key] = [];
 					acc[key].push(report);
 					return acc;
-					},
-					{}
-				);
+				}, {});
 
 				const lessonsWithReports = (lessonResult.data ?? []).map((lesson: Lesson) => ({
 					...lesson,
 					reports: reportsByLesson[lesson.title] ?? [],
 				}));
+				lessonsWithReports.sort((a:Lesson, b:Lesson) => {
+					// Deleted lessons at the bottom
+					if (!!a.deletedAt !== !!b.deletedAt) {
+						return a.deletedAt ? 1 : -1;
+					}
+					// If both are deleted or both are not, sort by id if present
+					if (a.id && b.id) {
+						return a.id - b.id;
+					}
+					return 0;
+				});
 				setLessons(lessonsWithReports);
 				setApplications(applicationsResult.data);
 				setReports(reportResult.data);
-
 			} catch (err) {
 				console.error("Failed to fetch lessons", err);
 			}
@@ -98,7 +106,15 @@ export const AdminLessonPage = () => {
 					<StatsGrid />
 
 					{/* Content Grid */}
-					<div>{selected === "Manage Lessons" ? <><MyLessonsCard title="My Lessons" data={lessons} /> <MyLessonsCard title="Applications" data={applications} /></> : selected === "View Alerts" ? <FeedbacksCard /> : null}</div>
+					<div>
+						{selected === "Manage Lessons" ? (
+							<>
+								<MyLessonsCard title="My Lessons" data={lessons} /> <MyLessonsCard title="Applications" data={applications} />
+							</>
+						) : selected === "View Alerts" ? (
+							<FeedbacksCard />
+						) : null}
+					</div>
 				</div>
 			</div>
 		</div>
