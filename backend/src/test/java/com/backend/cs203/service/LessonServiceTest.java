@@ -32,12 +32,14 @@ import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Quiz;
 import com.backend.cs203.entity.Report;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
 import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.exception.Exceptions;
 
@@ -61,6 +63,9 @@ class LessonServiceTest {
 
     @Mock
     private UserRepository userRepository;          // ← ADD
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
 
     @Mock
     private SupabaseStorageService supabaseStorageService;
@@ -405,6 +410,27 @@ class LessonServiceTest {
         assertEquals("Chapter 2", result.getChapters().get(1).getTitle());
         assertEquals("C1 Front", result.getChapters().get(0).getCards().get(0).getFront());
         assertEquals("C2 Front", result.getChapters().get(1).getCards().get(0).getFront());
+    }
+
+    // ===== getAdminLessonStats =====
+
+    @Test
+    void getAdminLessonStats_returnsCorrectCounts() {
+        when(lessonRepository.countPendingAndApprovedByUserId(1)).thenReturn(5L);
+        when(lessonRepository.countPublishedByUserId(1)).thenReturn(3L);
+        when(userLessonProgressRepository.countAttemptsByAdminId(1)).thenReturn(20L);
+        when(userLessonProgressRepository.countCompletionsByAdminId(1)).thenReturn(10L);
+
+        AdminLessonStatsDTO result = lessonService.getAdminLessonStats(1);
+
+        assertEquals(5L, result.getTotalLessons());
+        assertEquals(3L, result.getPublishedLessons());
+        assertEquals(20L, result.getTotalAttempts());
+        assertEquals(10L, result.getTotalCompletions());
+        verify(lessonRepository).countPendingAndApprovedByUserId(1);
+        verify(lessonRepository).countPublishedByUserId(1);
+        verify(userLessonProgressRepository).countAttemptsByAdminId(1);
+        verify(userLessonProgressRepository).countCompletionsByAdminId(1);
     }
 
     @Test

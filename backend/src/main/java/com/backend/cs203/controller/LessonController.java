@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.CreateLessonRequest;
 import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -78,6 +79,15 @@ public class LessonController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
         return ResponseEntity.ok(lessonService.getUserCreatedLessonApplications(user.getId()));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/stats")
+    public ResponseEntity<AdminLessonStatsDTO> getAdminLessonStats(Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+        return ResponseEntity.ok(lessonService.getAdminLessonStats(user.getId()));
     }
 
     @PreAuthorize("hasRole('USER')")

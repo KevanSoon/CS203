@@ -21,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
@@ -404,6 +405,54 @@ class LessonControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(lessonService, never()).deleteLesson(anyInt(), anyInt());
+    }
+
+    // ===== GET /api/lesson/admin/stats (requires ADMIN role) =====
+
+    @Test
+    void getAdminLessonStats_withAdminRole_returns200() throws Exception {
+        User user = User.builder().id(1).username("adminuser").build();
+        AdminLessonStatsDTO stats = new AdminLessonStatsDTO(5L, 3L, 20L, 10L);
+
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+        when(lessonService.getAdminLessonStats(1)).thenReturn(stats);
+
+        mockMvc.perform(get("/api/lesson/admin/stats").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalLessons").value(5))
+                .andExpect(jsonPath("$.publishedLessons").value(3))
+                .andExpect(jsonPath("$.totalAttempts").value(20))
+                .andExpect(jsonPath("$.totalCompletions").value(10));
+
+        verify(lessonService).getAdminLessonStats(1);
+    }
+
+    @Test
+    void getAdminLessonStats_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/stats").with(user("testuser").roles("USER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getAdminLessonStats_withRootRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/stats").with(user("root").roles("ROOT")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getAdminLessonStats_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/lesson/admin/stats"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getAdminLessonStats_userNotFound_returns400() throws Exception {
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/lesson/admin/stats").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isBadRequest());
+
+        verify(lessonService, never()).getAdminLessonStats(anyInt());
     }
 
     // ===== Helper methods =====

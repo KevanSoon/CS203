@@ -13,6 +13,7 @@ import com.backend.cs203.dto.card.CardDTO;
 import com.backend.cs203.dto.card.CreateCardRequest;
 import com.backend.cs203.dto.chapter.ChapterDTO;
 import com.backend.cs203.dto.chapter.CreateChapterRequest;
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.CreateLessonRequest;
 import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -36,6 +37,7 @@ import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
 import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,6 +55,7 @@ public class LessonService {
     private final QuizRepository quizRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
     private final ReportRepository reportRepository;
     private final SupabaseStorageService supabaseStorageService;
     private final EntityManager entityManager;
@@ -93,6 +96,14 @@ public class LessonService {
 
     public List<LessonApplicationDTO> getUserCreatedLessonApplications(int userId) { // ← NEW
         return lessonRepository.findUserCreatedLessonApplications(userId);
+    }
+
+    public AdminLessonStatsDTO getAdminLessonStats(int adminId) {
+        long totalLessons = lessonRepository.countPendingAndApprovedByUserId(adminId);
+        long publishedLessons = lessonRepository.countPublishedByUserId(adminId);
+        long totalAttempts = userLessonProgressRepository.countAttemptsByAdminId(adminId);
+        long totalCompletions = userLessonProgressRepository.countCompletionsByAdminId(adminId);
+        return new AdminLessonStatsDTO(totalLessons, publishedLessons, totalAttempts, totalCompletions);
     }
 
     private LessonSummaryResponse toResponseWithSignedUrl(LessonSummaryDTO dto) {
