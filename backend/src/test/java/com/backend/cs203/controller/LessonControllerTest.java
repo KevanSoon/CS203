@@ -49,7 +49,6 @@ class LessonControllerTest {
     private JwtUtil jwtUtil;
 
     // ===== GET /api/lesson/ (requires USER role) =====
-
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
         LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null);
@@ -84,7 +83,6 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/user-lessons/ (requires ADMIN role) =====
-
     @Test
     void getUserCreatedLessons_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -103,15 +101,14 @@ class LessonControllerTest {
     }
 
     @Test
-    void getUserCreatedLessons_userNotFound_returns500() throws Exception {
+    void getUserCreatedLessons_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/lesson/user-lessons/").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
     }
 
     // ===== GET /api/lesson/applications/ (requires ROOT role) =====
-
     @Test
     void getAllLessonApplications_withRootRole_returns200() throws Exception {
         LessonApplicationDTO dto = createApplicationDTO("Pending Lesson", "A lesson", "author", LocalDateTime.now(), "java", "pending");
@@ -136,7 +133,6 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/applications/pending (requires ROOT role) =====
-
     @Test
     void getPendingApplications_withRootRole_returns200() throws Exception {
         when(lessonService.getPendingLessonApplications()).thenReturn(Collections.emptyList());
@@ -153,7 +149,6 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/page (requires USER role) =====
-
     @Test
     void getLessonPage_withUserRole_returns200() throws Exception {
         LessonPageDTO pageDTO = new LessonPageDTO(
@@ -164,7 +159,7 @@ class LessonControllerTest {
         when(lessonService.getLessonPage("Test Lesson")).thenReturn(pageDTO);
 
         mockMvc.perform(get("/api/lesson/page").param("title", "Test Lesson")
-                        .with(user("testuser").roles("USER")))
+                .with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Test Lesson"))
@@ -180,13 +175,13 @@ class LessonControllerTest {
     }
 
     @Test
-    void getLessonPage_lessonNotFound_returns500() throws Exception {
+    void getLessonPage_lessonNotFound_returns400() throws Exception {
         when(lessonService.getLessonPage("Nonexistent"))
                 .thenThrow(new RuntimeException("Lesson not found"));
 
         mockMvc.perform(get("/api/lesson/page").param("title", "Nonexistent")
-                        .with(user("testuser").roles("USER")))
-                .andExpect(status().is5xxServerError());
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -196,7 +191,6 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/user-applications/ (requires ADMIN role) =====
-
     @Test
     void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -215,21 +209,21 @@ class LessonControllerTest {
         verify(lessonService, never()).getUserCreatedLessons(anyInt());
     }
 
-        @Test
-        void getUserCreatedLessonApplications_withAdminRoleAndNoApplications_returnsEmptyArray() throws Exception {
-                User user = User.builder().id(1).username("adminuser").build();
+    @Test
+    void getUserCreatedLessonApplications_withAdminRoleAndNoApplications_returnsEmptyArray() throws Exception {
+        User user = User.builder().id(1).username("adminuser").build();
 
-                when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
-                when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(Collections.emptyList());
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(user));
+        when(lessonService.getUserCreatedLessonApplications(1)).thenReturn(Collections.emptyList());
 
-                mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$").isArray())
-                                .andExpect(jsonPath("$").isEmpty());
+        mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
-                verify(userRepository).findByUsername("adminuser");
-                verify(lessonService).getUserCreatedLessonApplications(1);
-        }
+        verify(userRepository).findByUsername("adminuser");
+        verify(lessonService).getUserCreatedLessonApplications(1);
+    }
 
     @Test
     void getUserCreatedLessonApplications_withUserRole_deniesAccess() throws Exception {
@@ -237,24 +231,23 @@ class LessonControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-        @Test
-        void getUserCreatedLessonApplications_withRootRole_deniesAccess() throws Exception {
-                mockMvc.perform(get("/api/lesson/user-applications/").with(user("root").roles("ROOT")))
-                                .andExpect(status().isForbidden());
-        }
+    @Test
+    void getUserCreatedLessonApplications_withRootRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/lesson/user-applications/").with(user("root").roles("ROOT")))
+                .andExpect(status().isForbidden());
+    }
 
     @Test
-    void getUserCreatedLessonApplications_userNotFound_returns500() throws Exception {
+    void getUserCreatedLessonApplications_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/lesson/user-applications/").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
 
         verify(lessonService, never()).getUserCreatedLessonApplications(anyInt());
     }
 
     // ===== GET /api/lesson/admin/page (requires ADMIN role) =====
-
     @Test
     void getAdminLessonPage_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -267,7 +260,7 @@ class LessonControllerTest {
         when(lessonService.getAdminLessonPage("My Lesson", 1)).thenReturn(pageDTO);
 
         mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
-                        .with(user("adminuser").roles("ADMIN")))
+                .with(user("adminuser").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("My Lesson"));
@@ -278,24 +271,24 @@ class LessonControllerTest {
     @Test
     void getAdminLessonPage_withRootRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
-                        .with(user("root").roles("ROOT")))
+                .with(user("root").roles("ROOT")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void getAdminLessonPage_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
-                        .with(user("testuser").roles("USER")))
+                .with(user("testuser").roles("USER")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void getAdminLessonPage_userNotFound_returns500() throws Exception {
+    void getAdminLessonPage_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/lesson/admin/page").param("title", "My Lesson")
-                        .with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().is4xxClientError());
 
         verify(lessonService, never()).getAdminLessonPage(any(), anyInt());
     }
@@ -307,7 +300,6 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/root/page (requires ROOT role) =====
-
     @Test
     void getRootLessonPage_withRootRole_returns200() throws Exception {
         LessonPageDTO pageDTO = new LessonPageDTO(
@@ -318,7 +310,7 @@ class LessonControllerTest {
         when(lessonService.getRootLessonApplicationPage("Pending Lesson")).thenReturn(pageDTO);
 
         mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
-                        .with(user("root").roles("ROOT")))
+                .with(user("root").roles("ROOT")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(2))
                 .andExpect(jsonPath("$.title").value("Pending Lesson"));
@@ -329,14 +321,14 @@ class LessonControllerTest {
     @Test
     void getRootLessonPage_withAdminRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
-                        .with(user("admin").roles("ADMIN")))
+                .with(user("admin").roles("ADMIN")))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void getRootLessonPage_withUserRole_deniesAccess() throws Exception {
         mockMvc.perform(get("/api/lesson/root/page").param("title", "Pending Lesson")
-                        .with(user("testuser").roles("USER")))
+                .with(user("testuser").roles("USER")))
                 .andExpect(status().isForbidden());
     }
 
@@ -347,28 +339,58 @@ class LessonControllerTest {
     }
 
     @Test
-    void getRootLessonPage_lessonNotFound_returns500() throws Exception {
+    void getRootLessonPage_lessonNotFound_returns400() throws Exception {
         when(lessonService.getRootLessonApplicationPage("Ghost Lesson"))
                 .thenThrow(new RuntimeException("Lesson application not found"));
 
         mockMvc.perform(get("/api/lesson/root/page").param("title", "Ghost Lesson")
-                        .with(user("root").roles("ROOT")))
-                .andExpect(status().is5xxServerError());
+                .with(user("root").roles("ROOT")))
+                .andExpect(status().is4xxClientError());
     }
 
     // ===== Helper methods =====
-
     private LessonApplicationDTO createApplicationDTO(String title, String description, String createdBy,
-                                                       LocalDateTime createdAt, String tags, String status) {
+            LocalDateTime createdAt, String tags, String status) {
         return new LessonApplicationDTO() {
-            @Override public Integer getId() { return 1; }
-            @Override public String getTitle() { return title; }
-            @Override public String getDescription() { return description; }
-            @Override public String getCreatedBy() { return createdBy; }
-            @Override public LocalDateTime getCreatedAt() { return createdAt; }
-            @Override public String getTags() { return tags; }
-            @Override public String getLessonPictureUrl() { return null; }
-            @Override public String getStatus() { return status; }
+            @Override
+            public Integer getId() {
+                return 1;
+            }
+
+            @Override
+            public String getTitle() {
+                return title;
+            }
+
+            @Override
+            public String getDescription() {
+                return description;
+            }
+
+            @Override
+            public String getCreatedBy() {
+                return createdBy;
+            }
+
+            @Override
+            public LocalDateTime getCreatedAt() {
+                return createdAt;
+            }
+
+            @Override
+            public String getTags() {
+                return tags;
+            }
+
+            @Override
+            public String getLessonPictureUrl() {
+                return null;
+            }
+
+            @Override
+            public String getStatus() {
+                return status;
+            }
         };
     }
 }
