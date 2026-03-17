@@ -27,12 +27,14 @@ import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Quiz;
+import com.backend.cs203.entity.Report;
 import com.backend.cs203.entity.Review;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
+import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -51,6 +53,7 @@ public class LessonService {
     private final QuizRepository quizRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
     private final SupabaseStorageService supabaseStorageService;
     private final EntityManager entityManager;
 
@@ -514,17 +517,28 @@ public class LessonService {
     }
 
     @Transactional
-    public void deleteLesson(Integer lessonId, Integer userId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
-        // Check if the user is the creator
-        if (!lesson.getCreatedBy().getId().equals(userId)) {
-            throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
-        }
-        if (lesson.getDeletedAt() != null) {
-            throw new RuntimeException("Lesson already deleted");
-        }
-        lesson.setDeletedAt(LocalDateTime.now());
-        lessonRepository.save(lesson);
+public void deleteLesson(Integer lessonId, Integer userId) {
+    Lesson lesson = lessonRepository.findById(lessonId)
+            .orElseThrow(() -> new RuntimeException("Lesson not found"));
+    if (!lesson.getCreatedBy().getId().equals(userId)) {
+        throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
     }
+    if (lesson.getDeletedAt() != null) {
+        throw new RuntimeException("Lesson already deleted");
+    }
+    lesson.setDeletedAt(LocalDateTime.now());
+    lessonRepository.save(lesson);
+
+    // --- Close all open reports for this lesson ---
+    List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
+    for (Report report : openReports) {
+        report.setStatus(Report.ReportStatus.closed);
+        String oldRemarks = report.getRemarks() == null ? "" : report.getRemarks();
+        if (!oldRemarks.isEmpty() && !oldRemarks.endsWith("\n")) {
+            oldRemarks += "\n";
+        }
+        report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
+        reportRepository.save(report);
+    }
+}
 }
