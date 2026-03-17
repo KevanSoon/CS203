@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -346,6 +347,63 @@ class LessonControllerTest {
         mockMvc.perform(get("/api/lesson/root/page").param("title", "Ghost Lesson")
                 .with(user("root").roles("ROOT")))
                 .andExpect(status().is4xxClientError());
+    }
+    // ===== DELETE /api/lesson/{lessonId} (requires ADMIN role, must be creator) =====
+
+    @Test
+    void deleteLesson_withAdminRoleAndCreator_returns200() throws Exception {
+        User user = User.builder().id(123).username("admin").build();
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(delete("/api/lesson/1")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Lesson deleted successfully"));
+
+        verify(lessonService).deleteLesson(1, 123);
+    }
+
+    @Test
+    void deleteLesson_userNotFound_returns400() throws Exception {
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.empty());
+
+        mockMvc.perform(delete("/api/lesson/1")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().is4xxClientError());
+
+        verify(lessonService, never()).deleteLesson(anyInt(), anyInt());
+    }
+
+    @Test
+    void deleteLesson_notCreator_returns403() throws Exception {
+        User user = User.builder().id(123).username("admin").build();
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        doThrow(new AuthorizationDeniedException("You do not have permission to delete this lesson"))
+                .when(lessonService).deleteLesson(1, 123);
+
+        mockMvc.perform(delete("/api/lesson/1")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to delete this lesson"));
+
+        verify(lessonService).deleteLesson(1, 123);
+    }
+
+    @Test
+    void deleteLesson_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(delete("/api/lesson/1"))
+                .andExpect(status().isUnauthorized());
+
+        verify(lessonService, never()).deleteLesson(anyInt(), anyInt());
+    }
+
+    @Test
+    void deleteLesson_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(delete("/api/lesson/1")
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().isForbidden());
+
+        verify(lessonService, never()).deleteLesson(anyInt(), anyInt());
     }
 
     // ===== Helper methods =====

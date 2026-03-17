@@ -1,8 +1,10 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LessonService {
+
     private final LessonRepository lessonRepository;
     private final ChapterRepository chapterRepository;
     private final CardRepository cardRepository;
@@ -57,12 +60,16 @@ public class LessonService {
                 .collect(Collectors.toList());
     }
 
-    /** Return all existing tag names for autocomplete. */
+    /**
+     * Return all existing tag names for autocomplete.
+     */
     public List<String> getAllTags() {
         return lessonRepository.findAllTagNames();
     }
 
-    /** Check whether a lesson title already exists (any status). */
+    /**
+     * Check whether a lesson title already exists (any status).
+     */
     public boolean isTitleTaken(String title) {
         return lessonRepository.countByTitleNotDeleted(title) > 0;
     }
@@ -146,12 +153,12 @@ public class LessonService {
     }
 
     public void submitReview(Integer lessonId, Integer userId, int rating, String feedback) {
-        
+
         System.out.println("lessonId: " + lessonId);
         System.out.println("userId: " + userId);
         System.out.println("rating: " + rating);
         System.out.println("feedback: " + feedback);
-        
+
         if (reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)) {
             throw new RuntimeException("You have already reviewed this lesson");
         }
@@ -198,14 +205,16 @@ public class LessonService {
         ObjectMapper mapper = new ObjectMapper();
         List<CreateChapterRequest> chapterList;
         try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Invalid chapters format");
         }
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
+                });
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
@@ -214,25 +223,27 @@ public class LessonService {
         if (lessonImage != null && !lessonImage.isEmpty()) {
             String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
             lesson.setLessonPictureUrl(imagePath);
-            lesson = lessonRepository.save(lesson); 
+            lesson = lessonRepository.save(lesson);
         }
 
         // 2. Save tags if provided
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) continue;
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
                 // Insert tag if it doesn't exist
                 entityManager.createNativeQuery(
-                    "INSERT IGNORE INTO tag (name) VALUES (:name)")
-                    .setParameter("name", trimmed)
-                    .executeUpdate();
+                        "INSERT IGNORE INTO tag (name) VALUES (:name)")
+                        .setParameter("name", trimmed)
+                        .executeUpdate();
                 // Insert lesson_tagging
                 entityManager.createNativeQuery(
-                    "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
-                    .setParameter("tagName", trimmed)
-                    .setParameter("lessonId", lesson.getId())
-                    .executeUpdate();
+                        "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
+                        .setParameter("tagName", trimmed)
+                        .setParameter("lessonId", lesson.getId())
+                        .executeUpdate();
             }
         }
 
@@ -378,14 +389,16 @@ public class LessonService {
         ObjectMapper mapper = new ObjectMapper();
         List<CreateChapterRequest> chapterList;
         try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Invalid chapters format");
         }
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
+                });
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
@@ -417,23 +430,25 @@ public class LessonService {
 
         // Delete old tags and re-insert
         entityManager.createNativeQuery(
-            "DELETE FROM lesson_tagging WHERE lesson_id = :lessonId")
-            .setParameter("lessonId", lesson.getId())
-            .executeUpdate();
+                "DELETE FROM lesson_tagging WHERE lesson_id = :lessonId")
+                .setParameter("lessonId", lesson.getId())
+                .executeUpdate();
 
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) continue;
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
                 entityManager.createNativeQuery(
-                    "INSERT IGNORE INTO tag (name) VALUES (:name)")
-                    .setParameter("name", trimmed)
-                    .executeUpdate();
+                        "INSERT IGNORE INTO tag (name) VALUES (:name)")
+                        .setParameter("name", trimmed)
+                        .executeUpdate();
                 entityManager.createNativeQuery(
-                    "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
-                    .setParameter("tagName", trimmed)
-                    .setParameter("lessonId", lesson.getId())
-                    .executeUpdate();
+                        "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
+                        .setParameter("tagName", trimmed)
+                        .setParameter("lessonId", lesson.getId())
+                        .executeUpdate();
             }
         }
 
@@ -496,5 +511,19 @@ public class LessonService {
                 "Lesson updated successfully and re-submitted for approval"
         );
     }
-}
 
+    @Transactional
+    public void deleteLesson(Integer lessonId, Integer userId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        // Check if the user is the creator
+        if (!lesson.getCreatedBy().getId().equals(userId)) {
+            throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
+        }
+        if (lesson.getDeletedAt() != null) {
+            throw new RuntimeException("Lesson already deleted");
+        }
+        lesson.setDeletedAt(LocalDateTime.now());
+        lessonRepository.save(lesson);
+    }
+}
