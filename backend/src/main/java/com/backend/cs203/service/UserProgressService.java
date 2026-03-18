@@ -214,8 +214,27 @@ public class UserProgressService {
         // INSERT IGNORE — idempotent, no duplicate entry error
         userCardProgressRepository.insertIgnore(userId, cardId);
 
-        // Upsert lesson progress row + check if lesson is now fully completed
+        // Upsert lesson progress row (quiz is always the final gate,
+        // so completion is checked there — not on every card flip)
         Integer lessonId = card.getChapter().getLesson().getId();
+        ensureLessonProgressExists(userId, lessonId);
+    }
+
+    /**
+     * Called by the controller after a quiz result is saved.
+     * Resolves the chapter → lesson, then checks whether every
+     * chapter (cards + quiz) is now fully completed.
+     */
+    @Transactional
+    public void checkLessonCompletionForChapter(String username, Integer chapterId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Integer userId = user.getId();
+
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new RuntimeException("Chapter not found"));
+        Integer lessonId = chapter.getLesson().getId();
+
         ensureLessonProgressExists(userId, lessonId);
         checkAndUpdateLessonCompletion(userId, lessonId);
     }
