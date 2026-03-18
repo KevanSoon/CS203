@@ -12,6 +12,7 @@ import com.backend.cs203.dto.quiz.QuizResultDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.QuizResultService;
+import com.backend.cs203.service.UserProgressService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,16 @@ import lombok.RequiredArgsConstructor;
 public class QuizResultController {
 
     private final QuizResultService quizResultService;
+    private final UserProgressService userProgressService;
 
     @PostMapping
     public ResponseEntity<Void> saveResult(
         @RequestBody QuizResultDTO dto,
         Authentication authentication
     ) {
-        quizResultService.saveResult(authentication.getName(), dto);
+        String username = authentication.getName();
+        quizResultService.saveResult(username, dto);
+        userProgressService.checkLessonCompletionForChapter(username, dto.getChapterId());
         return ResponseEntity.ok().build();
     }
 }
