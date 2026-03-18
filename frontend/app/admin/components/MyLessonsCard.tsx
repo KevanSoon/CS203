@@ -1,10 +1,13 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { BookOpen, Pencil, Trash2, ChevronDown, BadgeAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
+
 import { Lesson } from "@/app/admin/page";
 import { parseTags, getVisibleTags } from "@/app/utils/tags";
 import { Report, ReportType } from "@/app/webadmin/page";
 import { ReportsModal } from "./ReportModal";
+import toast from "react-hot-toast";
+import DeleteModal from "./DeleteModal";
 
 type FilterValue = "pending" | "rejected";
 interface MyLessonsCardProps {
@@ -30,11 +33,18 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(true);
 	const [appFilter, setAppFilter] = useState<FilterValue>("pending");
+	const [localData, setLocalData] = useState(data);
+	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+	const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null);
 
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 	const [selectedLessonTitle, setSelectedLessonTitle] = useState("");
 	const [selectedReports, setSelectedReports] = useState<Report[]>([]);
 	const [reportOverrides, setReportOverrides] = useState<Record<string, Report[]>>({});
+
+	useEffect(() => {
+		setLocalData(data);
+	}, [data]);
 
 	function openReportsModal(lessonTitle: string, reports?: unknown[]) {
 		setSelectedLessonTitle(lessonTitle);
@@ -46,6 +56,11 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 		setIsReportModalOpen(false);
 		setSelectedLessonTitle("");
 		setSelectedReports([]);
+	}
+
+	function closeDeleteModal() {
+		setDeleteModalOpen(false);
+		setLessonToDelete(null);
 	}
 
 	function renderPendingTag(status: string) {
@@ -67,9 +82,9 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 		);
 	}
 	const displayData = useMemo(() => {
-		if (title !== "Applications") return data;
-		return data.filter((l) => (l.status ?? "").toLowerCase() === appFilter);
-	}, [title, data, appFilter]);
+		if (title !== "Applications") return localData;
+		return localData.filter((l) => (l.status ?? "").toLowerCase() === appFilter);
+	}, [title, localData, appFilter]);
 
 	function getHighestReportType(reports?: Array<{ type?: string | null }>): ReportType | null {
 		if (!reports || reports.length === 0) return null;
@@ -116,7 +131,12 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 							const mergedReports = (reportOverrides[record.title] ?? record.reports ?? []) as Report[];
 							const showUpdateDot = mergedReports.some((rep) => (rep.lastUpdate ?? "").toLowerCase() !== "admin");
 							return (
-								<div key={i} className="p-4 rounded-lg border border-border hover:bg-border/50 transition-colors cursor-pointer">
+								<div
+									key={i}
+									className={
+										`p-4 rounded-lg border border-border hover:bg-border/50 transition-colors cursor-pointer` +
+										(record.deletedAt ? " opacity-50 pointer-events-none grayscale" : "")
+									}>
 									<div className="flex items-start gap-3">
 										<div className="hidden sm:block p-3 rounded-lg bg-primary/10 shrink-0">
 											<BookOpen className="h-5 w-5 text-primary" />
@@ -125,8 +145,8 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 											<div className="flex items-start justify-between gap-2">
 												<div className="flex-1">
 													<p className="text-sm font-semibold text-foreground mb-1">
-														{record.title} {record.status === "suspended" ? renderSuspendedTag() : <></>}{" "}
-														{title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
+														{record.title} {record.deletedAt ? "(Deleted on " + new Date(record.createdAt).toUTCString().slice(0, -4) + ")" : ""}
+														{record.status === "suspended" && !record.deletedAt ? renderSuspendedTag() : <></>} {title === "Applications" ? renderPendingTag(record.status ?? "") : ""}
 													</p>
 												</div>
 												{record.status === "pending" ? (
@@ -144,8 +164,8 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 															<Trash2 className="h-4 w-4" />
 														</button>
 													</div>
-												) : (record.reports?.length ?? 0) > 0 && record.status !== "suspended" ? (
-													<>
+												) : (record.reports?.length ?? 0) > 0 && record.status !== "suspended" && !record.deletedAt ? (
+													<div className="flex items-center gap-2">
 														<button
 															type="button"
 															onClick={() => openReportsModal(record.title, mergedReports)}
@@ -156,8 +176,27 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 															<span>{record.reports?.length ?? 0}</span>
 															{showUpdateDot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70 group-hover:opacity-100" />}
 														</button>
-													</>
-												) : null}
+														<Trash2
+															className="h-4 w-4"
+															onClick={(e) => {
+																e.stopPropagation();
+																setLessonToDelete(record);
+																setDeleteModalOpen(true);
+															}}
+														/>
+													</div>
+												) : !record.deletedAt ? (
+													<Trash2
+														className="h-4 w-4"
+														onClick={(e) => {
+															e.stopPropagation();
+															setLessonToDelete(record);
+															setDeleteModalOpen(true);
+														}}
+													/>
+												) : (
+													<></>
+												)}
 											</div>
 											<p className="text-sm text-muted-foreground mb-1">{record.description}</p>
 											{tagsArray.length > 0 && (
@@ -199,6 +238,14 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 						};
 					});
 				}}
+			/>
+			<DeleteModal
+				open={deleteModalOpen}
+				onClose={closeDeleteModal}
+				lesson={lessonToDelete}
+				setLessonToDelete={setLessonToDelete}
+				setDeleteModalOpen={setDeleteModalOpen}
+				setLocalData={setLocalData}
 			/>
 		</div>
 	);

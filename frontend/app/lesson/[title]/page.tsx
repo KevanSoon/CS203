@@ -9,6 +9,10 @@ import { MessageCircle } from "lucide-react";
 import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
+import ReviewModal from "@/app/components/ReviewModal";
+import ReviewViewModal from "@/app/components/ReviewViewModal";
+import { ReportModal } from "@/app/components/ReportModal";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // Backend DTO types
 interface CardDTO {
@@ -146,8 +150,15 @@ export default function LessonRoadmapPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lessonTitle = decodeURIComponent(title);
-
   const { lessonProgress, setLessonProgress, markCardCompleted, markQuizCompleted } = useProgressStore();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [showReviewView, setShowReviewView] = useState(false);
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const router = useRouter();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -196,6 +207,21 @@ export default function LessonRoadmapPage({
 
     fetchLessonPage();
   }, [lessonTitle]);
+
+  useEffect(() => {
+    if (searchParams.get("report") === "true") {
+      setReportOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleReportClose = () => {
+    setReportOpen(false);
+    setSelected("");
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("report")
+    router.replace(`/lesson/${encodeURIComponent(lessonTitle)}?${params.toString()}`)
+  }
 
   const currentChapter = chapters[selectedChapter];
 
@@ -257,6 +283,30 @@ export default function LessonRoadmapPage({
     setSelectedNode(null);
   };
 
+  const lessonCompleted =
+    chapters.length > 0 &&
+    chapters.every((chapter) =>
+      chapter.nodes.length > 0 &&
+      chapter.nodes.every((node) => node.status === "completed")
+    );
+  
+  useEffect(() => {
+    const checkReview = async () => {
+      if (!lessonCompleted || !lessonId || reviewSubmitted) return;
+      try {
+        const { data } = await api.get(`/api/lesson/${lessonId}/review`);
+        if (data?.review?.hasReviewed) {
+          setReviewSubmitted(true);
+        } else {
+          setShowReviewModal(true);
+        }
+      } catch (err) {
+        console.error (err);
+      }
+    };
+    checkReview();
+  }, [lessonCompleted, lessonId, reviewSubmitted]);
+
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar
@@ -269,7 +319,10 @@ export default function LessonRoadmapPage({
         completedChapterIds={chapters
           .filter((c) => c.nodes.length > 0 && c.nodes.every((n) => n.status === "completed"))
           .map((c) => c.id)
-  }
+        }
+        showReviewTab={reviewSubmitted}
+        onReviewSelect={() => setShowReviewView(true)}
+        onReportClick={() => setReportOpen(true)}
       />
 
       {/* Left: Roadmap */}
@@ -389,6 +442,29 @@ export default function LessonRoadmapPage({
             <AIChatAssistant onClose={() => setChatOpen(false)} />
           </div>
         </div>
+      )}
+
+      {showReviewModal && lessonId && (
+        <ReviewModal
+          lessonId={lessonId}
+          onClose={() => setShowReviewModal(false)}
+          onSubmitted={() => setReviewSubmitted(true)}
+        />
+      )}
+
+      {showReviewView && lessonId && (
+        <ReviewViewModal
+          lessonId={lessonId}
+          onClose={() => setShowReviewView(false)}
+        />
+      )}
+      
+      {reportOpen && (
+        <ReportModal
+          lessonId={lessonId}
+          chapters={chapters.map(c => ({ id: c.id, title: c.title}))}
+          onClose={handleReportClose}
+        />
       )}
     </div>
   );

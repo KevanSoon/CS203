@@ -1,27 +1,35 @@
 package com.backend.cs203.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.CreateLessonRequest;
 import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
+import com.backend.cs203.dto.review.ReviewDTO;
+import com.backend.cs203.dto.review.ReviewRequestDTO;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.LessonService;
 
@@ -35,6 +43,7 @@ public class LessonController {
 
     private final LessonService lessonService;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/")
@@ -72,6 +81,15 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.getUserCreatedLessonApplications(user.getId()));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/stats")
+    public ResponseEntity<AdminLessonStatsDTO> getAdminLessonStats(Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+        return ResponseEntity.ok(lessonService.getAdminLessonStats(user.getId()));
+    }
+
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/page")
     public ResponseEntity<LessonPageDTO> getLessonPage(@RequestParam String title) {
@@ -92,12 +110,33 @@ public class LessonController {
     @PostMapping("/{lessonId}/review")
     public ResponseEntity<String> submitReview(
             @PathVariable Integer lessonId,
-            @RequestParam int rating,
+            @RequestBody ReviewRequestDTO request,
             Authentication authentication) {
+
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        lessonService.submitReview(lessonId, user.getId(), rating);
+        lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
         return ResponseEntity.ok("Review submitted successfully");
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{lessonId}/review")
+    public ResponseEntity<Map<String, Object>> getUserReview(
+            @PathVariable Integer lessonId,
+            Authentication authentication) {
+
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean hasReviewed = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("hasReviewed", hasReviewed);
+        if (hasReviewed) {
+            ReviewDTO reviewDto = lessonService.getUserReview(lessonId, user.getId());
+            response.put("review", reviewDto);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -154,5 +193,16 @@ public class LessonController {
         boolean taken = lessonService.isTitleTaken(title);
         return ResponseEntity.ok(java.util.Map.of("available", !taken));
     }
-}
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{lessonId}")
+    public ResponseEntity<String> deleteLesson(
+            @PathVariable Integer lessonId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+        lessonService.deleteLesson(lessonId, user.getId());
+        return ResponseEntity.ok("Lesson deleted successfully");
+    }
+}

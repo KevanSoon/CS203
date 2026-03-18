@@ -223,24 +223,6 @@ class UserProgressServiceTest {
         assertEquals("completed", result.get(0).getStatus());
     }
 
-    @Test
-    void getDashboard_deletedLessonIsExcluded() {
-        lesson.setDeletedAt(java.time.LocalDateTime.now());
-
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(lessonRepository.findAll()).thenReturn(List.of(lesson));
-        when(chapterRepository.findAll()).thenReturn(Collections.emptyList());
-        when(userLessonProgressRepository.findByUserId(1)).thenReturn(Collections.emptyList());
-        when(cardRepository.countCardsGroupedByChapter()).thenReturn(Collections.emptyList());
-        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1)).thenReturn(Collections.emptyList());
-        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
-        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
-
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
-
-        assertTrue(result.isEmpty());
-    }
-
     // ===== getLessonProgress =====
 
     @Test

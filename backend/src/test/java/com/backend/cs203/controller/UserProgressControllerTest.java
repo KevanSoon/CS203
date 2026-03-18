@@ -132,12 +132,12 @@ class UserProgressControllerTest {
     }
 
     @Test
-    void getLessonProgress_lessonNotFound_returns500() throws Exception {
+    void getLessonProgress_lessonNotFound_returns400() throws Exception {
         when(userProgressService.getLessonProgress("testuser", 999))
                 .thenThrow(new RuntimeException("Lesson not found"));
 
         mockMvc.perform(get("/api/progress/lesson/999").with(user("testuser").roles("USER")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -168,7 +168,7 @@ class UserProgressControllerTest {
     }
 
     @Test
-    void markCardComplete_cardNotFound_returns500() throws Exception {
+    void markCardComplete_cardNotFound_returns400() throws Exception {
         org.mockito.Mockito.doThrow(new RuntimeException("Card not found"))
                 .when(userProgressService).markCardComplete(eq("testuser"), eq(9999));
 
@@ -176,7 +176,7 @@ class UserProgressControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"cardId\": 9999}")
                         .with(user("testuser").roles("USER")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

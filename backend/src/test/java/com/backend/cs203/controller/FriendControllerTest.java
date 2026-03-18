@@ -71,12 +71,12 @@ class FriendControllerTest {
     }
 
     @Test
-    void getMyFriends_serviceThrowsException_returns500() throws Exception {
+    void getMyFriends_serviceThrowsException_returns400() throws Exception {
         when(friendService.getFriends("testuser"))
                 .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     // ===== GET /api/friendship/pending =====

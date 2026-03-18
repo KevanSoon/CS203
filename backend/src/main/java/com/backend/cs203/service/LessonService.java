@@ -1,8 +1,10 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +13,7 @@ import com.backend.cs203.dto.card.CardDTO;
 import com.backend.cs203.dto.card.CreateCardRequest;
 import com.backend.cs203.dto.chapter.ChapterDTO;
 import com.backend.cs203.dto.chapter.CreateChapterRequest;
+import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.CreateLessonRequest;
 import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
@@ -20,17 +23,21 @@ import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.quiz.CreateQuizRequest;
 import com.backend.cs203.dto.quiz.QuizDTO;
+import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Quiz;
+import com.backend.cs203.entity.Report;
 import com.backend.cs203.entity.Review;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.QuizRepository;
+import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,12 +48,15 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LessonService {
+
     private final LessonRepository lessonRepository;
     private final ChapterRepository chapterRepository;
     private final CardRepository cardRepository;
     private final QuizRepository quizRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final ReportRepository reportRepository;
     private final SupabaseStorageService supabaseStorageService;
     private final EntityManager entityManager;
 
@@ -56,12 +66,16 @@ public class LessonService {
                 .collect(Collectors.toList());
     }
 
-    /** Return all existing tag names for autocomplete. */
+    /**
+     * Return all existing tag names for autocomplete.
+     */
     public List<String> getAllTags() {
         return lessonRepository.findAllTagNames();
     }
 
-    /** Check whether a lesson title already exists (any status). */
+    /**
+     * Check whether a lesson title already exists (any status).
+     */
     public boolean isTitleTaken(String title) {
         return lessonRepository.countByTitleNotDeleted(title) > 0;
     }
@@ -84,6 +98,14 @@ public class LessonService {
         return lessonRepository.findUserCreatedLessonApplications(userId);
     }
 
+    public AdminLessonStatsDTO getAdminLessonStats(int adminId) {
+        long totalLessons = lessonRepository.countPendingAndApprovedByUserId(adminId);
+        long publishedLessons = lessonRepository.countPublishedByUserId(adminId);
+        long totalAttempts = userLessonProgressRepository.countAttemptsByAdminId(adminId);
+        long totalCompletions = userLessonProgressRepository.countCompletionsByAdminId(adminId);
+        return new AdminLessonStatsDTO(totalLessons, publishedLessons, totalAttempts, totalCompletions);
+    }
+
     private LessonSummaryResponse toResponseWithSignedUrl(LessonSummaryDTO dto) {
         String picUrl = dto.getLessonPictureUrl();
         String signedUrl = (picUrl != null)
@@ -96,7 +118,9 @@ public class LessonService {
                 dto.getCreatedBy(),
                 dto.getCreatedAt(),
                 dto.getTags(),
-                signedUrl
+                signedUrl,
+                dto.getDeletedAt(),
+                dto.getStatus()
         );
     }
 
@@ -144,7 +168,13 @@ public class LessonService {
         );
     }
 
-    public void submitReview(Integer lessonId, Integer userId, int rating) {
+    public void submitReview(Integer lessonId, Integer userId, int rating, String feedback) {
+
+        System.out.println("lessonId: " + lessonId);
+        System.out.println("userId: " + userId);
+        System.out.println("rating: " + rating);
+        System.out.println("feedback: " + feedback);
+
         if (reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)) {
             throw new RuntimeException("You have already reviewed this lesson");
         }
@@ -159,9 +189,23 @@ public class LessonService {
 
         Review review = new Review();
         review.setRating((byte) rating);
+        review.setFeedback(feedback);
         review.setLesson(lesson);
         review.setReviewedBy(user);
         reviewRepository.save(review);
+    }
+
+    public ReviewDTO getUserReview(Integer lessonId, Integer userId) {
+        Review review = reviewRepository
+                .findByReviewedByIdAndLessonId(userId, lessonId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        return new ReviewDTO(
+                lessonId,
+                userId,
+                review.getRating(),
+                review.getFeedback()
+        );
     }
 
     @Transactional
@@ -177,14 +221,16 @@ public class LessonService {
         ObjectMapper mapper = new ObjectMapper();
         List<CreateChapterRequest> chapterList;
         try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Invalid chapters format");
         }
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
+                });
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
@@ -193,25 +239,27 @@ public class LessonService {
         if (lessonImage != null && !lessonImage.isEmpty()) {
             String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
             lesson.setLessonPictureUrl(imagePath);
-            lesson = lessonRepository.save(lesson); 
+            lesson = lessonRepository.save(lesson);
         }
 
         // 2. Save tags if provided
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) continue;
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
                 // Insert tag if it doesn't exist
                 entityManager.createNativeQuery(
-                    "INSERT IGNORE INTO tag (name) VALUES (:name)")
-                    .setParameter("name", trimmed)
-                    .executeUpdate();
+                        "INSERT IGNORE INTO tag (name) VALUES (:name)")
+                        .setParameter("name", trimmed)
+                        .executeUpdate();
                 // Insert lesson_tagging
                 entityManager.createNativeQuery(
-                    "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
-                    .setParameter("tagName", trimmed)
-                    .setParameter("lessonId", lesson.getId())
-                    .executeUpdate();
+                        "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
+                        .setParameter("tagName", trimmed)
+                        .setParameter("lessonId", lesson.getId())
+                        .executeUpdate();
             }
         }
 
@@ -357,14 +405,16 @@ public class LessonService {
         ObjectMapper mapper = new ObjectMapper();
         List<CreateChapterRequest> chapterList;
         try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
+            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Invalid chapters format");
         }
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
+                });
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
@@ -396,23 +446,25 @@ public class LessonService {
 
         // Delete old tags and re-insert
         entityManager.createNativeQuery(
-            "DELETE FROM lesson_tagging WHERE lesson_id = :lessonId")
-            .setParameter("lessonId", lesson.getId())
-            .executeUpdate();
+                "DELETE FROM lesson_tagging WHERE lesson_id = :lessonId")
+                .setParameter("lessonId", lesson.getId())
+                .executeUpdate();
 
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) continue;
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
                 entityManager.createNativeQuery(
-                    "INSERT IGNORE INTO tag (name) VALUES (:name)")
-                    .setParameter("name", trimmed)
-                    .executeUpdate();
+                        "INSERT IGNORE INTO tag (name) VALUES (:name)")
+                        .setParameter("name", trimmed)
+                        .executeUpdate();
                 entityManager.createNativeQuery(
-                    "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
-                    .setParameter("tagName", trimmed)
-                    .setParameter("lessonId", lesson.getId())
-                    .executeUpdate();
+                        "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
+                        .setParameter("tagName", trimmed)
+                        .setParameter("lessonId", lesson.getId())
+                        .executeUpdate();
             }
         }
 
@@ -475,5 +527,30 @@ public class LessonService {
                 "Lesson updated successfully and re-submitted for approval"
         );
     }
-}
 
+    @Transactional
+public void deleteLesson(Integer lessonId, Integer userId) {
+    Lesson lesson = lessonRepository.findById(lessonId)
+            .orElseThrow(() -> new RuntimeException("Lesson not found"));
+    if (!lesson.getCreatedBy().getId().equals(userId)) {
+        throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
+    }
+    if (lesson.getDeletedAt() != null) {
+        throw new RuntimeException("Lesson already deleted");
+    }
+    lesson.setDeletedAt(LocalDateTime.now());
+    lessonRepository.save(lesson);
+
+    // --- Close all open reports for this lesson ---
+    List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
+    for (Report report : openReports) {
+        report.setStatus(Report.ReportStatus.closed);
+        String oldRemarks = report.getRemarks() == null ? "" : report.getRemarks();
+        if (!oldRemarks.isEmpty() && !oldRemarks.endsWith("\n")) {
+            oldRemarks += "\n";
+        }
+        report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
+        reportRepository.save(report);
+    }
+}
+}

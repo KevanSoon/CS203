@@ -6,24 +6,27 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.anyInt;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.backend.cs203.config.SecurityConfig;
+import com.backend.cs203.dto.report.ReportCreateDTO;
 import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
@@ -46,6 +49,82 @@ class ReportControllerTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+
+    @Test
+    void createReport_userAuthenticated_returns200() throws Exception {
+        // Arrange
+        User userEntity = User.builder().id(7).username("testuser").build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(userEntity));
+        doNothing().when(reportService).createReport(any(ReportCreateDTO.class), any(User.class));
+
+        String requestBody = """
+            {
+                "title": "Broken card",
+                "description": "The card content is incorrect",
+                "status": "reported",
+                "type": "high",
+                "lessonId": 10,
+                "chapterId": 5
+            }
+            """;
+
+        // Act & Assert
+        mockMvc.perform(post("/api/report/user")
+                        .with(user("testuser").roles("USER"))
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isOk());
+
+        verify(reportService).createReport(any(ReportCreateDTO.class), eq(userEntity));
+    }
+
+    @Test
+    void createReport_userNotFound_returns400() throws Exception {
+        // Arrange
+        when(userRepository.findByUsername("missinguser")).thenReturn(Optional.empty());
+
+        String requestBody = """
+            {
+                "title": "Broken card",
+                "description": "The card content is incorrect",
+                "status": "reported",
+                "type": "high",
+                "lessonId": 10,
+                "chapterId": 5
+            }
+            """;
+
+        // Act & Assert
+        mockMvc.perform(post("/api/report/user")
+                        .with(user("missinguser").roles("USER"))
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().is4xxClientError());
+
+        verify(reportService, never()).createReport(any(ReportCreateDTO.class), any(User.class));
+    }
+
+    @Test
+    void createReport_unauthenticated_returns401() throws Exception {
+        String requestBody = """
+            {
+                "title": "Broken card",
+                "description": "The card content is incorrect",
+                "status": "reported",
+                "type": "high",
+                "lessonId": 10,
+                "chapterId": 5
+            }
+            """;
+
+        mockMvc.perform(post("/api/report/user")
+                        .contentType("application/json")
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+
+        verify(reportService, never()).createReport(any(ReportCreateDTO.class), any(User.class));
+    }
 
     // ===== GET /api/report/admin =====
     @Test
@@ -82,11 +161,11 @@ class ReportControllerTest {
     }
 
     @Test
-    void getUserCreatedLessonReports_userNotFound_returns500() throws Exception {
+    void getUserCreatedLessonReports_userNotFound_returns400() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/report/admin").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
 
         verify(reportService, never()).getUserCreatedLessonReports(anyInt());
     }
@@ -196,6 +275,11 @@ class ReportControllerTest {
             public LocalDateTime getUpdatedAt() {
                 return LocalDateTime.of(2026, 3, 6, 11, 0);
             }
+
+            @Override
+            public LocalDateTime getLessonDeletedAt() {
+                return LocalDateTime.of(2026, 3, 6, 11, 0);
+            }
         };
     }
     // ===== PATCH /api/report/root =====
@@ -234,7 +318,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportStatus_serviceThrows_returns500() throws Exception {
+    void updateReportStatus_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportStatus(999, "closed");
 
@@ -243,7 +327,7 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("status", "closed")
                         .with(user("rootuser").roles("ROOT"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 
     // ===== PATCH /api/report/root/suspend =====
@@ -282,7 +366,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportStatusAndSuspendLesson_serviceThrows_returns500() throws Exception {
+    void updateReportStatusAndSuspendLesson_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportStatusAndSuspendLesson(999, "resolved");
 
@@ -291,7 +375,7 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("status", "resolved")
                         .with(user("rootuser").roles("ROOT"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 
     // ===== PATCH /api/report/admin/remarks =====
@@ -340,7 +424,7 @@ class ReportControllerTest {
     }
 
     @Test
-    void updateReportRemarks_serviceThrows_returns500() throws Exception {
+    void updateReportRemarks_serviceThrows_returns400() throws Exception {
         doThrow(new RuntimeException("Report not found"))
                 .when(reportService).updateReportRemarks(999, "Reviewed and fixed");
 
@@ -349,6 +433,6 @@ class ReportControllerTest {
                         .param("reportId", "999")
                         .param("remarks", "Reviewed and fixed")
                 .with(user("adminuser").roles("ADMIN"))
-        ).andExpect(status().is5xxServerError());
+        ).andExpect(status().is4xxClientError());
     }
 }
