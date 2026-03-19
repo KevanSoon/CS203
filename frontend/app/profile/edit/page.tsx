@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { PencilLine, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 
-const BACKEND_PUBLIC_BASE = "http://localhost:8080";
-
 type ProfileResponse = {
   username?: string;
   email?: string;
@@ -122,10 +120,7 @@ export default function EditProfilePage() {
     return true;
   }, [emailErr, imageErr, password, passwordErr, confirmErr]);
 
-  const existingPic =
-    profilePictureUrl && profilePictureUrl.startsWith("/")
-      ? `${BACKEND_PUBLIC_BASE}${profilePictureUrl}`
-      : profilePictureUrl;
+  const existingPic = profilePictureUrl || "";
 
   const shownPic = previewUrl || existingPic;
 
@@ -214,7 +209,6 @@ export default function EditProfilePage() {
                       alt="Profile picture"
                       fill
                       className="object-cover"
-                      unoptimized
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl">

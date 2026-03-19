@@ -19,6 +19,7 @@ import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
+import com.backend.cs203.dto.lesson.LessonReviewResponse;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.quiz.CreateQuizRequest;
@@ -552,5 +553,26 @@ public void deleteLesson(Integer lessonId, Integer userId) {
         report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
         reportRepository.save(report);
     }
+}
+
+public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
+    return reviewRepository
+            .findByLessonIdOrderByCreatedAtDesc(lessonId)
+            .stream()
+            .map(r -> {
+                User user = r.getReviewedBy();
+                String avatarUrl = user.getProfilePictureUrl() != null
+                        ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
+                        : null;
+
+                return new LessonReviewResponse(
+                        r.getId(),
+                        user.getUsername(),
+                        avatarUrl,
+                        (int) r.getRating(),
+                        r.getFeedback()
+                );
+            })
+            .collect(Collectors.toList());
 }
 }
