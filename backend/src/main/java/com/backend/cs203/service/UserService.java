@@ -2,6 +2,7 @@ package com.backend.cs203.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,58 @@ public class UserService {
     private final SupabaseStorageService supabaseStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private void validatePassword(String password) {
+        if (password.length() < 8 || password.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Password must be 8–100 characters long");
+        }
+
+        boolean hasLower = false;
+        boolean hasUpper = false;
+        boolean hasDigit = false;
+
+        for (int i = 0; i < password.length(); i++) {
+            char c = password.charAt(i);
+
+            if (c >= 'a' && c <= 'z') hasLower = true;
+            else if (c >= 'A' && c <= 'Z') hasUpper = true;
+            else if (c >= '0' && c <= '9') hasDigit = true;
+
+            if (hasLower && hasUpper && hasDigit) break;
+        }
+
+        if (!hasLower || !hasUpper || !hasDigit) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Password must contain uppercase, lowercase, and a number");
+        }
+    }
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\\.[A-Za-z]{2,}$");
+
+    private String validateEmail(String email) {
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+
+        email = email.trim();
+
+        if (email.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+
+        if (email.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email too long (max 100)");
+        }
+
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
+        }
+
+        return email;
+    }
+
+
 
     @Transactional
     public RegisterResponse registerUser(RegisterRequest request) {
@@ -159,14 +212,8 @@ public class UserService {
         if (email == null || email.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
-        email = email.trim();
-        if (email.length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email too long (max 100)");
-        }
-        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email format");
-        }
-
+        
+        email = validateEmail(request.getEmail());
         user.setEmail(email);
 
         // ✅ password optional
@@ -192,8 +239,6 @@ public class UserService {
             user.setProfilePictureUrl(newPath);
         }
 
-
-
         User saved = userRepository.save(user);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
     }
@@ -205,24 +250,6 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
         return auth.getName();
-    }
-
-    private void validatePassword(String password) {
-        if (password.length() < 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too short (min 8)");
-        }
-        if (password.length() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too long (max 100)");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one lowercase letter");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one uppercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one number");
-        }
     }
 
     public List<UserSearchResult> searchUsers(String username) {
