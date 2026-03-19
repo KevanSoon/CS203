@@ -1,5 +1,6 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -498,6 +499,96 @@ class UserProgressServiceTest {
                 p.getStatus() == ProgressStatus.completed
             )
         );
+    }
+
+    // ===== updateStreak (via checkLessonCompletionForChapter) =====
+
+    /** Stubs the minimal "all cards done, no quiz" lesson completion scenario. */
+    private void stubLessonCompletion(UserLessonProgress progress) {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
+                .thenReturn(Optional.of(progress));
+        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
+        when(cardRepository.countCardsGroupedByChapter()).thenReturn(groupedRow(100, 1L));
+        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1)).thenReturn(groupedRow(100, 1L));
+        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
+        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    }
+
+    private UserLessonProgress inProgressLesson() {
+        UserLessonProgress p = new UserLessonProgress();
+        p.setUserId(1);
+        p.setLessonId(10);
+        p.setStatus(ProgressStatus.in_progress);
+        return p;
+    }
+
+    @Test
+    void updateStreak_alreadyCountedToday_userSaveNotCalled() {
+        user.setStreak(5);
+        user.setLastStreakDate(LocalDate.now());
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateStreak_consecutiveDay_incrementsStreak() {
+        user.setStreak(3);
+        user.setLastStreakDate(LocalDate.now().minusDays(1));
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 4 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_brokenStreak_resetsToOne() {
+        user.setStreak(7);
+        user.setLastStreakDate(LocalDate.now().minusDays(3));
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 1 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_noLastStreakDate_setsStreakToOne() {
+        user.setStreak(0);
+        user.setLastStreakDate(null);
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 1 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_lessonAlreadyCompleted_userSaveNotCalled() {
+        user.setStreak(3);
+        user.setLastStreakDate(LocalDate.now().minusDays(1));
+
+        UserLessonProgress alreadyCompleted = new UserLessonProgress();
+        alreadyCompleted.setUserId(1);
+        alreadyCompleted.setLessonId(10);
+        alreadyCompleted.setStatus(ProgressStatus.completed);
+        stubLessonCompletion(alreadyCompleted);
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test

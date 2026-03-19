@@ -1,5 +1,6 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -297,6 +299,83 @@ class UserServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> userService.updateMyProfile(request));
         assertEquals(400, ex.getStatusCode().value());
+    }
+
+    // ===== checkAndResetStreak (via getMyProfile) =====
+
+    @Test
+    void getMyProfile_brokenStreak_resetsToZero() {
+        setAuthentication("testuser");
+        User user = User.builder()
+                .username("testuser").email("test@example.com")
+                .streak(5).lastStreakDate(LocalDate.now().minusDays(3))
+                .build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(0, result.getStreak());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void getMyProfile_missedExactlyTwoDays_resetsToZero() {
+        setAuthentication("testuser");
+        User user = User.builder()
+                .username("testuser").email("test@example.com")
+                .streak(3).lastStreakDate(LocalDate.now().minusDays(2))
+                .build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(0, result.getStreak());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void getMyProfile_streakValidYesterday_noReset() {
+        setAuthentication("testuser");
+        User user = User.builder()
+                .username("testuser").email("test@example.com")
+                .streak(3).lastStreakDate(LocalDate.now().minusDays(1))
+                .build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(3, result.getStreak());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getMyProfile_streakCountedToday_noReset() {
+        setAuthentication("testuser");
+        User user = User.builder()
+                .username("testuser").email("test@example.com")
+                .streak(4).lastStreakDate(LocalDate.now())
+                .build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(4, result.getStreak());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getMyProfile_noStreakYet_noReset() {
+        setAuthentication("testuser");
+        User user = User.builder()
+                .username("testuser").email("test@example.com")
+                .streak(0).lastStreakDate(null)
+                .build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(0, result.getStreak());
+        verify(userRepository, never()).save(any(User.class));
     }
 
     // ===== searchUsers =====
