@@ -58,7 +58,7 @@ class UserProgressServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.builder().id(1).username("testuser").build();
+        user = User.builder().id(1).username("testuser").streak(0).build();
 
         lesson = new Lesson();
         lesson.setId(10);
@@ -460,6 +460,7 @@ class UserProgressServiceTest {
             .thenReturn(groupedRow(100, 2L)); // all cards done
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(List.of(100));
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(List.of(100)); // quiz done
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
         userProgressService.checkLessonCompletionForChapter("testuser", 100);
 

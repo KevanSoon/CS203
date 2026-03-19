@@ -94,7 +94,9 @@ public class UserService {
         return new UserResponse(
             user.getUsername(),
             user.getEmail(),
-            signedUrl
+            signedUrl,
+            user.getStreak(),
+            user.getLastStreakDate()
         );
     }
 
@@ -195,7 +197,8 @@ public class UserService {
 
 
         User saved = userRepository.save(user);
-        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
+        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
+                saved.getStreak(), saved.getLastStreakDate());
     }
 
     private String requireUsername() {

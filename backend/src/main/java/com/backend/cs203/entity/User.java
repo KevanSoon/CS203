@@ -1,6 +1,7 @@
 package com.backend.cs203.entity;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,6 +35,9 @@ public class User {
     private UserType usertype;
 
     private Integer streak;
+
+    @Column(name = "last_streak_date")
+    private LocalDate lastStreakDate;
 
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
