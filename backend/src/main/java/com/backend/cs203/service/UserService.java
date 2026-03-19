@@ -1,6 +1,7 @@
 package com.backend.cs203.service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,7 @@ public class UserService {
         return new RegisterResponse(true, "User registered successfully", userData);
     }
 
+    @Transactional
     public UserResponse getMyProfile() {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -85,6 +87,8 @@ public class UserService {
         if (user.getDeactivatedAt() != null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
         }
+
+        checkAndResetStreak(user);
 
         String profilePictureUrl = user.getProfilePictureUrl();
         String signedUrl = (profilePictureUrl != null)
@@ -199,6 +203,14 @@ public class UserService {
         User saved = userRepository.save(user);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
                 saved.getStreak(), saved.getLastStreakDate());
+    }
+
+    private void checkAndResetStreak(User user) {
+        LocalDate lastStreakDate = user.getLastStreakDate();
+        if (lastStreakDate != null && lastStreakDate.isBefore(LocalDate.now().minusDays(1))) {
+            user.setStreak(0);
+            userRepository.save(user);
+        }
     }
 
     private String requireUsername() {
