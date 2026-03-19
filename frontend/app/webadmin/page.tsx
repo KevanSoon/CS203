@@ -131,15 +131,27 @@ export default function DashboardPage() {
 		setLessons((prev) => prev.map((lesson) => (lesson.title === title ? { ...lesson, status } : lesson)));
 	};
 
-	const handleApprove = (title: string) => {
-		updateLessonStatus(title, "approved");
-		showToast(`"${title}" has been approved for publishing.`, "success");
-	};
+	const handleApprove = async (title: string) => {
+		try {
+			await api.patch("/api/lesson/applications/review", { title, action: "approve" })
+			updateLessonStatus(title, "approved")
+			showToast(`"${title}" has been approved for publishing.`, "success")
+		} catch (err) {
+			console.error(err)
+			showToast(`Failed to approve "${title}".`, "error")
+		}
+	}
 
-	const handleReject = (title: string) => {
-		updateLessonStatus(title, "rejected");
-		showToast(`"${title}" has been rejected.`, "error");
-	};
+	const handleReject = async (title: string) => {
+		try {
+			await api.patch("/api/lesson/applications/review", { title, action: "reject" })
+			updateLessonStatus(title, "rejected")
+			showToast(`"${title}" has been rejected.`, "error")
+		} catch (err) {
+			console.error(err)
+			showToast(`Failed to reject "${title}".`, "error")
+		}
+	}
 
 	return (
 		<div className="flex min-h-screen bg-background">

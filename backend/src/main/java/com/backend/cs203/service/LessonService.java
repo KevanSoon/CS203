@@ -575,4 +575,24 @@ public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
             })
             .collect(Collectors.toList());
 }
+
+@Transactional
+public void reviewLessonApplication(String title, String action) {
+    System.out.println(">>> reviewLessonApplication called: title=" + title + ", action=" + action);
+    
+    Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
+            .orElseThrow(() -> new RuntimeException("Lesson not found: " + title));
+
+    System.out.println(">>> Found lesson id=" + lesson.getId() + " status=" + lesson.getStatus());
+
+    if (lesson.getStatus() != Lesson.LessonStatus.pending) {
+        throw new IllegalStateException(
+            "Lesson '" + title + "' is already " + lesson.getStatus().name() + "."
+        );
+    }
+
+    String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
+    int rows = lessonRepository.updateStatusByTitle(title, newStatus);
+    System.out.println(">>> Rows updated: " + rows);
+}
 }
