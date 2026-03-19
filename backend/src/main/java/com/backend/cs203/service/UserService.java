@@ -22,6 +22,8 @@ import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.entity.UserLessonProgress.ProgressStatus;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class UserService {
 
     private final SupabaseStorageService supabaseStorageService;
     private final UserRepository userRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -95,12 +98,16 @@ public class UserService {
                 ? supabaseStorageService.getSignedUrl(profilePictureUrl, 3600)
                 : null;
 
+        long totalCompletedLessons = userLessonProgressRepository
+                .countByUserIdAndStatus(user.getId(), ProgressStatus.completed);
+
         return new UserResponse(
             user.getUsername(),
             user.getEmail(),
             signedUrl,
             user.getStreak(),
-            user.getLastStreakDate()
+            user.getLastStreakDate(),
+            totalCompletedLessons
         );
     }
 
@@ -201,8 +208,10 @@ public class UserService {
 
 
         User saved = userRepository.save(user);
+        long totalCompletedLessons = userLessonProgressRepository
+                .countByUserIdAndStatus(saved.getId(), ProgressStatus.completed);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
-                saved.getStreak(), saved.getLastStreakDate());
+                saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons);
     }
 
     private void checkAndResetStreak(User user) {

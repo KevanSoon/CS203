@@ -31,6 +31,7 @@ import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +42,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserLessonProgressRepository userLessonProgressRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

@@ -13,4 +13,5 @@ public class UserResponse {
     private String profilePictureUrl;
     private Integer streak;
     private LocalDate lastStreakDate;
+    private long totalCompletedLessons;
 }
