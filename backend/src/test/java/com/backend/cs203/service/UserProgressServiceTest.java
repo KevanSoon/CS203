@@ -584,7 +584,18 @@ class UserProgressServiceTest {
         alreadyCompleted.setUserId(1);
         alreadyCompleted.setLessonId(10);
         alreadyCompleted.setStatus(ProgressStatus.completed);
-        stubLessonCompletion(alreadyCompleted);
+
+        // Do NOT use stubLessonCompletion — it stubs userRepository.findById which is
+        // never reached when the lesson is already completed (updateStreak won't fire)
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
+                .thenReturn(Optional.of(alreadyCompleted));
+        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
+        when(cardRepository.countCardsGroupedByChapter()).thenReturn(groupedRow(100, 1L));
+        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1)).thenReturn(groupedRow(100, 1L));
+        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
+        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
         userProgressService.checkLessonCompletionForChapter("testuser", 100);
 
