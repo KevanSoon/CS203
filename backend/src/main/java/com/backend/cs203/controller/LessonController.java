@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,6 +26,7 @@ import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
+import com.backend.cs203.dto.lesson.LessonReviewRequest;
 import com.backend.cs203.dto.lesson.LessonReviewResponse;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.review.ReviewDTO;
@@ -212,5 +214,14 @@ public class LessonController {
     public ResponseEntity<List<LessonReviewResponse>> getReviews(
             @PathVariable Integer lessonId) {
         return ResponseEntity.ok(lessonService.getReviewsForLesson(lessonId));
+    }
+
+    @PreAuthorize("hasRole('ROOT')")
+    @PatchMapping("/applications/review")
+    public ResponseEntity<?> reviewLessonApplication(
+            @Valid @RequestBody LessonReviewRequest request) {
+        lessonService.reviewLessonApplication(request.getTitle(), request.getAction());
+        String verb = "approve".equals(request.getAction()) ? "approved" : "rejected";
+        return ResponseEntity.ok(Map.of("message", "Lesson successfully " + verb + "."));
     }
 }
