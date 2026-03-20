@@ -10,6 +10,9 @@ export async function GET(
 ) {
     const { lessonId } = await context.params;
 
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("jwt")?.value;
+
     if (!lessonId || lessonId === "undefined") {
         return Response.json(
             { error: "Missing lessonId", message: "Lesson ID is required" },
@@ -17,8 +20,6 @@ export async function GET(
         );
     }
 
-    const cookieStore = await cookies();
-    const jwt = cookieStore.get("jwt")?.value;
     if (!jwt) {
         return Response.json(
             { error: "Unauthorized", message: "Unauthorized access. Please refresh and try again" },
@@ -32,7 +33,6 @@ export async function GET(
             { headers: { Authorization: `Bearer ${jwt}` } }
         );
 
-        // Spring Boot returns: [{ id, reviewedBy, username, avatarUrl, rating, feedback, createdAt }]
         const reviews = data.map((r: any) => ({
             id: r.id,
             username: r.username ?? "Unknown User",
