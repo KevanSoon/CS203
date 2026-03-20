@@ -1,5 +1,6 @@
 package com.backend.cs203.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,5 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
    Integer findRatingCountByLessonId(Integer lessonId);
 
    Optional<Review> findByReviewedByIdAndLessonId(Integer userId, Integer lessonId);
+
+   List<Review> findByLessonIdOrderByCreatedAtDesc(Integer lessonId);
 }
 

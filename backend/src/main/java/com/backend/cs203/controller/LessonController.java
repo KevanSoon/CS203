@@ -25,6 +25,7 @@ import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
+import com.backend.cs203.dto.lesson.LessonReviewResponse;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.dto.review.ReviewRequestDTO;
@@ -204,5 +205,12 @@ public class LessonController {
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
         lessonService.deleteLesson(lessonId, user.getId());
         return ResponseEntity.ok("Lesson deleted successfully");
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{lessonId}/reviews")
+    public ResponseEntity<List<LessonReviewResponse>> getReviews(
+            @PathVariable Integer lessonId) {
+        return ResponseEntity.ok(lessonService.getReviewsForLesson(lessonId));
     }
 }
