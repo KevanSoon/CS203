@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { PencilLine, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { api } from "@/app/api/api";
 
 const BACKEND_PUBLIC_BASE = "http://localhost:8080";
 
@@ -36,7 +37,6 @@ const validatePassword = (password: string): string | undefined => {
 export default function EditProfilePage() {
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -50,30 +50,23 @@ export default function EditProfilePage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       setPageError("");
       setSuccessMsg("");
 
       try {
-        const res = await fetch("/api/profile", { cache: "no-store" });
-        const data: any = await res.json().catch(() => ({}));
-
-        if (res.status === 401) {
-          router.replace("/login");
-          return;
-        }
-        if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load profile");
-
-        const p = data as ProfileResponse;
+        const res = await api.get("/api/profile");
+        const p = res.data as ProfileResponse;
         setUsername(p.username ?? "");
         setEmail(p.email ?? "");
         setProfilePictureUrl(p.profilePictureUrl ?? "");
       } catch (e: any) {
-        setPageError(e?.message || "Failed to load profile");
+        if (e?.response?.status === 401) { router.replace("/login"); return; }
+        setPageError(e?.response?.data?.message || "Failed to load profile");
       } finally {
         setLoading(false);
       }
@@ -164,26 +157,12 @@ export default function EditProfilePage() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        body: formData,
-      });
-
-      const data: any = await res.json().catch(() => ({}));
-
-      if (res.status === 401) {
-        router.replace("/login");
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || data?.error || "Failed to update profile");
-      }
-      toast.success("Update Successful")
+      await api.patch("/api/profile", formData);
+      toast.success("Update Successful");
       router.push("/profile");
-
     } catch (e: any) {
-      setPageError(e?.message || "Failed to update profile");
+      if (e?.response?.status === 401) { router.replace("/login"); return; }
+      setPageError(e?.response?.data?.message || "Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -191,13 +170,8 @@ export default function EditProfilePage() {
 
   const initial = (username?.[0] || "?").toUpperCase();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen grid place-items-center bg-[#F2F0FF]">
-        <div className="text-slate-600 font-semibold">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen bg-linear-to-b from-[#F2F0FF] via-white to-white" />;
+
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#F2F0FF] via-white to-white px-5 py-10">
