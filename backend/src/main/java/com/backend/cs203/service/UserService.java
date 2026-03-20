@@ -219,6 +219,7 @@ public class UserService {
         LocalDate lastStreakDate = user.getLastStreakDate();
         if (lastStreakDate != null && lastStreakDate.isBefore(LocalDate.now().minusDays(1))) {
             user.setStreak(0);
+            user.setLastStreakDate(null);
             userRepository.save(user);
             return true;
         }
