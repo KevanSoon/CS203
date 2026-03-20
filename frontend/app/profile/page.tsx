@@ -160,12 +160,10 @@ export default function ProfilePage() {
     setFriendsError("");
     setIsLoadingFriends(true);
     try {
-      const res = await fetch("/api/friendship", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load friends");
-      setFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship");
+      setFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setFriendsError(e?.message || "Failed to load friends");
+      setFriendsError(e?.response?.data?.message || "Failed to load friends");
       setFriends([]);
     } finally {
       setIsLoadingFriends(false);
@@ -176,12 +174,10 @@ export default function ProfilePage() {
     setPendingError("");
     setIsLoadingPending(true);
     try {
-      const res = await fetch("/api/friendship/pending", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load pending");
-      setPendingFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship/pending");
+      setPendingFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setPendingError(e?.message || "Failed to load pending");
+      setPendingError(e?.response?.data?.message || "Failed to load pending");
       setPendingFriends([]);
     } finally {
       setIsLoadingPending(false);
@@ -196,14 +192,9 @@ export default function ProfilePage() {
     setFriends(prev => [...prev, acceptedUser]);
 
     try {
-      const res = await fetch(`/api/friendship/${requesterId}`, {
-        method: "POST",
-      });
-
-      if (!res.ok) throw new Error();
+      await api.post(`/api/friendship/${requesterId}`);
       toast.success("Friend request accepted!");
     } catch {
-      toast.error("Failed to accept friend request");
       await loadFriends();
       await loadPending();
     }
@@ -217,12 +208,10 @@ export default function ProfilePage() {
     setOutgoingError("");
     setIsLoadingOutgoing(true);
     try {
-      const res = await fetch("/api/friendship/pending/outgoing", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load outgoing");
-      setOutgoingFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship/pending/outgoing");
+      setOutgoingFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setOutgoingError(e?.message || "Failed to load outgoing");
+      setOutgoingError(e?.response?.data?.message || "Failed to load outgoing");
       setOutgoingFriends([]);
     } finally {
       setIsLoadingOutgoing(false);
@@ -235,14 +224,8 @@ export default function ProfilePage() {
       setIsLoadingProfile(true);
 
       try {
-        const res = await fetch("/api/profile", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(
-            data?.message || data?.error || "Failed to load profile"
-          );
-        }
+        const res = await api.get("/api/profile");
+        const data = res.data;
 
         setProfile({
           username: data?.username ?? "",
@@ -260,7 +243,7 @@ export default function ProfilePage() {
           setAdminStats(statsResult.data);
         }
       } catch (e: any) {
-        setProfileError(e?.message || "Something went wrong 💀");
+        setProfileError(e?.response?.data?.message || "Something went wrong 💀");
       } finally {
         setIsLoadingProfile(false);
       }
@@ -337,22 +320,17 @@ export default function ProfilePage() {
     setSearchError("");
     setSearchResults([]);
     try {
-      const res = await fetch(
-        `/api/users/search?username=${encodeURIComponent(q)}`
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok)
-        throw new Error(data?.message || data?.error || "No users found");
-      const results = Array.isArray(data)
-        ? data
-        : data.username
-        ? [{ id: data.id, username: data.username }]
+      const res = await api.get("/api/users/search", { params: { username: q } });
+      const results = Array.isArray(res.data)
+        ? res.data
+        : res.data.username
+        ? [{ id: res.data.id, username: res.data.username }]
         : [];
       setSearchResults(results);
       if (results.length === 0)
         setSearchError("No users found matching that username.");
     } catch (e: any) {
-      setSearchError(e?.message || "No users found");
+      setSearchError(e?.response?.data?.message || "No users found");
     } finally {
       setIsSearching(false);
     }
