@@ -1,5 +1,6 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +59,7 @@ class UserProgressServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.builder().id(1).username("testuser").build();
+        user = User.builder().id(1).username("testuser").streak(0).build();
 
         lesson = new Lesson();
         lesson.setId(10);
@@ -374,13 +375,6 @@ class UserProgressServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10)).thenReturn(Optional.empty());
-        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
-        when(cardRepository.countCardsGroupedByChapter())
-            .thenReturn(groupedRow(100, 2L));
-        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1))
-            .thenReturn(groupedRow(100, 1L));
-        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
-        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
         userProgressService.markCardComplete("testuser", 1000);
 
@@ -392,13 +386,6 @@ class UserProgressServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10)).thenReturn(Optional.empty());
-        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
-        when(cardRepository.countCardsGroupedByChapter())
-            .thenReturn(groupedRow(100, 2L));
-        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1))
-            .thenReturn(groupedRow(100, 1L));
-        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
-        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
         userProgressService.markCardComplete("testuser", 1000);
 
@@ -416,41 +403,67 @@ class UserProgressServiceTest {
         when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
             .thenReturn(Optional.of(existingProgress));
-        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
-        when(cardRepository.countCardsGroupedByChapter())
-            .thenReturn(groupedRow(100, 2L));
-        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1))
-            .thenReturn(groupedRow(100, 1L));
-        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
-        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
         userProgressService.markCardComplete("testuser", 1000);
 
-        // save should NOT be called a second time for ensureLessonProgressExists
+        // save should NOT be called since row already exists
         verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
     }
 
     @Test
-    void markCardComplete_allCardsAndQuizzesCompleted_updatesStatusToCompleted() {
-        // Chapter: 1 card, no quiz. After marking, completed = 1, total = 1 → lesson complete.
+    void markCardComplete_doesNotCheckCompletion() {
+        // markCardComplete should NOT call checkAndUpdateLessonCompletion
+        // (quiz is always the final gate — completion is checked there)
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10)).thenReturn(Optional.empty());
+
+        userProgressService.markCardComplete("testuser", 1000);
+
+        // Should NOT query chapter/quiz data (those are only for completion checks)
+        verify(chapterRepository, never()).findByLessonId(any());
+    }
+
+    // ===== checkLessonCompletionForChapter =====
+
+    @Test
+    void checkLessonCompletionForChapter_userNotFound_throwsRuntimeException() {
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> userProgressService.checkLessonCompletionForChapter("ghost", 100));
+    }
+
+    @Test
+    void checkLessonCompletionForChapter_chapterNotFound_throwsRuntimeException() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(chapterRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> userProgressService.checkLessonCompletionForChapter("testuser", 999));
+    }
+
+    @Test
+    void checkLessonCompletionForChapter_allCardsAndQuizDone_marksLessonCompleted() {
         UserLessonProgress existingProgress = new UserLessonProgress();
         existingProgress.setUserId(1);
         existingProgress.setLessonId(10);
         existingProgress.setStatus(ProgressStatus.in_progress);
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
             .thenReturn(Optional.of(existingProgress));
         when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
         when(cardRepository.countCardsGroupedByChapter())
-            .thenReturn(groupedRow(100, 1L));
+            .thenReturn(groupedRow(100, 2L));
         when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1))
-            .thenReturn(groupedRow(100, 1L)); // all cards done
-        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
-        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
+            .thenReturn(groupedRow(100, 2L)); // all cards done
+        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(List.of(100));
+        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(List.of(100)); // quiz done
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
 
-        userProgressService.markCardComplete("testuser", 1000);
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
 
         verify(userLessonProgressRepository).save(
             org.mockito.ArgumentMatchers.argThat(p ->
@@ -460,14 +473,14 @@ class UserProgressServiceTest {
     }
 
     @Test
-    void markCardComplete_cardsDoneButQuizPending_doesNotMarkLessonComplete() {
+    void checkLessonCompletionForChapter_quizPending_doesNotMarkComplete() {
         UserLessonProgress existingProgress = new UserLessonProgress();
         existingProgress.setUserId(1);
         existingProgress.setLessonId(10);
         existingProgress.setStatus(ProgressStatus.in_progress);
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
             .thenReturn(Optional.of(existingProgress));
         when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
@@ -478,21 +491,126 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(List.of(100)); // quiz exists
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList()); // quiz NOT done
 
-        userProgressService.markCardComplete("testuser", 1000);
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
 
-        // status should NOT be updated to completed
-        verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
+        // Should NOT update to completed — quiz still pending
+        verify(userLessonProgressRepository, never()).save(
+            org.mockito.ArgumentMatchers.argThat(p ->
+                p.getStatus() == ProgressStatus.completed
+            )
+        );
+    }
+
+    // ===== updateStreak (via checkLessonCompletionForChapter) =====
+
+    /** Stubs the minimal "all cards done, no quiz" lesson completion scenario. */
+    private void stubLessonCompletion(UserLessonProgress progress) {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
+                .thenReturn(Optional.of(progress));
+        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
+        when(cardRepository.countCardsGroupedByChapter()).thenReturn(groupedRow(100, 1L));
+        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1)).thenReturn(groupedRow(100, 1L));
+        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
+        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    }
+
+    private UserLessonProgress inProgressLesson() {
+        UserLessonProgress p = new UserLessonProgress();
+        p.setUserId(1);
+        p.setLessonId(10);
+        p.setStatus(ProgressStatus.in_progress);
+        return p;
     }
 
     @Test
-    void markCardComplete_notAllCardsDone_doesNotMarkLessonComplete() {
+    void updateStreak_alreadyCountedToday_userSaveNotCalled() {
+        user.setStreak(5);
+        user.setLastStreakDate(LocalDate.now());
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateStreak_consecutiveDay_incrementsStreak() {
+        user.setStreak(3);
+        user.setLastStreakDate(LocalDate.now().minusDays(1));
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 4 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_brokenStreak_resetsToOne() {
+        user.setStreak(7);
+        user.setLastStreakDate(LocalDate.now().minusDays(3));
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 1 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_noLastStreakDate_setsStreakToOne() {
+        user.setStreak(0);
+        user.setLastStreakDate(null);
+        stubLessonCompletion(inProgressLesson());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u ->
+                u.getStreak() == 1 && LocalDate.now().equals(u.getLastStreakDate())
+        ));
+    }
+
+    @Test
+    void updateStreak_lessonAlreadyCompleted_userSaveNotCalled() {
+        user.setStreak(3);
+        user.setLastStreakDate(LocalDate.now().minusDays(1));
+
+        UserLessonProgress alreadyCompleted = new UserLessonProgress();
+        alreadyCompleted.setUserId(1);
+        alreadyCompleted.setLessonId(10);
+        alreadyCompleted.setStatus(ProgressStatus.completed);
+
+        // Do NOT use stubLessonCompletion — it stubs userRepository.findById which is
+        // never reached when the lesson is already completed (updateStreak won't fire)
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
+        when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
+                .thenReturn(Optional.of(alreadyCompleted));
+        when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
+        when(cardRepository.countCardsGroupedByChapter()).thenReturn(groupedRow(100, 1L));
+        when(userCardProgressRepository.countCompletedCardsGroupedByChapter(1)).thenReturn(groupedRow(100, 1L));
+        when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
+        when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
+
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void checkLessonCompletionForChapter_cardsNotDone_doesNotMarkComplete() {
         UserLessonProgress existingProgress = new UserLessonProgress();
         existingProgress.setUserId(1);
         existingProgress.setLessonId(10);
         existingProgress.setStatus(ProgressStatus.in_progress);
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(cardRepository.findById(1000)).thenReturn(Optional.of(card));
+        when(chapterRepository.findById(100)).thenReturn(Optional.of(chapter));
         when(userLessonProgressRepository.findByUserIdAndLessonId(1, 10))
             .thenReturn(Optional.of(existingProgress));
         when(chapterRepository.findByLessonId(10)).thenReturn(List.of(chapter));
@@ -503,8 +621,12 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        userProgressService.markCardComplete("testuser", 1000);
+        userProgressService.checkLessonCompletionForChapter("testuser", 100);
 
-        verify(userLessonProgressRepository, never()).save(any(UserLessonProgress.class));
+        verify(userLessonProgressRepository, never()).save(
+            org.mockito.ArgumentMatchers.argThat(p ->
+                p.getStatus() == ProgressStatus.completed
+            )
+        );
     }
 }

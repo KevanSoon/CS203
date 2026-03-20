@@ -1,6 +1,8 @@
 package com.backend.cs203.entity;
 
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,4 +35,7 @@ public class Review {
    @ManyToOne
    @JoinColumn(name = "lesson_id", nullable = false)
    private Lesson lesson;
+
+   @Column(name = "created_at", insertable = false, updatable = false)
+   private LocalDateTime createdAt;
 }
