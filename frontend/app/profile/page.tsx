@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import {
   Award,
   BookOpen,
-  Clock,
   Flame,
   Users,
   ChevronDown,
@@ -27,6 +26,8 @@ type Profile = {
   username: string;
   profilePictureUrl?: string;
   usertype?: string;
+  streak?: number;
+  totalCompletedLessons?: number;
 };
 
 type FriendDto = {
@@ -44,12 +45,6 @@ type AdminStats = {
   totalAttempts: number;
 };
 
-// ✅ Mock learning progress (still mock)
-const MOCK_PROGRESS = {
-  overallProgress: 65,
-  lessonsCompleted: 12,
-  totalHours: 24,
-};
 
 
 function CollapsibleCard({
@@ -252,6 +247,8 @@ export default function ProfilePage() {
         setProfile({
           username: data?.username ?? "",
           profilePictureUrl: data?.profilePictureUrl ?? "",
+          streak: data?.streak ?? 0,
+          totalCompletedLessons: data?.totalCompletedLessons ?? 0,
         });
 
         // Set usertype from API response (JWT is httpOnly, can't read from browser)
@@ -527,60 +524,37 @@ export default function ProfilePage() {
                   <CollapsibleCard
                     title="Learning Progress"
                     icon={<Award size={20} className="text-[#6C63FF]" />}
-                    rightBadge={
-                      <span className="rounded-full bg-[#F3F1FF] px-3 py-1 text-xs font-semibold text-[#5B52D6]">
-                        {MOCK_PROGRESS.overallProgress}%
-                      </span>
-                    }
                     defaultOpen={true}
                   >
-                    <div>
-                      <div className="flex items-end justify-between">
-                        <p className="text-sm font-semibold text-slate-600">
-                          Overall Course Completion
-                        </p>
-                        <p className="text-2xl font-black text-[#6C63FF]">
-                          {MOCK_PROGRESS.overallProgress}%
-                        </p>
-                      </div>
-
-                      <div className="mt-3 h-3 w-full rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-[#6C63FF]"
-                          style={{ width: `${MOCK_PROGRESS.overallProgress}%` }}
-                        />
-                      </div>
-
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
-                              <BookOpen size={18} />
-                            </span>
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Lessons
-                              </p>
-                              <p className="text-xl font-black">
-                                {MOCK_PROGRESS.lessonsCompleted}
-                              </p>
-                            </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
+                            <BookOpen size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Lessons Completed
+                            </p>
+                            <p className="text-xl font-black">
+                              {profile.totalCompletedLessons ?? 0}
+                            </p>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
-                              <Clock size={18} />
-                            </span>
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Hours
-                              </p>
-                              <p className="text-xl font-black">
-                                {MOCK_PROGRESS.totalHours}h
-                              </p>
-                            </div>
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-orange-500">
+                            <Flame size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Daily Streak
+                            </p>
+                            <p className="text-xl font-black">
+                              {profile.streak ?? 0} day{profile.streak !== 1 ? "s" : ""}
+                            </p>
                           </div>
                         </div>
                       </div>
