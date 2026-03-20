@@ -1,66 +1,45 @@
-from openai import AsyncOpenAI
+from tavily import TavilyClient
 
-from verification.config import CREDIBLE_SOURCES, OPENAI_SEARCH_MODEL
+from verification.config import TAVILY_API_KEY
 from verification.models import Evidence, SearchResult
 
 
-async def search_news_evidence(slang_term: str, definition: str) -> SearchResult:
+async def crawl_evidence(slang_term: str) -> SearchResult:
     """
-    Use OpenAI Responses API with web_search_preview to find evidence
-    of a slang term in credible news sources.
+    Full pipeline:
+      1. Search Tavily for the slang term.
+      2. Extract url, title, content from each result.
+      3. Feed content to the evaluator to verify the slang term and definition.
     """
-    client = AsyncOpenAI()  # uses OPENAI_API_KEY env var
+    print(f"[SEARCH] Searching Tavily for '{slang_term}'...")
 
-    site_filter = " OR ".join(f"site:{s}" for s in CREDIBLE_SOURCES)
-    query = f'"{slang_term}" Gen Alpha slang ({site_filter})'
+    client = TavilyClient(TAVILY_API_KEY)
+    response = client.search(query=slang_term, search_depth="advanced")
+    results = response.get("results", [])
 
-    print(f"[SEARCH] Querying OpenAI web search: {query}")
+    if not results:
+        print("[SEARCH] No results found.")
+        return SearchResult(summary="", evidence=[])
 
-    response = await client.responses.create(
-        model=OPENAI_SEARCH_MODEL,
-        tools=[{"type": "web_search_preview"}],
-        input=query,
-    )
-
-    result = _parse_response(response)
-    print(f"[SEARCH] Found {len(result.evidence)} source citations")
-    print(f"[SEARCH] Summary: {result.summary[:200]}...")
-    for i, e in enumerate(result.evidence, 1):
-        print(f"[SEARCH]   {i}. {e.title} — {e.url}")
-
-    return result
-
-
-def _parse_response(response) -> SearchResult:
-    """Extract full summary text and source citations from OpenAI Responses API output."""
     evidence: list[Evidence] = []
-    seen_urls: set[str] = set()
     summary_parts: list[str] = []
 
-    for item in response.output:
-        if item.type == "message":
-            for content_block in item.content:
-                if content_block.type != "output_text":
-                    continue
-                full_text = content_block.text or ""
-                if full_text:
-                    summary_parts.append(full_text)
-                for annotation in getattr(content_block, "annotations", []):
-                    if annotation.type != "url_citation":
-                        continue
-                    url = annotation.url
-                    if url in seen_urls:
-                        continue
-                    seen_urls.add(url)
-                    evidence.append(
-                        Evidence(
-                            url=url,
-                            title=annotation.title or "",
-                            snippet="",
-                        )
-                    )
+    for r in results:
+        url = r.get("url", "")
+        title = r.get("title", "")
+        content = r.get("content", "").strip()
 
-    return SearchResult(
-        summary="\n".join(summary_parts),
-        evidence=evidence,
-    )
+        if not content:
+            continue
+
+        print(f"[SEARCH]   {url} -> {len(content)} chars")
+        summary_parts.append(f"### {title}\nSource: {url}\n\n{content}")
+        evidence.append(Evidence(url=url, title=title, snippet=content))
+
+    if not evidence:
+        print("[SEARCH] No content found in results.")
+        return SearchResult(summary="", evidence=[])
+
+    summary = "\n\n---\n\n".join(summary_parts)
+    print(f"[SEARCH] Done — {len(evidence)} source(s)")
+    return SearchResult(summary=summary, evidence=evidence)

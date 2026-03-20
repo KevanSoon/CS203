@@ -51,11 +51,13 @@ def create_slang_verifier() -> GEval:
             LLMTestCaseParams.RETRIEVAL_CONTEXT,
         ],
         evaluation_steps=[
-            "Examine the retrieval_context which contains news article excerpts from credible sources such as The Guardian, Straits Times, BBC, NYT, Reuters, and CNA.",
-            "Determine if the slang term and definition provided in the input are corroborated by any of the news articles.",
-            "A slang term is 'real' if at least one credible news source discusses it with a matching or similar definition.",
-            "A slang term is 'AI slop' if no credible source mentions it, or if sources contradict the given definition.",
-            "Score 1.0 if strongly corroborated by multiple sources, 0.5 if partially mentioned or only one weak reference, 0.0 if no evidence or contradicted.",
+            "Examine the retrieval_context which contains crawled content from web sources discovered via open-web search for the slang term.",
+            "Check whether the slang term from the input is defined or described in the retrieval_context.",
+            "Compare the definition in actual_output against how the slang term is defined in the retrieval_context.",
+            "Score 1.0 if the retrieval_context explicitly defines the slang term and the definition in actual_output closely matches or aligns with it.",
+            "Score 0.7 if the retrieval_context mentions the slang term and the actual_output definition is broadly consistent, even if worded differently.",
+            "Score 0.3 if the slang term appears in the retrieval_context but the actual_output definition is inconsistent or only partially correct.",
+            "Score 0.0 if the slang term is not found in any retrieval_context source, or if the actual_output definition contradicts what the sources say.",
         ],
         threshold=VERDICT_THRESHOLD,
     )

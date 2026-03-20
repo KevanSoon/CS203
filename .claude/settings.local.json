@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(venv/Scripts/python -c \"import inspect; from crawl4ai import CrawlerRunConfig; print\\(inspect.signature\\(CrawlerRunConfig.__init__\\)\\)\")",
+      "WebFetch(domain:pypi.org)",
+      "Bash(python -c \"from duckduckgo_search import DDGS; results = DDGS\\(\\).text\\(''6-7 meme'', max_results=5\\); print\\(results\\)\")",
+      "Bash(python verification/test_ddg.py 6-7 meme)",
+      "Bash(venv/Scripts/pip install:*)",
+      "Bash(venv/Scripts/pip show:*)"
+    ]
+  }
+}

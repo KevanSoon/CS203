@@ -2,7 +2,7 @@ from deepeval.test_case import LLMTestCase
 
 from verification.config import VERDICT_THRESHOLD
 from verification.models import VerifyRequest, VerifyResponse
-from verification.searcher import search_news_evidence
+from verification.searcher import crawl_evidence
 from verification.evaluator import create_slang_verifier
 
 
@@ -28,7 +28,7 @@ async def verify_content(request: VerifyRequest) -> VerifyResponse:
 
     # Step 1: Search news sources
     print("[VERIFY] Step 1: Searching credible news sources...")
-    search_result = await search_news_evidence(request.slang_term, request.definition)
+    search_result = await crawl_evidence(request.slang_term)
 
     # Step 2: Build DeepEval test case — use the full summary as retrieval context
     retrieval_context = [search_result.summary] if search_result.summary.strip() else ["No news articles found for this slang term."]
