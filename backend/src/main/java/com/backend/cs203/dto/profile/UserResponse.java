@@ -14,4 +14,5 @@ public class UserResponse {
     private Integer streak;
     private LocalDate lastStreakDate;
     private long totalCompletedLessons;
+    private boolean streakBroken;
 }

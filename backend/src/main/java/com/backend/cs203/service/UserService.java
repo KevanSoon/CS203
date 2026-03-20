@@ -91,7 +91,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
         }
 
-        checkAndResetStreak(user);
+        boolean streakBroken = checkAndResetStreak(user);
 
         String profilePictureUrl = user.getProfilePictureUrl();
         String signedUrl = (profilePictureUrl != null)
@@ -107,7 +107,8 @@ public class UserService {
             signedUrl,
             user.getStreak(),
             user.getLastStreakDate(),
-            totalCompletedLessons
+            totalCompletedLessons,
+            streakBroken
         );
     }
 
@@ -211,15 +212,17 @@ public class UserService {
         long totalCompletedLessons = userLessonProgressRepository
                 .countByUserIdAndStatus(saved.getId(), ProgressStatus.completed);
         return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
-                saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons);
+                saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons, false);
     }
 
-    private void checkAndResetStreak(User user) {
+    private boolean checkAndResetStreak(User user) {
         LocalDate lastStreakDate = user.getLastStreakDate();
         if (lastStreakDate != null && lastStreakDate.isBefore(LocalDate.now().minusDays(1))) {
             user.setStreak(0);
             userRepository.save(user);
+            return true;
         }
+        return false;
     }
 
     private String requireUsername() {
