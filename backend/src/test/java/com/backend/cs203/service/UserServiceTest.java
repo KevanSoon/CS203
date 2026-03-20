@@ -308,7 +308,7 @@ class UserServiceTest {
     // ===== checkAndResetStreak (via getMyProfile) =====
 
     @Test
-    void getMyProfile_brokenStreak_resetsToZero() {
+    void getMyProfile_brokenStreak_resetsToZeroAndStreakBrokenTrue() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser").email("test@example.com")
@@ -319,11 +319,12 @@ class UserServiceTest {
         UserResponse result = userService.getMyProfile();
 
         assertEquals(0, result.getStreak());
+        assertTrue(result.isStreakBroken());
         verify(userRepository).save(user);
     }
 
     @Test
-    void getMyProfile_missedExactlyTwoDays_resetsToZero() {
+    void getMyProfile_missedExactlyTwoDays_resetsToZeroAndStreakBrokenTrue() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser").email("test@example.com")
@@ -334,11 +335,12 @@ class UserServiceTest {
         UserResponse result = userService.getMyProfile();
 
         assertEquals(0, result.getStreak());
+        assertTrue(result.isStreakBroken());
         verify(userRepository).save(user);
     }
 
     @Test
-    void getMyProfile_streakValidYesterday_noReset() {
+    void getMyProfile_streakValidYesterday_noResetAndStreakBrokenFalse() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser").email("test@example.com")
@@ -349,11 +351,12 @@ class UserServiceTest {
         UserResponse result = userService.getMyProfile();
 
         assertEquals(3, result.getStreak());
+        assertFalse(result.isStreakBroken());
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void getMyProfile_streakCountedToday_noReset() {
+    void getMyProfile_streakCountedToday_noResetAndStreakBrokenFalse() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser").email("test@example.com")
@@ -364,11 +367,12 @@ class UserServiceTest {
         UserResponse result = userService.getMyProfile();
 
         assertEquals(4, result.getStreak());
+        assertFalse(result.isStreakBroken());
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void getMyProfile_noStreakYet_noReset() {
+    void getMyProfile_noStreakYet_noResetAndStreakBrokenFalse() {
         setAuthentication("testuser");
         User user = User.builder()
                 .username("testuser").email("test@example.com")
@@ -379,6 +383,7 @@ class UserServiceTest {
         UserResponse result = userService.getMyProfile();
 
         assertEquals(0, result.getStreak());
+        assertFalse(result.isStreakBroken());
         verify(userRepository, never()).save(any(User.class));
     }
 
