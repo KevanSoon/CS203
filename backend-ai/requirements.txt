@@ -11,3 +11,4 @@ psycopg[binary]
 deepeval
 openai
 python-jose[cryptography]
+tavily-python
