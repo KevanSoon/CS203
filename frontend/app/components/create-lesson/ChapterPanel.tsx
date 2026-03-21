@@ -16,13 +16,18 @@ import {
   ChevronUp,
   Code2,
   Crown,
+  ExternalLink,
   GripVertical,
   ImagePlus,
+  Loader2,
   Plus,
+  Sparkles,
   Star,
   Trash2,
+  X,
   Zap,
 } from "lucide-react";
+import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { OPTION_KEYS_MCQ, optionKeysForType, CardForm, ChapterForm, QuizForm, QuizType } from "./form";
@@ -32,6 +37,56 @@ const QUIZ_TYPE_LABELS: Record<QuizType, string> = {
   mcq: "Multiple Choice",
   true_false: "True / False",
   fill_blank: "Fill in the Blank",
+};
+
+/* ─── Verify types & constants ─── */
+interface VerifyEvidence {
+  url: string;
+  title: string;
+  content: string;
+}
+
+interface VerifyResult {
+  slang_term: string;
+  verdict: string;
+  confidence: number;
+  evidence: VerifyEvidence[];
+  reasoning: string;
+}
+
+const VERDICT_LABELS: Record<string, string> = {
+  real: "Real",
+  likely_real: "Likely Real",
+  unverified: "Unverified",
+  ai_slop: "AI Slop",
+};
+
+function scoreVerdict(confidence: number): string {
+  if (confidence >= 0.85) return "real";
+  if (confidence >= 0.65) return "likely_real";
+  if (confidence >= 0.40) return "unverified";
+  return "ai_slop";
+}
+
+const VERDICT_PILL: Record<string, string> = {
+  real: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  likely_real: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  unverified: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  ai_slop: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+};
+
+const VERDICT_BAR: Record<string, string> = {
+  real: "bg-green-500",
+  likely_real: "bg-blue-500",
+  unverified: "bg-yellow-500",
+  ai_slop: "bg-red-500",
+};
+
+const VERDICT_ICON: Record<string, string> = {
+  real: "text-green-500",
+  likely_real: "text-blue-500",
+  unverified: "text-yellow-500",
+  ai_slop: "text-red-500",
 };
 
 /* ─── CardItem ─── */
@@ -64,6 +119,28 @@ function CardItem({
   onRemoveCard,
   clearError,
 }: CardItemProps) {
+  const [verifyState, setVerifyState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [showAllSources, setShowAllSources] = useState(false);
+
+  const handleVerify = async () => {
+    setVerifyState("loading");
+    setShowResult(false);
+    try {
+      const { data } = await axios.post<VerifyResult>("/api/verify", {
+        question: card.front,
+        content: card.back,
+      });
+      setVerifyResult(data);
+      setVerifyState("done");
+      setShowResult(true);
+    } catch {
+      setVerifyState("error");
+    }
+  };
+
   return (
     <div
       className={`relative rounded-2xl border-2 bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-800 shadow-sm overflow-hidden group transition-colors ${
@@ -90,6 +167,26 @@ function CardItem({
             </span>
           </div>
         </>
+      )}
+
+      {readOnly && (
+        <button
+          onClick={handleVerify}
+          disabled={verifyState === "loading"}
+          title="Verify with AI"
+          className={`absolute top-3 right-3 z-10 p-1.5 rounded-lg transition-all disabled:cursor-not-allowed
+            ${verifyState === "done" && verifyResult
+              ? VERDICT_ICON[scoreVerdict(verifyResult.confidence)]
+              : "text-primary/60 hover:text-primary"
+            }
+            ${verifyState === "loading" ? "opacity-100" : ""}
+          `}
+        >
+          {verifyState === "loading"
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <Sparkles className="h-3.5 w-3.5" />
+          }
+        </button>
       )}
 
       <div className={`p-4 space-y-3 ${readOnly ? "pt-4" : "pt-10"}`}>
@@ -155,6 +252,105 @@ function CardItem({
             />
           )}
         </div>
+
+        {readOnly && verifyState === "error" && (
+          <div className="flex items-center justify-between rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2">
+            <span className="text-xs text-destructive">Verification failed.</span>
+            <button onClick={handleVerify} className="text-xs text-destructive underline hover:no-underline">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {readOnly && showResult && verifyResult && (
+          <div className="rounded-xl border border-border/50 bg-background/80 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">AI Verification</span>
+              </div>
+              <button
+                onClick={() => setShowResult(false)}
+                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+
+            <div className="px-3 py-2.5 space-y-2.5">
+              {/* Verdict pill */}
+              <div className="flex items-center gap-2">
+                {(() => { const v = scoreVerdict(verifyResult.confidence); return (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${VERDICT_PILL[v]}`}>
+                    {VERDICT_LABELS[v]}
+                  </span>
+                ); })()}
+              </div>
+
+              {/* Reasoning inline */}
+              {verifyResult.reasoning && (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Reasoning:</span> {verifyResult.reasoning}
+                </p>
+              )}
+
+              {/* Sources */}
+              {verifyResult.evidence.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Sources</p>
+                  <div className="space-y-1">
+                    {(showAllSources ? verifyResult.evidence : verifyResult.evidence.slice(0, 1)).map((e, i) => (
+                      <a
+                        key={i}
+                        href={e.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start gap-1.5 text-xs text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3 shrink-0 mt-0.5" />
+                        <span className="truncate">{e.title || e.url}</span>
+                      </a>
+                    ))}
+                    {verifyResult.evidence.length > 1 && (
+                      <button
+                        onClick={() => setShowAllSources((v) => !v)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showAllSources ? "Show less" : `Show all ${verifyResult.evidence.length} sources`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Score toggle */}
+              <div>
+                <button
+                  onClick={() => setShowScore((v) => !v)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                >
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showScore ? "rotate-180" : ""}`} />
+                  {showScore ? "Hide score" : "Show score"}
+                </button>
+                {showScore && (
+                  <div className="mt-1.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Confidence</span>
+                      <span className="text-xs text-muted-foreground">{Math.round(verifyResult.confidence * 100)}%</span>
+                    </div>
+                    <div className="h-1 w-full rounded-full bg-border/50">
+                      <div
+                        className={`h-1 rounded-full transition-all ${VERDICT_BAR[scoreVerdict(verifyResult.confidence)]}`}
+                        style={{ width: `${verifyResult.confidence * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {!readOnly && (
           <button
