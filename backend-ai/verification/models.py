@@ -9,11 +9,11 @@ class VerifyRequest(BaseModel):
 class Evidence(BaseModel):
     url: str
     title: str
-    snippet: str
+    content: str
 
 
 class SearchResult(BaseModel):
-    summary: str  # full text response from OpenAI web search
+    summary: str 
     evidence: list[Evidence]  # individual source citations
 
 

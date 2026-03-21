@@ -34,7 +34,7 @@ async def crawl_evidence(slang_term: str) -> SearchResult:
 
         print(f"[SEARCH]   {url} -> {len(content)} chars")
         summary_parts.append(f"### {title}\nSource: {url}\n\n{content}")
-        evidence.append(Evidence(url=url, title=title, snippet=content))
+        evidence.append(Evidence(url=url, title=title, content=content))
 
     if not evidence:
         print("[SEARCH] No content found in results.")
