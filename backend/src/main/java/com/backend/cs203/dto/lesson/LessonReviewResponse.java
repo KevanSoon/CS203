@@ -1,5 +1,7 @@
 package com.backend.cs203.dto.lesson;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -11,4 +13,5 @@ public class LessonReviewResponse {
     private String avatarUrl;
     private Integer rating;
     private String feedback;
+    private LocalDateTime createdAt;
 }

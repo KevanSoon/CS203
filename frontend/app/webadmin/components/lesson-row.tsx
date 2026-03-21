@@ -102,7 +102,7 @@ export function LessonRow({
                 <Eye className="h-3.5 w-3.5" />
                 Preview
               </button>
-              {lesson.status !== "approved" && (
+              {lesson.status === "pending" && (
                 <button
                   onClick={() => onApprove(lesson.title)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-green-200 text-green-600 hover:bg-green-50 transition-colors"
@@ -111,7 +111,7 @@ export function LessonRow({
                   Approve
                 </button>
               )}
-              {lesson.status !== "rejected" && (
+              {lesson.status === "pending" && (
                 <button
                   onClick={() => onReject(lesson.title)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
@@ -141,7 +141,7 @@ export function LessonRow({
                     <Eye className="h-4 w-4" />
                     Preview
                   </button>
-                  {lesson.status !== "approved" && (
+                  {lesson.status === "pending" && (
                     <button
                       onClick={() => { onApprove(lesson.title); setMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success transition-colors hover:bg-success-light"
@@ -150,7 +150,7 @@ export function LessonRow({
                       Approve
                     </button>
                   )}
-                  {lesson.status !== "rejected" && (
+                  {lesson.status === "pending" && (
                     <button
                       onClick={() => { onReject(lesson.title); setMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive-light"

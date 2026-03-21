@@ -28,8 +28,11 @@ export default function ViewReviewsModal({
   onClose,
 }: ViewReviewsModalProps) {
   const [reviews, setReviews] = useState<LessonReview[]>([]);
+  const [allReviews, setAllReviews] = useState<LessonReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const sliderRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,7 +51,14 @@ export default function ViewReviewsModal({
           throw new Error("Failed to load reviews");
         }
 
-        setReviews(data.reviews || []);
+        const all = data.reviews || [];
+
+        const top5 = all
+          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+          .slice(0, 5);
+
+        setAllReviews(all);
+        setReviews(top5);
       } catch (err) {
         toast.error("Failed to load reviews.");
       } finally {
@@ -59,22 +69,39 @@ export default function ViewReviewsModal({
     fetchReviews();
   }, [lessonId]);
 
-  const average = useMemo(() => {
-    if (!reviews.length) return 0;
-    return (
-      reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) /
-      reviews.length
-    );
+  // Check scroll arrows
+  useEffect(() => {
+    const el = sliderRef.current;
+    if (!el) return;
+
+    const checkScroll = () => {
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    };
+
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
   }, [reviews]);
+
+  const average = useMemo(() => {
+    if (!allReviews.length) return 0;
+    return allReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / allReviews.length;
+  }, [allReviews]);
 
   const distribution = useMemo(() => {
     const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    reviews.forEach((r) => {
+    allReviews.forEach((r) => {
       const rounded = Math.round(r.rating);
       if (rounded >= 1 && rounded <= 5) dist[rounded]++;
     });
     return dist;
-  }, [reviews]);
+  }, [allReviews]);
 
   const renderStars = (rating: number, size: "sm" | "md" = "sm") => {
     const sz = size === "md" ? "h-5 w-5" : "h-4 w-4";
@@ -151,10 +178,10 @@ export default function ViewReviewsModal({
             <h2 className="text-xl sm:text-2xl font-bold text-foreground">
               User Reviews
             </h2>
-            {!loading && reviews.length > 0 && (
+            {!loading && allReviews.length > 0 && (
               <p className="mt-1 text-sm text-muted-foreground">
-                {average.toFixed(1)} average rating · {reviews.length} review
-                {reviews.length !== 1 ? "s" : ""}
+                {average.toFixed(1)} average rating · {allReviews.length} review
+                {allReviews.length !== 1 ? "s" : ""}
               </p>
             )}
           </div>
@@ -182,7 +209,7 @@ export default function ViewReviewsModal({
           )}
 
           {/* Empty state */}
-          {!loading && reviews.length === 0 && (
+          {!loading && allReviews.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
                 <Star className="h-6 w-6 text-muted-foreground" />
@@ -197,7 +224,7 @@ export default function ViewReviewsModal({
           )}
 
           {/* Summary + Carousel */}
-          {!loading && reviews.length > 0 && (
+          {!loading && allReviews.length > 0 && (
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Summary block */}
               <div className="flex-shrink-0 lg:w-48 flex flex-col items-center lg:items-start gap-3">
@@ -217,8 +244,8 @@ export default function ViewReviewsModal({
                 <div className="w-full space-y-1 mt-1">
                   {[5, 4, 3, 2, 1].map((star) => {
                     const count = distribution[star] ?? 0;
-                    const pct = reviews.length
-                      ? Math.round((count / reviews.length) * 100)
+                    const pct = allReviews.length
+                      ? Math.round((count / allReviews.length) * 100)
                       : 0;
                     return (
                       <div
@@ -247,18 +274,19 @@ export default function ViewReviewsModal({
 
               {/* Carousel section */}
               <div className="flex-1 min-w-0 flex flex-col gap-3">
-
                 {/* Slider */}
                 <div className="relative">
-                  {/* Desktop left arrow */}
-                  <button
-                    onClick={() => scrollByCard("left")}
-                    className="hidden sm:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-3 h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-md hover:bg-muted transition-colors"
-                    aria-label="Previous reviews"
-                    type="button"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
+                  {/* Desktop left arrow — only when scrollable */}
+                  {canScrollLeft && (
+                    <button
+                      onClick={() => scrollByCard("left")}
+                      className="hidden sm:flex absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-3 h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-md hover:bg-muted transition-colors"
+                      aria-label="Previous reviews"
+                      type="button"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                  )}
 
                   <div
                     ref={sliderRef}
@@ -333,53 +361,56 @@ export default function ViewReviewsModal({
                     ))}
                   </div>
 
-                  {/* Desktop right arrow */}
-                  <button
-                    onClick={() => scrollByCard("right")}
-                    className="hidden sm:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-3 h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-md hover:bg-muted transition-colors"
-                    aria-label="Next reviews"
-                    type="button"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                  {/* Desktop right arrow — only when scrollable */}
+                  {canScrollRight && (
+                    <button
+                      onClick={() => scrollByCard("right")}
+                      className="hidden sm:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-3 h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-md hover:bg-muted transition-colors"
+                      aria-label="Next reviews"
+                      type="button"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
 
-                {/* Mobile controls: arrows + dot indicators */}
-                <div className="flex sm:hidden items-center justify-between mt-1">
-                  <button
-                    onClick={() => scrollByCard("left")}
-                    disabled={currentIndex === 0}
-                    className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-card shadow-sm disabled:opacity-30 hover:bg-muted transition-colors"
-                    aria-label="Previous review"
-                    type="button"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
+                {/* Mobile controls — only when scrollable */}
+                {(canScrollLeft || canScrollRight) && (
+                  <div className="flex sm:hidden items-center justify-between mt-1">
+                    <button
+                      onClick={() => scrollByCard("left")}
+                      disabled={!canScrollLeft}
+                      className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-card shadow-sm disabled:opacity-30 hover:bg-muted transition-colors"
+                      aria-label="Previous review"
+                      type="button"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
 
-                  {/* Dot indicators */}
-                  <div className="flex items-center gap-1.5">
-                    {reviews.map((_, i) => (
-                      <span
-                        key={i}
-                        className={`block rounded-full transition-all duration-300 ${
-                          i === currentIndex
-                            ? "w-4 h-2 bg-primary"
-                            : "w-2 h-2 bg-muted-foreground/30"
-                        }`}
-                      />
-                    ))}
+                    <div className="flex items-center gap-1.5">
+                      {reviews.map((_, i) => (
+                        <span
+                          key={i}
+                          className={`block rounded-full transition-all duration-300 ${
+                            i === currentIndex
+                              ? "w-4 h-2 bg-primary"
+                              : "w-2 h-2 bg-muted-foreground/30"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => scrollByCard("right")}
+                      disabled={!canScrollRight}
+                      className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-card shadow-sm disabled:opacity-30 hover:bg-muted transition-colors"
+                      aria-label="Next review"
+                      type="button"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => scrollByCard("right")}
-                    disabled={currentIndex === reviews.length - 1}
-                    className="h-9 w-9 flex items-center justify-center rounded-full border border-border bg-card shadow-sm disabled:opacity-30 hover:bg-muted transition-colors"
-                    aria-label="Next review"
-                    type="button"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           )}

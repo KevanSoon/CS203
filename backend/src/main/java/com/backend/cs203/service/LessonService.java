@@ -570,7 +570,8 @@ public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
                         user.getUsername(),
                         avatarUrl,
                         (int) r.getRating(),
-                        r.getFeedback()
+                        r.getFeedback(),
+                        r.getCreatedAt()
                 );
             })
             .collect(Collectors.toList());

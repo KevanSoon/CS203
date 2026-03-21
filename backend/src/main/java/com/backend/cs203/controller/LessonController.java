@@ -209,7 +209,7 @@ public class LessonController {
         return ResponseEntity.ok("Lesson deleted successfully");
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{lessonId}/reviews")
     public ResponseEntity<List<LessonReviewResponse>> getReviews(
             @PathVariable Integer lessonId) {
