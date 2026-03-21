@@ -23,19 +23,19 @@ async def verify_content(request: VerifyRequest) -> VerifyResponse:
     2. Judge authenticity with DeepEval GEval + ChatOllama
     3. Return verdict with evidence and reasoning
     """
-    print(f"\n[VERIFY] === Starting verification for '{request.slang_term}' ===")
-    print(f"[VERIFY] Definition: {request.definition}")
+    print(f"\n[VERIFY] === Starting verification for '{request.question}' ===")
+    print(f"[VERIFY] Definition: {request.content}")
 
     # Step 1: Search news sources
     print("[VERIFY] Step 1: Searching credible news sources...")
-    search_result = await crawl_evidence(request.slang_term)
+    search_result = await crawl_evidence(request.question)
 
     # Step 2: Build DeepEval test case — use the full summary as retrieval context
     retrieval_context = [search_result.summary] if search_result.summary.strip() else ["No news articles found for this slang term."]
 
     test_case = LLMTestCase(
-        input=f"Slang term: {request.slang_term}. Definition: {request.definition}.",
-        actual_output=request.definition,
+        input=f"Slang term: {request.question}. Definition: {request.content}.",
+        actual_output=request.content,
         retrieval_context=retrieval_context,
     )
 
@@ -54,7 +54,7 @@ async def verify_content(request: VerifyRequest) -> VerifyResponse:
     print(f"[VERIFY] === Verification complete ===\n")
 
     return VerifyResponse(
-        slang_term=request.slang_term,
+        slang_term=request.question,
         verdict=verdict,
         confidence=score,
         evidence=search_result.evidence,

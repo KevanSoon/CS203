@@ -2,8 +2,8 @@ from pydantic import BaseModel
 
 
 class VerifyRequest(BaseModel):
-    slang_term: str
-    definition: str
+    question: str
+    content: str
 
 
 class Evidence(BaseModel):
