@@ -12,6 +12,7 @@ import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStor
 import ReviewModal from "@/app/components/ReviewModal";
 import ReviewViewModal from "@/app/components/ReviewViewModal";
 import { ReportModal } from "@/app/components/ReportModal";
+import RecommendModal from "./components/RecommendModal";
 import { useSearchParams, useRouter } from "next/navigation";
 
 // Backend DTO types
@@ -147,6 +148,7 @@ export default function LessonRoadmapPage({
   const [isDesktop, setIsDesktop] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [lessonId, setLessonId] = useState<number | null>(null);
+  const [lessonDescription, setLessonDescription] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lessonTitle = decodeURIComponent(title);
@@ -154,6 +156,8 @@ export default function LessonRoadmapPage({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewView, setShowReviewView] = useState(false);
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   const [reportOpen, setReportOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -181,6 +185,7 @@ export default function LessonRoadmapPage({
         });
 
         setLessonId(data.id);
+        setLessonDescription(data.description || "");
 
         // Always fetch fresh progress from backend when opening a lesson
         // (cache is only used for optimistic updates mid-session)
@@ -213,6 +218,23 @@ export default function LessonRoadmapPage({
       setReportOpen(true);
     }
   }, [searchParams]);
+
+  const handleReviewClose = async () => {
+    setShowReviewModal(false);
+    try {
+      const { data } = await api.post("/api/recommend", {
+        query: `${lessonTitle} ${lessonDescription}`,
+        count: 4, // fetch 4, filter out current, show 3
+      });
+      const filtered = (data.recommendations || []).filter(
+        (r: any) => r.lesson_title !== lessonTitle
+      ).slice(0, 3);
+      setRecommendations(filtered);
+    } catch {
+      setRecommendations([]);
+    }
+    setShowRecommendModal(true);
+  };
 
   const handleReportClose = () => {
     setReportOpen(false);
@@ -447,8 +469,15 @@ export default function LessonRoadmapPage({
       {showReviewModal && lessonId && (
         <ReviewModal
           lessonId={lessonId}
-          onClose={() => setShowReviewModal(false)}
+          onClose={handleReviewClose}
           onSubmitted={() => setReviewSubmitted(true)}
+        />
+      )}
+
+      {showRecommendModal && (
+        <RecommendModal
+          recommendations={recommendations}
+          onClose={() => setShowRecommendModal(false)}
         />
       )}
 
