@@ -94,6 +94,7 @@ function ReviewsPanel({ lessonId }: { lessonId: string }) {
 	const [fetchState, setFetchState] = useState<FetchState>("idle");
 	const [reviews, setReviews] = useState<Review[]>([]);
 	const [starFilter, setStarFilter] = useState<StarFilter>(0);
+	const [feedbackOnly, setFeedbackOnly] = useState(false);
 	const [showAll, setShowAll] = useState(false);
 
 	useEffect(() => {
@@ -117,33 +118,42 @@ function ReviewsPanel({ lessonId }: { lessonId: string }) {
 		return () => { cancelled = true; };
 	}, [lessonId]);
 
-	// Only reviews that have a non-empty feedback string
-	const reviewsWithFeedback = useMemo(
-		() => reviews.filter((r) => r.feedback?.trim()),
-		[reviews]
-	);
-
 	const filtered = useMemo(() => {
-		const base = starFilter === 0
-			? reviewsWithFeedback
-			: reviewsWithFeedback.filter((r) => r.rating === starFilter);
+		let base = starFilter === 0
+			? reviews
+			: reviews.filter((r) => r.rating === starFilter);
+		if (feedbackOnly) {
+			base = base.filter((r) => r.feedback?.trim());
+		}
 		return [...base].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-	}, [reviewsWithFeedback, starFilter]);
+	}, [reviews, starFilter, feedbackOnly]);
 
 	const displayed = showAll ? filtered : filtered.slice(0, PREVIEW_COUNT);
 	const hasMore = filtered.length > PREVIEW_COUNT;
 
+	// Count helpers — always based on full reviews list, respecting the feedbackOnly toggle
+	const baseForCount = feedbackOnly ? reviews.filter((r) => r.feedback?.trim()) : reviews;
 	const countFor = (s: StarFilter) =>
 		s === 0
-			? reviewsWithFeedback.length
-			: reviewsWithFeedback.filter((r) => r.rating === s).length;
+			? baseForCount.length
+			: baseForCount.filter((r) => r.rating === s).length;
 
-	const maxCount = Math.max(...([1, 2, 3, 4, 5] as StarFilter[]).map(countFor), 1);
+	const feedbackCount = reviews.filter((r) => r.feedback?.trim()).length;
 
-	// Average is still computed from ALL reviews (not just those with feedback)
+	// Average computed from ALL reviews
 	const avg = reviews.length
 		? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
 		: 0;
+
+	function handleStarFilter(s: StarFilter) {
+		setStarFilter(s);
+		setShowAll(false);
+	}
+
+	function handleFeedbackToggle() {
+		setFeedbackOnly((v) => !v);
+		setShowAll(false);
+	}
 
 	return (
 		<div className="border-t border-border bg-muted/30 p-4">
@@ -192,64 +202,78 @@ function ReviewsPanel({ lessonId }: { lessonId: string }) {
 						</div>
 					</div>
 
-					{/* Only show filters + list if there are any reviews with feedback */}
-					{reviewsWithFeedback.length === 0 ? (
-						<p className="text-xs text-muted-foreground text-center py-3">No written feedback yet.</p>
+					{/* Filter pills */}
+					<div className="flex flex-wrap gap-1.5 mb-3">
+						{/* Star filter pills */}
+						{([0, 5, 4, 3, 2, 1] as StarFilter[]).map((s) => (
+							<button
+								key={s}
+								type="button"
+								onClick={() => handleStarFilter(s)}
+								className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
+									${starFilter === s && !feedbackOnly
+										? "bg-primary/10 text-primary border-primary/30"
+										: "bg-background text-muted-foreground border-border hover:border-primary/30"
+									}`}
+							>
+								{s === 0 ? "All" : `${s} ★`} {countFor(s)}
+							</button>
+						))}
+
+						{/* Divider */}
+						<span className="self-center h-4 w-px bg-border mx-0.5" />
+
+						{/* Feedback only pill */}
+						<button
+							type="button"
+							onClick={handleFeedbackToggle}
+							className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
+								${feedbackOnly
+									? "bg-primary/10 text-primary border-primary/30"
+									: "bg-background text-muted-foreground border-border hover:border-primary/30"
+								}`}
+						>
+							With Feedback {feedbackCount}
+						</button>
+					</div>
+
+					{/* Review cards */}
+					{filtered.length === 0 ? (
+						<p className="text-xs text-muted-foreground text-center py-3">No reviews match this filter.</p>
 					) : (
-						<>
-							{/* Filter pills — counts based on reviews with feedback */}
-							<div className="flex flex-wrap gap-1.5 mb-3">
-								{([0, 5, 4, 3, 2, 1] as StarFilter[]).map((s) => (
-									<button
-										key={s}
-										type="button"
-										onClick={() => { setStarFilter(s); setShowAll(false); }}
-										className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors
-											${starFilter === s
-												? "bg-primary/10 text-primary border-primary/30"
-												: "bg-background text-muted-foreground border-border hover:border-primary/30"
-											}`}
-									>
-										{s === 0 ? "All" : `${s} ★`} {countFor(s)}
-									</button>
-								))}
-							</div>
-
-							{/* Review cards */}
-							{displayed.length === 0 ? (
-								<p className="text-xs text-muted-foreground text-center py-3">No written feedback for this rating.</p>
-							) : (
-								<div className="flex flex-col gap-2">
-									{displayed.map((review) => (
-										<div key={review.id} className="bg-background rounded-lg border border-border px-3 py-2.5">
-											<div className="flex items-center justify-between mb-1.5">
-												<div className="flex items-center gap-2">
-													<AvatarCircle username={review.username} avatarUrl={review.profilePictureUrl} />
-													<div>
-														<p className="text-xs font-medium text-foreground leading-none">{review.username}</p>
-														<p className="text-[10px] text-muted-foreground mt-0.5">
-															{new Date(review.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-														</p>
-													</div>
-												</div>
-												<StarDisplay value={review.rating} />
+						<div className="flex flex-col gap-2">
+							{displayed.map((review) => (
+								<div key={review.id} className="bg-background rounded-lg border border-border px-3 py-2.5">
+									<div className="flex items-center justify-between mb-1.5">
+										<div className="flex items-center gap-2">
+											<AvatarCircle username={review.username} avatarUrl={review.profilePictureUrl} />
+											<div>
+												<p className="text-xs font-medium text-foreground leading-none">{review.username}</p>
+												<p className="text-[10px] text-muted-foreground mt-0.5">
+													{new Date(review.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+												</p>
 											</div>
-											<p className="text-[11px] text-muted-foreground leading-relaxed pl-8">{review.feedback}</p>
 										</div>
-									))}
+										<StarDisplay value={review.rating} />
+									</div>
+									{review.feedback?.trim() ? (
+										<p className="text-[11px] text-muted-foreground leading-relaxed pl-8">{review.feedback}</p>
+									) : (
+										<p className="text-[11px] text-muted-foreground/50 leading-relaxed pl-8 italic">No written feedback.</p>
+									)}
 								</div>
-							)}
+							))}
+						</div>
+					)}
 
-							{hasMore && (
-								<button
-									type="button"
-									onClick={() => setShowAll((v) => !v)}
-									className="mt-2.5 w-full rounded-md border border-border bg-background py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-								>
-									{showAll ? "Show less" : `See all ${filtered.length} reviews`}
-								</button>
-							)}
-						</>
+					{hasMore && (
+						<button
+							type="button"
+							onClick={() => setShowAll((v) => !v)}
+							className="mt-2.5 w-full rounded-md border border-border bg-background py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+						>
+							{showAll ? "Show less" : `See all ${filtered.length} reviews`}
+						</button>
 					)}
 				</>
 			)}
@@ -401,7 +425,10 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 																	onClick={() => router.push(`/admin/create?edit=${encodeURIComponent(record.title)}`)}>
 																	<Pencil className="h-4 w-4" />
 																</button>
-																<button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+																<button
+																	className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+																	onClick={() => { setLessonToDelete(record); setDeleteModalOpen(true); }}
+																>
 																	<Trash2 className="h-4 w-4" />
 																</button>
 															</>
@@ -484,7 +511,11 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 				lesson={lessonToDelete}
 				setLessonToDelete={setLessonToDelete}
 				setDeleteModalOpen={setDeleteModalOpen}
-				setLocalData={setLocalData}
+				onDeleted={(id) =>
+					title === "Applications"
+						? setLocalData((prev) => prev.filter((l) => l.id !== id))
+						: setLocalData((prev) => prev.map((l) => (l.id === id ? { ...l, deletedAt: new Date().toISOString() } : l)))
+				}
 			/>
 		</div>
 	);

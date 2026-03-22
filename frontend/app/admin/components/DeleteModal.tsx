@@ -9,20 +9,20 @@ interface DeleteModalProps {
 	lesson: Lesson | null;
 	setDeleteModalOpen: (state: boolean) => void;
 	setLessonToDelete: (lesson: Lesson | null) => void;
-	setLocalData: (updater: (prev: any[]) => any[]) => void;
+	onDeleted: (id: number) => void;
 }
 
-export function DeleteModal({ open, onClose, lesson, setDeleteModalOpen, setLessonToDelete, setLocalData }: DeleteModalProps) {
+export function DeleteModal({ open, onClose, lesson, setDeleteModalOpen, setLessonToDelete, onDeleted }: DeleteModalProps) {
 	const [input, setInput] = useState("");
 
-    useEffect(() => {
-        if (!open) setInput("");
-    }, [open]);
+	useEffect(() => {
+		if (!open) setInput("");
+	}, [open]);
 
-	async function handleDelete(id: number | null) {
+	async function handleDelete(id: number) {
 		try {
 			await api.delete(`/api/lesson/${id}`);
-			setLocalData((prev) => prev.map((l) => (l.id === id ? { ...l, deletedAt: new Date().toISOString() } : l)));
+			onDeleted(id);
 			toast.success("Lesson has been deleted successfully");
 		} catch {
 			toast.error("Lesson deletion has failed");
