@@ -34,11 +34,12 @@ def rag_search(query: str) -> str:
     query_embedding = _get_embedding(query)
 
     result = supabase.rpc(
-        "hybrid_search",
+        "hybrid_search_filtered",
         {
             "query_text": query,
             "query_embedding": query_embedding,
             "match_count": 5,
+            "filter_type": "card",
             "full_text_weight": 1.0,
             "semantic_weight": 1.0,
         },
