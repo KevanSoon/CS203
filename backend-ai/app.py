@@ -298,7 +298,7 @@ async def verify_slang(request: VerifyRequest, claims: dict = Depends(verify_jwt
 ## ---- Vector Store Management Endpoints ---- ##
 
 @app.post("/vectorstore/lesson")
-async def insert_lesson_to_vectorstore(payload: LessonPayload, _: str = Depends(_verify_service_key)):
+async def insert_lesson_to_vectorstore(payload: LessonPayload, claims: dict = Depends(verify_jwt)):
     """Insert lesson content into the vector store. Idempotent: deletes existing docs first."""
     try:
         # Step 1: Delete existing documents for this lesson (idempotent re-approval)
@@ -378,7 +378,7 @@ async def insert_lesson_to_vectorstore(payload: LessonPayload, _: str = Depends(
 
 
 @app.delete("/vectorstore/lesson/{lesson_id}")
-async def delete_lesson_from_vectorstore(lesson_id: int, _: str = Depends(_verify_service_key)):
+async def delete_lesson_from_vectorstore(lesson_id: int, claims: dict = Depends(verify_jwt)):
     """Delete all vector store documents for a given lesson."""
     try:
         result = supabase_client.table("documents").delete().eq(

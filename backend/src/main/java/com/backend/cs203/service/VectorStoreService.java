@@ -1,9 +1,14 @@
 package com.backend.cs203.service;
 
+import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -16,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
 @Service
 public class VectorStoreService {
 
@@ -24,8 +32,27 @@ public class VectorStoreService {
     @Value("${vectorstore.api.url:}")
     private String vectorStoreUrl;
 
-    @Value("${vectorstore.api.key:}")
-    private String vectorStoreApiKey;
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    private String generateServiceToken() {
+        byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
+        SecretKey key = new SecretKeySpec(keyBytes, "HmacSHA256");
+        return Jwts.builder()
+                .setSubject("service")
+                .claim("role", "service")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000)) // 1 minute
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    private HttpHeaders buildAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(generateServiceToken());
+        return headers;
+    }
 
     @Async
     public void insertLesson(LessonPageDTO lesson) {
@@ -36,14 +63,8 @@ public class VectorStoreService {
 
         try {
             Map<String, Object> payload = buildPayload(lesson);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("x-api-key", vectorStoreApiKey);
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, buildAuthHeaders());
             restTemplate.postForEntity(vectorStoreUrl + "/vectorstore/lesson", request, String.class);
-
             System.out.println("[VectorStore] Inserted lesson: " + lesson.getTitle());
         } catch (Exception e) {
             System.err.println("[VectorStore] Failed to insert lesson " + lesson.getId() + ": " + e.getMessage());
@@ -58,17 +79,13 @@ public class VectorStoreService {
         }
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("x-api-key", vectorStoreApiKey);
-
-            HttpEntity<Void> request = new HttpEntity<>(headers);
+            HttpEntity<Void> request = new HttpEntity<>(buildAuthHeaders());
             restTemplate.exchange(
                     vectorStoreUrl + "/vectorstore/lesson/" + lessonId,
                     HttpMethod.DELETE,
                     request,
                     String.class
             );
-
             System.out.println("[VectorStore] Deleted lesson: " + lessonId);
         } catch (Exception e) {
             System.err.println("[VectorStore] Failed to delete lesson " + lessonId + ": " + e.getMessage());
