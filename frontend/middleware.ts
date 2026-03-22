@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 		url = redirectMap[userType!];
 	}
 
-	const publicRoutes = ["/", "/login", "/signup"];
+	const publicRoutes = ["/", "/login", "/signup", "/forgot-password"];
 	if (publicRoutes.includes(pathname)) {
 		if (isLoggedIn) {
 			const res = NextResponse.redirect(new URL(url, request.url));
