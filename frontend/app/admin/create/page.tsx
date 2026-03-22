@@ -262,10 +262,7 @@ function CreateLessonPage() {
 
   const isSafeImageSrc = (src: string | null) => {
     if (!src) return false;
-
-    return (
-      src.startsWith("https://")
-    );
+    return src.startsWith("https://") || src.startsWith("blob:");
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
