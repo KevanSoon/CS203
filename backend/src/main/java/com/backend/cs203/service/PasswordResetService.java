@@ -46,9 +46,9 @@ public class PasswordResetService {
 
         String otp = String.format("%06d", new Random().nextInt(999999));
 
-        tokenSaver.saveOtp(user, otp); // commits to DB independently
+        tokenSaver.saveOtp(user, otp);
 
-        sendOtpEmail(email, otp); // email failure won't roll back the DB save
+        sendOtpEmail(email, otp);
     }
 
     public void verifyOtp(String email, String otp) {
@@ -120,7 +120,7 @@ public class PasswordResetService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
         }
     }
-    
+
     private void validatePassword(String password) {
         if (password == null || password.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
@@ -131,13 +131,26 @@ public class PasswordResetService {
         if (password.length() > 100) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password too long (max 100)");
         }
-        if (!password.matches(".*[a-z].*")) {
+
+        boolean hasLower = false;
+        boolean hasUpper = false;
+        boolean hasDigit = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isLowerCase(c)) hasLower = true;
+            else if (Character.isUpperCase(c)) hasUpper = true;
+            else if (Character.isDigit(c)) hasDigit = true;
+
+            if (hasLower && hasUpper && hasDigit) break; // exit early once all found
+        }
+
+        if (!hasLower) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one lowercase letter");
         }
-        if (!password.matches(".*[A-Z].*")) {
+        if (!hasUpper) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one uppercase letter");
         }
-        if (!password.matches(".*\\d.*")) {
+        if (!hasDigit) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must have at least one number");
         }
     }
