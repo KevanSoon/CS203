@@ -1,5 +1,6 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -289,10 +290,38 @@ public class UserProgressService {
         // All chapters fully completed
         userLessonProgressRepository.findByUserIdAndLessonId(userId, lessonId)
                 .ifPresent(p -> {
-                    p.setStatus(ProgressStatus.completed);
-                    p.setCompletedAt(LocalDateTime.now());
-                    userLessonProgressRepository.save(p);
+                    if (p.getStatus() != ProgressStatus.completed) {
+                        p.setStatus(ProgressStatus.completed);
+                        p.setCompletedAt(LocalDateTime.now());
+                        userLessonProgressRepository.save(p);
+                        updateStreak(userId);
+                    }
                 });
+    }
+
+    private void updateStreak(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastStreakDate = user.getLastStreakDate();
+
+        //check if counted today for streak
+        if (lastStreakDate != null && lastStreakDate.equals(today)) {
+            return; 
+        }
+        //check if streak can be added for today's first lesson completion
+        if (lastStreakDate != null && lastStreakDate.equals(today.minusDays(1))) {
+            user.setStreak(user.getStreak() + 1);
+        } 
+        //reset streak
+        else {
+            user.setStreak(1);
+        }
+
+        //update last streak date
+        user.setLastStreakDate(today);
+        userRepository.save(user);
     }
 
     @Transactional

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         }
 
         const { data } = await axios.get(`${AI_BACKEND_URL}/chat/threads`, {
-            params: { user_id: userId },
+            headers: { Authorization: `Bearer ${jwt}` },
         });
         return Response.json(data);
     } catch (err: any) {

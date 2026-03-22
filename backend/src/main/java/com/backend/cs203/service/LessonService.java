@@ -19,6 +19,7 @@ import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
+import com.backend.cs203.dto.lesson.LessonReviewResponse;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.dto.quiz.CreateQuizRequest;
@@ -552,5 +553,47 @@ public void deleteLesson(Integer lessonId, Integer userId) {
         report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
         reportRepository.save(report);
     }
+}
+
+public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
+    return reviewRepository
+            .findByLessonIdOrderByCreatedAtDesc(lessonId)
+            .stream()
+            .map(r -> {
+                User user = r.getReviewedBy();
+                String avatarUrl = user.getProfilePictureUrl() != null
+                        ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
+                        : null;
+
+                return new LessonReviewResponse(
+                        r.getId(),
+                        user.getUsername(),
+                        avatarUrl,
+                        (int) r.getRating(),
+                        r.getFeedback(),
+                        r.getCreatedAt()
+                );
+            })
+            .collect(Collectors.toList());
+}
+
+@Transactional
+public void reviewLessonApplication(String title, String action) {
+    System.out.println(">>> reviewLessonApplication called: title=" + title + ", action=" + action);
+    
+    Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
+            .orElseThrow(() -> new RuntimeException("Lesson not found: " + title));
+
+    System.out.println(">>> Found lesson id=" + lesson.getId() + " status=" + lesson.getStatus());
+
+    if (lesson.getStatus() != Lesson.LessonStatus.pending) {
+        throw new IllegalStateException(
+            "Lesson '" + title + "' is already " + lesson.getStatus().name() + "."
+        );
+    }
+
+    String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
+    int rows = lessonRepository.updateStatusByTitle(title, newStatus);
+    System.out.println(">>> Rows updated: " + rows);
 }
 }

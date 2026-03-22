@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import {
   Award,
   BookOpen,
-  Clock,
   Flame,
   Users,
   ChevronDown,
@@ -27,6 +26,8 @@ type Profile = {
   username: string;
   profilePictureUrl?: string;
   usertype?: string;
+  streak?: number;
+  totalCompletedLessons?: number;
 };
 
 type FriendDto = {
@@ -44,12 +45,6 @@ type AdminStats = {
   totalAttempts: number;
 };
 
-// ✅ Mock learning progress (still mock)
-const MOCK_PROGRESS = {
-  overallProgress: 65,
-  lessonsCompleted: 12,
-  totalHours: 24,
-};
 
 
 function CollapsibleCard({
@@ -148,6 +143,7 @@ export default function ProfilePage() {
   const [friendsError, setFriendsError] = useState("");
 
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+  const [showStreakBrokenModal, setShowStreakBrokenModal] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -165,12 +161,10 @@ export default function ProfilePage() {
     setFriendsError("");
     setIsLoadingFriends(true);
     try {
-      const res = await fetch("/api/friendship", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load friends");
-      setFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship");
+      setFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setFriendsError(e?.message || "Failed to load friends");
+      setFriendsError(e?.response?.data?.message || "Failed to load friends");
       setFriends([]);
     } finally {
       setIsLoadingFriends(false);
@@ -181,12 +175,10 @@ export default function ProfilePage() {
     setPendingError("");
     setIsLoadingPending(true);
     try {
-      const res = await fetch("/api/friendship/pending", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load pending");
-      setPendingFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship/pending");
+      setPendingFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setPendingError(e?.message || "Failed to load pending");
+      setPendingError(e?.response?.data?.message || "Failed to load pending");
       setPendingFriends([]);
     } finally {
       setIsLoadingPending(false);
@@ -201,14 +193,9 @@ export default function ProfilePage() {
     setFriends(prev => [...prev, acceptedUser]);
 
     try {
-      const res = await fetch(`/api/friendship/${requesterId}`, {
-        method: "POST",
-      });
-
-      if (!res.ok) throw new Error();
+      await api.post(`/api/friendship/${requesterId}`);
       toast.success("Friend request accepted!");
     } catch {
-      toast.error("Failed to accept friend request");
       await loadFriends();
       await loadPending();
     }
@@ -222,12 +209,10 @@ export default function ProfilePage() {
     setOutgoingError("");
     setIsLoadingOutgoing(true);
     try {
-      const res = await fetch("/api/friendship/pending/outgoing", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to load outgoing");
-      setOutgoingFriends(Array.isArray(data) ? data : []);
+      const res = await api.get("/api/friendship/pending/outgoing");
+      setOutgoingFriends(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
-      setOutgoingError(e?.message || "Failed to load outgoing");
+      setOutgoingError(e?.response?.data?.message || "Failed to load outgoing");
       setOutgoingFriends([]);
     } finally {
       setIsLoadingOutgoing(false);
@@ -240,19 +225,17 @@ export default function ProfilePage() {
       setIsLoadingProfile(true);
 
       try {
-        const res = await fetch("/api/profile", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(
-            data?.message || data?.error || "Failed to load profile"
-          );
-        }
+        const res = await api.get("/api/profile");
+        const data = res.data;
 
         setProfile({
           username: data?.username ?? "",
           profilePictureUrl: data?.profilePictureUrl ?? "",
+          streak: data?.streak ?? 0,
+          totalCompletedLessons: data?.totalCompletedLessons ?? 0,
         });
+
+        if (data?.streakBroken) setShowStreakBrokenModal(true);
 
         // Set usertype from API response (JWT is httpOnly, can't read from browser)
         const resolvedType = data?.usertype || "user";
@@ -263,7 +246,7 @@ export default function ProfilePage() {
           setAdminStats(statsResult.data);
         }
       } catch (e: any) {
-        setProfileError(e?.message || "Something went wrong 💀");
+        setProfileError(e?.response?.data?.message || "Something went wrong 💀");
       } finally {
         setIsLoadingProfile(false);
       }
@@ -274,6 +257,14 @@ export default function ProfilePage() {
     loadPending();
     loadOutgoing();
   }, []);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowStreakBrokenModal(false);
+    };
+    if (showStreakBrokenModal) window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [showStreakBrokenModal]);
 
   const name = isLoadingProfile ? "Loading..." : profile.username || "User";
   const profilePic = profile.profilePictureUrl || "";
@@ -340,22 +331,17 @@ export default function ProfilePage() {
     setSearchError("");
     setSearchResults([]);
     try {
-      const res = await fetch(
-        `/api/users/search?username=${encodeURIComponent(q)}`
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok)
-        throw new Error(data?.message || data?.error || "No users found");
-      const results = Array.isArray(data)
-        ? data
-        : data.username
-        ? [{ id: data.id, username: data.username }]
+      const res = await api.get("/api/users/search", { params: { username: q } });
+      const results = Array.isArray(res.data)
+        ? res.data
+        : res.data.username
+        ? [{ id: res.data.id, username: res.data.username }]
         : [];
       setSearchResults(results);
       if (results.length === 0)
         setSearchError("No users found matching that username.");
     } catch (e: any) {
-      setSearchError(e?.message || "No users found");
+      setSearchError(e?.response?.data?.message || "No users found");
     } finally {
       setIsSearching(false);
     }
@@ -390,7 +376,6 @@ export default function ProfilePage() {
                               alt="Profile picture"
                               fill
                               className="object-cover"
-                              unoptimized
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-4xl">
@@ -527,60 +512,37 @@ export default function ProfilePage() {
                   <CollapsibleCard
                     title="Learning Progress"
                     icon={<Award size={20} className="text-[#6C63FF]" />}
-                    rightBadge={
-                      <span className="rounded-full bg-[#F3F1FF] px-3 py-1 text-xs font-semibold text-[#5B52D6]">
-                        {MOCK_PROGRESS.overallProgress}%
-                      </span>
-                    }
                     defaultOpen={true}
                   >
-                    <div>
-                      <div className="flex items-end justify-between">
-                        <p className="text-sm font-semibold text-slate-600">
-                          Overall Course Completion
-                        </p>
-                        <p className="text-2xl font-black text-[#6C63FF]">
-                          {MOCK_PROGRESS.overallProgress}%
-                        </p>
-                      </div>
-
-                      <div className="mt-3 h-3 w-full rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-[#6C63FF]"
-                          style={{ width: `${MOCK_PROGRESS.overallProgress}%` }}
-                        />
-                      </div>
-
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
-                              <BookOpen size={18} />
-                            </span>
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Lessons
-                              </p>
-                              <p className="text-xl font-black">
-                                {MOCK_PROGRESS.lessonsCompleted}
-                              </p>
-                            </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
+                            <BookOpen size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Lessons Completed
+                            </p>
+                            <p className="text-xl font-black">
+                              {profile.totalCompletedLessons ?? 0}
+                            </p>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
-                              <Clock size={18} />
-                            </span>
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Hours
-                              </p>
-                              <p className="text-xl font-black">
-                                {MOCK_PROGRESS.totalHours}h
-                              </p>
-                            </div>
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-orange-500">
+                            <Flame size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Daily Streak
+                            </p>
+                            <p className="text-xl font-black">
+                              {profile.streak ?? 0} day{profile.streak !== 1 ? "s" : ""}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -910,6 +872,42 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {showStreakBrokenModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+          onClick={() => setShowStreakBrokenModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative"
+          >
+            <button
+              onClick={() => setShowStreakBrokenModal(false)}
+              className="absolute top-3 right-3 p-2 rounded-md hover:bg-slate-100"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex flex-col items-center text-center gap-3 py-2">
+              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-orange-100 text-orange-500">
+                <Flame size={28} />
+              </span>
+              <h3 className="text-xl font-extrabold text-slate-900">Your streak has ended</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                You missed a day and your daily streak has been reset to 0. Complete a lesson today to start a new streak!
+              </p>
+              <button
+                onClick={() => setShowStreakBrokenModal(false)}
+                className="mt-2 w-full rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] hover:brightness-105 transition"
+              >
+                Let's go again!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

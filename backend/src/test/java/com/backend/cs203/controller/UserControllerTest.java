@@ -53,7 +53,7 @@ class UserControllerTest {
 
     @Test
     void getProfile_authenticated_returns200() throws Exception {
-        UserResponse response = new UserResponse("testuser", "test@example.com", null);
+        UserResponse response = new UserResponse("testuser", "test@example.com", null, 0, null, 0L, false);
         when(userService.getMyProfile()).thenReturn(response);
 
         mockMvc.perform(get("/api/profile").with(user("testuser").roles("USER")))
@@ -81,7 +81,7 @@ class UserControllerTest {
 
     @Test
     void updateProfile_authenticated_returns200() throws Exception {
-        UserResponse response = new UserResponse("testuser", "new@example.com", null);
+        UserResponse response = new UserResponse("testuser", "new@example.com", null, 0, null, 0L, false);
         when(userService.updateMyProfile(any())).thenReturn(response);
 
         mockMvc.perform(multipart("/api/profile")

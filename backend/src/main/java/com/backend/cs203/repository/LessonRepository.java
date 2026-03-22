@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryDTO;
@@ -113,5 +115,9 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     /** Count published (approved) lessons created by an admin. */
     @Query(value = "SELECT COUNT(*) FROM lesson WHERE created_by_id = :userId AND status = 'approved' AND deleted_at IS NULL", nativeQuery = true)
     long countPublishedByUserId(@Param("userId") Integer userId);
-
+    
+        @Modifying
+        @Transactional
+        @Query(value = "UPDATE lesson SET status = :status WHERE title = :title AND deleted_at IS NULL", nativeQuery = true)
+        int updateStatusByTitle(@Param("title") String title, @Param("status") String status);
 }

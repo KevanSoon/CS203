@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.backend.cs203.entity.UserLessonProgress;
+import com.backend.cs203.entity.UserLessonProgress.ProgressStatus;
 import com.backend.cs203.entity.UserLessonProgressId;
 
 @Repository
@@ -33,5 +34,7 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
             WHERE l.created_by_id = :adminId AND l.status = 'approved' AND ulp.status = 'completed' AND l.deleted_at IS NULL
             """, nativeQuery = true)
     long countCompletionsByAdminId(@Param("adminId") Integer adminId);
+    long countByUserIdAndStatus(Integer userId, ProgressStatus status);
+
     void deleteByUserIdAndLessonId(Integer userId, Integer lessonId);
 }

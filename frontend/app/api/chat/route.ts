@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { data } = await axios.post(`${AI_BACKEND_URL}/chat`, body);
+        const { data } = await axios.post(`${AI_BACKEND_URL}/chat`, body, {
+            headers: { Authorization: `Bearer ${jwt}` },
+        });
         return Response.json(data);
     } catch (err: any) {
         console.error("AI chat request failed:", err.message);

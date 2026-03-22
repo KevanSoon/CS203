@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 
 const AI_BACKEND_URL = process.env.AI_BACKEND_URL;
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
     const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
@@ -16,24 +16,15 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const threadId = req.nextUrl.searchParams.get("thread_id");
-
-        if (!threadId) {
-            return Response.json(
-                { error: "Bad Request", message: "thread_id is required" },
-                { status: 400 }
-            );
-        }
-
-        const { data } = await axios.get(`${AI_BACKEND_URL}/chat/history`, {
+        const body = await req.json();
+        const { data } = await axios.post(`${AI_BACKEND_URL}/verify`, body, {
             headers: { Authorization: `Bearer ${jwt}` },
-            params: { thread_id: threadId },
         });
         return Response.json(data);
     } catch (err: any) {
-        console.error("AI history request failed:", err.message);
+        console.error("AI verify request failed:", err.message);
         return Response.json(
-            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.detail || "Failed to fetch chat history. Please try again" },
+            { error: err?.response?.error || "Internal Server Error", message: err?.response?.data?.detail || "Verification failed. Please try again" },
             { status: err?.response?.status || 500 }
         );
     }

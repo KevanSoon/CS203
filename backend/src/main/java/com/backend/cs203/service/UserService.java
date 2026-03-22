@@ -1,6 +1,7 @@
 package com.backend.cs203.service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,6 +23,8 @@ import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.entity.UserLessonProgress.ProgressStatus;
+import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class UserService {
 
     private final SupabaseStorageService supabaseStorageService;
     private final UserRepository userRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
     private final PasswordEncoder passwordEncoder;
 
     private void validatePassword(String password) {
@@ -119,6 +123,7 @@ public class UserService {
         return new RegisterResponse(true, "User registered successfully", userData);
     }
 
+    @Transactional
     public UserResponse getMyProfile() {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -139,15 +144,24 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account deactivated");
         }
 
+        boolean streakBroken = checkAndResetStreak(user);
+
         String profilePictureUrl = user.getProfilePictureUrl();
         String signedUrl = (profilePictureUrl != null)
                 ? supabaseStorageService.getSignedUrl(profilePictureUrl, 3600)
                 : null;
 
+        long totalCompletedLessons = userLessonProgressRepository
+                .countByUserIdAndStatus(user.getId(), ProgressStatus.completed);
+
         return new UserResponse(
             user.getUsername(),
             user.getEmail(),
-            signedUrl
+            signedUrl,
+            user.getStreak(),
+            user.getLastStreakDate(),
+            totalCompletedLessons,
+            streakBroken
         );
     }
 
@@ -240,7 +254,21 @@ public class UserService {
         }
 
         User saved = userRepository.save(user);
-        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl());
+        long totalCompletedLessons = userLessonProgressRepository
+                .countByUserIdAndStatus(saved.getId(), ProgressStatus.completed);
+        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
+                saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons, false);
+    }
+
+    private boolean checkAndResetStreak(User user) {
+        LocalDate lastStreakDate = user.getLastStreakDate();
+        if (lastStreakDate != null && lastStreakDate.isBefore(LocalDate.now().minusDays(1))) {
+            user.setStreak(0);
+            user.setLastStreakDate(null);
+            userRepository.save(user);
+            return true;
+        }
+        return false;
     }
 
     private String requireUsername() {

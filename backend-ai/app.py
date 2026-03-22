@@ -9,10 +9,11 @@ if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from auth import verify_jwt
 
 # Windows-specific fix for psycopg async compatibility
 if sys.platform == "win32":
@@ -28,7 +29,6 @@ except ImportError:
 #pydantic models
 class ChatRequest(BaseModel):
     message: str
-    user_id: str = "default_user"
     thread_id: str = "default_thread"
     stream: bool = False
 
@@ -84,6 +84,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from verification.models import VerifyRequest, VerifyResponse
+from verification import verify_content
+
+
 @app.get("/")
 def root():
     return {
@@ -101,8 +105,10 @@ def health():
 
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, claims: dict = Depends(verify_jwt)):
     """Chat with LangGraph-powered chatbot with memory."""
+    user_id = claims["sub"]
+
     if not langgraph_chat:
         raise HTTPException(
             status_code=503,
@@ -112,13 +118,13 @@ async def chat(request: ChatRequest):
     config = {
         "configurable": {
             "thread_id": request.thread_id,
-            "user_id": request.user_id,
+            "user_id": user_id,
         }
     }
 
     # Register thread in store for this user
     if langgraph_store:
-        thread_namespace = ("threads", request.user_id)
+        thread_namespace = ("threads", user_id)
         existing = await langgraph_store.aget(thread_namespace, request.thread_id)
         if not existing:
             await langgraph_store.aput(
@@ -165,8 +171,9 @@ async def chat(request: ChatRequest):
     
 
 @app.get("/chat/threads")
-async def chat_threads(user_id: str):
+async def chat_threads(claims: dict = Depends(verify_jwt)):
     """List all threads for a user."""
+    user_id = claims["sub"]
     if not langgraph_store:
         raise HTTPException(
             status_code=503,
@@ -188,8 +195,9 @@ async def chat_threads(user_id: str):
 
 
 @app.get("/chat/history")
-async def chat_history(thread_id: str, user_id: str = "default_user"):
+async def chat_history(thread_id: str, claims: dict = Depends(verify_jwt)):
     """Retrieve chat history for a given thread."""
+    user_id = claims["sub"]
     if not langgraph_chat:
         raise HTTPException(
             status_code=503,
@@ -216,6 +224,16 @@ async def chat_history(thread_id: str, user_id: str = "default_user"):
                 })
 
         return {"thread_id": thread_id, "messages": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/verify", response_model=VerifyResponse)
+async def verify_slang(request: VerifyRequest, claims: dict = Depends(verify_jwt)):
+    """Verify whether a Gen Alpha slang term is real or AI-generated slop."""
+    try:
+        result = await verify_content(request)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
