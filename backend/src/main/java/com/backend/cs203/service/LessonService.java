@@ -59,6 +59,7 @@ public class LessonService {
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final ReportRepository reportRepository;
     private final SupabaseStorageService supabaseStorageService;
+    private final VectorStoreService vectorStoreService;
     private final EntityManager entityManager;
 
     public List<LessonSummaryResponse> getAllLessons() {
@@ -542,6 +543,9 @@ public void deleteLesson(Integer lessonId, Integer userId) {
     lesson.setDeletedAt(LocalDateTime.now());
     lessonRepository.save(lesson);
 
+    // Remove lesson content from vector store
+    vectorStoreService.deleteLesson(lessonId);
+
     // --- Close all open reports for this lesson ---
     List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
     for (Report report : openReports) {
@@ -595,5 +599,11 @@ public void reviewLessonApplication(String title, String action) {
     String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
     int rows = lessonRepository.updateStatusByTitle(title, newStatus);
     System.out.println(">>> Rows updated: " + rows);
+
+    // On approval, insert lesson content into vector store for RAG
+    if ("approved".equals(newStatus)) {
+        LessonPageDTO lessonPage = buildLessonPageDTO(lesson);
+        vectorStoreService.insertLesson(lessonPage);
+    }
 }
 }

@@ -8,11 +8,14 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
+import requests
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Depends
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from supabase import create_client, Client
 from auth import verify_jwt
 
 # Windows-specific fix for psycopg async compatibility
@@ -35,6 +38,60 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+
+
+class CardPayload(BaseModel):
+    id: int
+    front: str
+    back: str
+
+class ChapterPayload(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    cards: list[CardPayload] = []
+
+class LessonPayload(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    tags: list[str] = []
+    chapters: list[ChapterPayload] = []
+
+class RecommendRequest(BaseModel):
+    query: str
+    count: int = 5
+
+
+# --- Supabase & embedding setup for vector store endpoints ---
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+EMBEDDING_API_URL = os.getenv("EMBEDDING_API_URL")
+HF_TOKEN = os.getenv("HF_TOKEN")
+VECTORSTORE_API_KEY = os.getenv("VECTORSTORE_API_KEY", "")
+
+supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+def _get_embeddings(texts: list[str]) -> list[list[float]]:
+    """Batch-embed texts via the hosted embedding model."""
+    response = requests.post(
+        EMBEDDING_API_URL,
+        json={"texts": texts},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {HF_TOKEN}",
+        },
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()["embeddings"]
+
+
+def _verify_service_key(x_api_key: str = Header(...)):
+    """Verify service-to-service API key for vector store endpoints."""
+    if not VECTORSTORE_API_KEY or x_api_key != VECTORSTORE_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
 
 
 langgraph_chat = None
@@ -234,6 +291,136 @@ async def verify_slang(request: VerifyRequest, claims: dict = Depends(verify_jwt
     try:
         result = await verify_content(request)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+## ---- Vector Store Management Endpoints ---- ##
+
+@app.post("/vectorstore/lesson")
+async def insert_lesson_to_vectorstore(payload: LessonPayload, _: str = Depends(_verify_service_key)):
+    """Insert lesson content into the vector store. Idempotent: deletes existing docs first."""
+    try:
+        # Step 1: Delete existing documents for this lesson (idempotent re-approval)
+        supabase_client.table("documents").delete().eq(
+            "metadata->>lesson_id", str(payload.id)
+        ).execute()
+
+        # Step 2: Build document list
+        documents = []
+
+        # Lesson-level document (for recommendations)
+        tags_str = ", ".join(payload.tags) if payload.tags else ""
+        lesson_content = f"Lesson: {payload.title}\nDescription: {payload.description or ''}"
+        if tags_str:
+            lesson_content += f"\nTags: {tags_str}"
+        documents.append({
+            "content": lesson_content,
+            "metadata": {
+                "type": "lesson",
+                "lesson_id": payload.id,
+                "lesson_title": payload.title,
+                "tags": payload.tags,
+            },
+        })
+
+        # Chapter and card documents
+        for chapter in payload.chapters:
+            # Chapter-level document
+            documents.append({
+                "content": f"Chapter: {chapter.title}\nDescription: {chapter.description or ''}\nLesson: {payload.title}",
+                "metadata": {
+                    "type": "chapter",
+                    "lesson_id": payload.id,
+                    "chapter_id": chapter.id,
+                    "lesson_title": payload.title,
+                },
+            })
+
+            # Card-level documents (for chat Q&A)
+            for card in chapter.cards:
+                documents.append({
+                    "content": f"Card Front: {card.front}\nCard Back: {card.back}",
+                    "metadata": {
+                        "type": "card",
+                        "lesson_id": payload.id,
+                        "chapter_id": chapter.id,
+                        "card_id": card.id,
+                        "chapter_title": chapter.title,
+                        "lesson_title": payload.title,
+                    },
+                })
+
+        if not documents:
+            return {"status": "ok", "inserted": 0}
+
+        # Step 3: Batch embed all content
+        texts = [doc["content"] for doc in documents]
+        embeddings = _get_embeddings(texts)
+
+        # Step 4: Insert into Supabase
+        rows = []
+        for doc, embedding in zip(documents, embeddings):
+            rows.append({
+                "content": doc["content"],
+                "metadata": doc["metadata"],
+                "embedding": embedding,
+            })
+
+        result = supabase_client.table("documents").insert(rows).execute()
+        count = len(result.data) if result.data else 0
+        print(f"[VectorStore] Inserted {count} documents for lesson '{payload.title}' (id={payload.id})")
+        return {"status": "ok", "inserted": count}
+
+    except Exception as e:
+        print(f"[VectorStore] Error inserting lesson {payload.id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/vectorstore/lesson/{lesson_id}")
+async def delete_lesson_from_vectorstore(lesson_id: int, _: str = Depends(_verify_service_key)):
+    """Delete all vector store documents for a given lesson."""
+    try:
+        result = supabase_client.table("documents").delete().eq(
+            "metadata->>lesson_id", str(lesson_id)
+        ).execute()
+        count = len(result.data) if result.data else 0
+        print(f"[VectorStore] Deleted {count} documents for lesson_id={lesson_id}")
+        return {"status": "ok", "deleted": count}
+    except Exception as e:
+        print(f"[VectorStore] Error deleting lesson {lesson_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/recommend")
+async def recommend_lessons(request: RecommendRequest, claims: dict = Depends(verify_jwt)):
+    """Recommend lessons based on a query (e.g. completed lesson title + description)."""
+    try:
+        query_embedding = _get_embeddings([request.query])[0]
+
+        result = supabase_client.rpc(
+            "hybrid_search_filtered",
+            {
+                "query_text": request.query,
+                "query_embedding": query_embedding,
+                "match_count": request.count,
+                "filter_type": "lesson",
+                "full_text_weight": 1.0,
+                "semantic_weight": 1.0,
+            },
+        ).execute()
+
+        recommendations = []
+        for doc in (result.data or []):
+            metadata = doc.get("metadata", {})
+            recommendations.append({
+                "lesson_id": metadata.get("lesson_id"),
+                "lesson_title": metadata.get("lesson_title"),
+                "tags": metadata.get("tags", []),
+                "content": doc.get("content"),
+            })
+
+        return {"recommendations": recommendations}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
