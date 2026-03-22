@@ -105,14 +105,22 @@ public class PasswordResetService {
             CreateEmailOptions params = CreateEmailOptions.builder()
                 .from(fromEmail)
                 .to(email)
-                .subject("Your password reset code")
-                .text("Your OTP is: " + otp + "\n\nThis code expires in 10 minutes. Do not share it with anyone.")
+                .subject("Your Simi Slang reset code 🔑")
+                .text(
+                    "Eh, forgot your password ah?\n\n" +
+                    "No worries lah, here's your one-time code:\n\n" +
+                    "👉 " + otp + "\n\n" +
+                    "This code expires in 10 minutes hor. Don't screenshot and send to your friend ah, keep it to yourself only.\n\n" +
+                    "If you never request this, just ignore lah. Your account still safe one.\n\n" +
+                    "— Simi Slang"
+                )
                 .build();
             resend.emails().send(params);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
         }
     }
+    
     private void validatePassword(String password) {
         if (password == null || password.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
