@@ -139,6 +139,63 @@ comment on function semantic_search is 'Performs semantic-only search using vect
 
 
 -- ============================================================
+-- STEP 5b: Filtered hybrid search function (by metadata type)
+-- ============================================================
+create or replace function hybrid_search_filtered(
+  query_text text,
+  query_embedding extensions.vector(768),
+  match_count int,
+  filter_type text,
+  full_text_weight float = 1,
+  semantic_weight float = 1,
+  rrf_k int = 50
+)
+returns setof documents
+language sql
+as $$
+with full_text as (
+  select
+    id,
+    row_number() over(order by ts_rank_cd(fts, websearch_to_tsquery(query_text)) desc) as rank_ix
+  from
+    documents
+  where
+    fts @@ websearch_to_tsquery(query_text)
+    and metadata->>'type' = filter_type
+  order by rank_ix
+  limit least(match_count, 30) * 2
+),
+semantic as (
+  select
+    id,
+    row_number() over (order by embedding <#> query_embedding) as rank_ix
+  from
+    documents
+  where
+    metadata->>'type' = filter_type
+  order by rank_ix
+  limit least(match_count, 30) * 2
+)
+select
+  documents.*
+from
+  full_text
+  full outer join semantic
+    on full_text.id = semantic.id
+  join documents
+    on coalesce(full_text.id, semantic.id) = documents.id
+order by
+  coalesce(1.0 / (rrf_k + full_text.rank_ix), 0.0) * full_text_weight +
+  coalesce(1.0 / (rrf_k + semantic.rank_ix), 0.0) * semantic_weight
+  desc
+limit
+  least(match_count, 30)
+$$;
+
+comment on function hybrid_search_filtered is 'Performs filtered hybrid search by metadata type using Reciprocal Rank Fusion (RRF)';
+
+
+-- ============================================================
 -- STEP 6: Enable Row Level Security (RLS)
 -- ============================================================
 alter table documents enable row level security;
