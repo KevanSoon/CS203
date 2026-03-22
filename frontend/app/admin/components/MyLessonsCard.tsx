@@ -401,7 +401,10 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 																	onClick={() => router.push(`/admin/create?edit=${encodeURIComponent(record.title)}`)}>
 																	<Pencil className="h-4 w-4" />
 																</button>
-																<button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+																<button
+																	className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+																	onClick={() => { setLessonToDelete(record); setDeleteModalOpen(true); }}
+																>
 																	<Trash2 className="h-4 w-4" />
 																</button>
 															</>
@@ -484,7 +487,11 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 				lesson={lessonToDelete}
 				setLessonToDelete={setLessonToDelete}
 				setDeleteModalOpen={setDeleteModalOpen}
-				setLocalData={setLocalData}
+				onDeleted={(id) =>
+					title === "Applications"
+						? setLocalData((prev) => prev.filter((l) => l.id !== id))
+						: setLocalData((prev) => prev.map((l) => (l.id === id ? { ...l, deletedAt: new Date().toISOString() } : l)))
+				}
 			/>
 		</div>
 	);
