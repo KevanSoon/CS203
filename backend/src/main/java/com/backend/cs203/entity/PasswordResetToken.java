@@ -41,4 +41,8 @@ public class PasswordResetToken {
     @Column(nullable = false)
     @Builder.Default
     private int attempts = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
 }

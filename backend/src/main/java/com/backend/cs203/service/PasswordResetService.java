@@ -26,6 +26,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenSaver tokenSaver;
 
     @Value("${resend.api.key}")
     private String resendApiKey;
@@ -33,7 +34,6 @@ public class PasswordResetService {
     @Value("${resend.from.email}")
     private String fromEmail;
 
-    @Transactional
     public void sendOtp(String email) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(
@@ -44,21 +44,11 @@ public class PasswordResetService {
                 HttpStatus.FORBIDDEN, "This account has been deactivated");
         }
 
-        tokenRepository.deleteByUser(user);
-        tokenRepository.flush();
-
         String otp = String.format("%06d", new Random().nextInt(999999));
 
-        PasswordResetToken resetToken = PasswordResetToken.builder()
-            .user(user)
-            .otp(otp)
-            .expiresAt(LocalDateTime.now().plusMinutes(10))
-            .attempts(0)
-            .build();
+        tokenSaver.saveOtp(user, otp); // commits to DB independently
 
-        tokenRepository.save(resetToken);
-
-        sendOtpEmail(email, otp);
+        sendOtpEmail(email, otp); // email failure won't roll back the DB save
     }
 
     public void verifyOtp(String email, String otp) {
@@ -66,19 +56,21 @@ public class PasswordResetService {
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "User not found"));
 
-        PasswordResetToken resetToken = tokenRepository.findByUser(user)
+        PasswordResetToken resetToken = tokenRepository.findByUserAndActiveTrue(user)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "No OTP requested for this email"));
 
         if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            tokenRepository.delete(resetToken);
+            resetToken.setActive(false);
+            tokenRepository.save(resetToken);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP has expired");
         }
 
         if (!resetToken.getOtp().equals(otp)) {
             resetToken.setAttempts(resetToken.getAttempts() + 1);
             if (resetToken.getAttempts() >= 5) {
-                tokenRepository.delete(resetToken);
+                resetToken.setActive(false);
+                tokenRepository.save(resetToken);
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Too many attempts. Request a new OTP.");
             }
@@ -100,7 +92,11 @@ public class PasswordResetService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        tokenRepository.deleteByUser(user);
+        // Deactivate OTP instead of deleting
+        tokenRepository.findByUserAndActiveTrue(user).ifPresent(token -> {
+            token.setActive(false);
+            tokenRepository.save(token);
+        });
     }
 
     private void sendOtpEmail(String email, String otp) {
@@ -117,7 +113,6 @@ public class PasswordResetService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
         }
     }
-
     private void validatePassword(String password) {
         if (password == null || password.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
