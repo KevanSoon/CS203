@@ -504,7 +504,7 @@ function CreateLessonPage() {
     formData.append("title", title.trim());
     formData.append("description", description.trim());
     formData.append("chapters", JSON.stringify(chaptersPayload));
-    tags.forEach((tag) => formData.append("tags", tag));
+    if (tags.length > 0) formData.append("tags", JSON.stringify(tags));
     if (lessonImage) formData.append("lessonPictureUrl", lessonImage);
 
     if (isEditMode) {
