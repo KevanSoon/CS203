@@ -260,6 +260,14 @@ function CreateLessonPage() {
     imageInputRef.current?.click();
   };
 
+  const isSafeImageSrc = (src: string | null) => {
+    if (!src) return false;
+
+    return (
+      src.startsWith("https://")
+    );
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -602,7 +610,7 @@ function CreateLessonPage() {
                 onClick={handleThumbnailSelect}
                 className="shrink-0 w-full md:w-56 h-36 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 group"
               >
-                {thumbnailPreview ? (
+                {thumbnailPreview && isSafeImageSrc(thumbnailPreview) ? (
                   <img
                     src={thumbnailPreview}
                     alt="Lesson thumbnail"
