@@ -264,7 +264,7 @@ function CreateLessonPage() {
     if (!src) return false;
 
     return (
-      src.startsWith("https://")
+      src.startsWith("https://") || src.startsWith("blob:")
     );
   };
 
