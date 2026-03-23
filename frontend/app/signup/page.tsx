@@ -206,15 +206,6 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FCFBF7] p-4 font-sans text-slate-800">
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-[#9D94EB]/30 border-t-[#9D94EB] rounded-full animate-spin"></div>
-            <p className="text-slate-700 font-medium">Creating your account...</p>
-          </div>
-        </div>
-      )}
 
       <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-100">
         
