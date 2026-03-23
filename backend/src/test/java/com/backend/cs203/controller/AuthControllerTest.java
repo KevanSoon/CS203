@@ -32,6 +32,7 @@ import com.backend.cs203.security.CookieFactory;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.AuthService;
+import com.backend.cs203.service.PasswordResetService;
 import com.backend.cs203.service.UserService;
 
 @WebMvcTest(AuthController.class)
@@ -55,6 +56,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
 
     // ===== POST /api/auth/login =====
 
