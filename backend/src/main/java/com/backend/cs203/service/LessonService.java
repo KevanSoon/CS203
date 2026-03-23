@@ -145,11 +145,15 @@ public class LessonService {
             return new ChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getDescription(), cards, quizzes);
         }).collect(Collectors.toList());
 
+        String signedUrl = lesson.getLessonPictureUrl() != null
+        ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
+        : null;
+
         return new LessonPageDTO(
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
-                lesson.getLessonPictureUrl(),
+                signedUrl,
                 lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails,
@@ -383,12 +387,15 @@ public class LessonService {
 
         // Fetch tags for this lesson
         List<String> tags = lessonRepository.findTagsByLessonId(lesson.getId());
+        String signedUrl = lesson.getLessonPictureUrl() != null
+            ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
+            : null;
 
         return new LessonPageDTO(
                 lesson.getId(),
                 lesson.getTitle(),
                 lesson.getDescription(),
-                lesson.getLessonPictureUrl(),
+                signedUrl,
                 lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails,
@@ -531,79 +538,79 @@ public class LessonService {
     }
 
     @Transactional
-public void deleteLesson(Integer lessonId, Integer userId) {
-    Lesson lesson = lessonRepository.findById(lessonId)
-            .orElseThrow(() -> new RuntimeException("Lesson not found"));
-    if (!lesson.getCreatedBy().getId().equals(userId)) {
-        throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
-    }
-    if (lesson.getDeletedAt() != null) {
-        throw new RuntimeException("Lesson already deleted");
-    }
-    lesson.setDeletedAt(LocalDateTime.now());
-    lessonRepository.save(lesson);
-
-    // Remove lesson content from vector store
-    vectorStoreService.deleteLesson(lessonId);
-
-    // --- Close all open reports for this lesson ---
-    List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
-    for (Report report : openReports) {
-        report.setStatus(Report.ReportStatus.closed);
-        String oldRemarks = report.getRemarks() == null ? "" : report.getRemarks();
-        if (!oldRemarks.isEmpty() && !oldRemarks.endsWith("\n")) {
-            oldRemarks += "\n";
+    public void deleteLesson(Integer lessonId, Integer userId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        if (!lesson.getCreatedBy().getId().equals(userId)) {
+            throw new AuthorizationDeniedException("You do not have permission to delete this lesson");
         }
-        report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
-        reportRepository.save(report);
-    }
-}
+        if (lesson.getDeletedAt() != null) {
+            throw new RuntimeException("Lesson already deleted");
+        }
+        lesson.setDeletedAt(LocalDateTime.now());
+        lessonRepository.save(lesson);
 
-public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
-    return reviewRepository
-            .findByLessonIdOrderByCreatedAtDesc(lessonId)
-            .stream()
-            .map(r -> {
-                User user = r.getReviewedBy();
-                String avatarUrl = user.getProfilePictureUrl() != null
-                        ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
-                        : null;
+        // Remove lesson content from vector store
+        vectorStoreService.deleteLesson(lessonId);
 
-                return new LessonReviewResponse(
-                        r.getId(),
-                        user.getUsername(),
-                        avatarUrl,
-                        (int) r.getRating(),
-                        r.getFeedback(),
-                        r.getCreatedAt()
-                );
-            })
-            .collect(Collectors.toList());
-}
-
-@Transactional
-public void reviewLessonApplication(String title, String action) {
-    System.out.println(">>> reviewLessonApplication called: title=" + title + ", action=" + action);
-    
-    Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
-            .orElseThrow(() -> new RuntimeException("Lesson not found: " + title));
-
-    System.out.println(">>> Found lesson id=" + lesson.getId() + " status=" + lesson.getStatus());
-
-    if (lesson.getStatus() != Lesson.LessonStatus.pending) {
-        throw new IllegalStateException(
-            "Lesson '" + title + "' is already " + lesson.getStatus().name() + "."
-        );
+        // --- Close all open reports for this lesson ---
+        List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
+        for (Report report : openReports) {
+            report.setStatus(Report.ReportStatus.closed);
+            String oldRemarks = report.getRemarks() == null ? "" : report.getRemarks();
+            if (!oldRemarks.isEmpty() && !oldRemarks.endsWith("\n")) {
+                oldRemarks += "\n";
+            }
+            report.setRemarks(oldRemarks + "\nLesson Admin closed lesson");
+            reportRepository.save(report);
+        }
     }
 
-    String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
-    int rows = lessonRepository.updateStatusByTitle(title, newStatus);
-    System.out.println(">>> Rows updated: " + rows);
+    public List<LessonReviewResponse> getReviewsForLesson(Integer lessonId) {
+        return reviewRepository
+                .findByLessonIdOrderByCreatedAtDesc(lessonId)
+                .stream()
+                .map(r -> {
+                    User user = r.getReviewedBy();
+                    String avatarUrl = user.getProfilePictureUrl() != null
+                            ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
+                            : null;
 
-    // On approval, insert lesson content into vector store for RAG
-    if ("approved".equals(newStatus)) {
-        LessonPageDTO lessonPage = buildLessonPageDTO(lesson);
-        vectorStoreService.insertLesson(lessonPage);
+                    return new LessonReviewResponse(
+                            r.getId(),
+                            user.getUsername(),
+                            avatarUrl,
+                            (int) r.getRating(),
+                            r.getFeedback(),
+                            r.getCreatedAt()
+                    );
+                })
+                .collect(Collectors.toList());
     }
-}
+
+    @Transactional
+    public void reviewLessonApplication(String title, String action) {
+        System.out.println(">>> reviewLessonApplication called: title=" + title + ", action=" + action);
+        
+        Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
+                .orElseThrow(() -> new RuntimeException("Lesson not found: " + title));
+
+        System.out.println(">>> Found lesson id=" + lesson.getId() + " status=" + lesson.getStatus());
+
+        if (lesson.getStatus() != Lesson.LessonStatus.pending) {
+            throw new IllegalStateException(
+                "Lesson '" + title + "' is already " + lesson.getStatus().name() + "."
+            );
+        }
+
+        String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
+        int rows = lessonRepository.updateStatusByTitle(title, newStatus);
+        System.out.println(">>> Rows updated: " + rows);
+
+        // On approval, insert lesson content into vector store for RAG
+        if ("approved".equals(newStatus)) {
+            LessonPageDTO lessonPage = buildLessonPageDTO(lesson);
+            vectorStoreService.insertLesson(lessonPage);
+        }
+    }
 }

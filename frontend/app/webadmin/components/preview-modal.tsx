@@ -10,6 +10,7 @@ interface Lesson {
   id?: number
   title: string
   description: string
+  lessonPictureUrl?: string | null
   createdBy: string
   createdAt: string
   status: LessonStatus
@@ -19,6 +20,7 @@ interface LessonPreviewDetail {
   id?: number
   title: string
   description: string
+  lessonPictureUrl?: string | null
   createdBy: string
   createdAt: string
   status?: LessonStatus
@@ -32,6 +34,11 @@ interface LessonPreviewDetail {
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   return date.toISOString().split("T")[0]
+}
+
+function isSafeImageSrc(src: string | null | undefined): boolean {
+  if (!src) return false;
+  return src.startsWith("https://") || src.startsWith("blob:");
 }
 
 interface PreviewModalProps {
@@ -76,6 +83,13 @@ export function PreviewModal({ lesson, lessonDetail, loadingDetail = false, onCl
         </button>
 
         <div className="flex items-start justify-between gap-4 pr-8">
+          {isSafeImageSrc(activeLesson.lessonPictureUrl) && (
+            <img
+              src={activeLesson.lessonPictureUrl!}
+              alt={activeLesson.title}
+              className="h-16 w-24 rounded-lg object-cover shrink-0"
+            />
+          )}
           <h2 className="text-xl font-semibold text-foreground">
             {activeLesson.title}
           </h2>
