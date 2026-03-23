@@ -61,7 +61,7 @@ public class SecurityConfig {
 
                 // Public endpoints - no authentication required
                 // Allow login and register publicly, keep other /api/auth endpoints protected
-                .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/health").permitAll()         // Health check
                 .requestMatchers("/api/hello").permitAll()          // Test endpoint
                 .requestMatchers("/api/db/test").permitAll()        // DB test
