@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { api } from "@/app/api/api";
 import { StatsCards } from "./components/stats-cards";
@@ -56,8 +57,10 @@ export interface Report {
 	lastUpdate: string | null;
 }
 
-export default function DashboardPage() {
-	const [selected, setSelected] = useState("Manage Applications");
+function DashboardContent() {
+	const searchParams = useSearchParams();
+	const initialTab = searchParams.get("tab") || "Manage Applications";
+	const [selected, setSelected] = useState(initialTab);
 	const [lessons, setLessons] = useState<Lesson[]>([]);
 	const [reports, setReports] = useState<Report[]>([]);
 
@@ -184,5 +187,13 @@ export default function DashboardPage() {
 				</div>
 			</main>
 		</div>
+	);
+}
+
+export default function DashboardPage() {
+	return (
+		<Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Loading dashboard...</div>}>
+			<DashboardContent />
+		</Suspense>
 	);
 }

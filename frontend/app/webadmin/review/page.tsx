@@ -13,6 +13,7 @@ function ReviewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const title = searchParams.get("title");
+  const reportId = searchParams.get("reportId");
 
   const [lesson, setLesson] = useState<LessonPageDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,8 +56,16 @@ function ReviewPage() {
   return (
     <LessonReadOnlyView
       lesson={lesson}
-      backLabel="Back to Applications"
-      onBack={() => router.push("/webadmin")}
+      backLabel={reportId ? "Back to Reports" : "Back to Applications"}
+      onBack={() => {
+        if (reportId) {
+          router.push(`/webadmin?tab=Manage Reports&reportId=${reportId}`);
+        } else {
+          router.push("/webadmin");
+        }
+      }}
+      headerTitle={reportId ? "View Approved Lesson" : "Review Lesson Application"}
+      headerSubtitle={reportId ? "Read-only view of published lesson content" : "Read-only view — content as submitted"}
     />
   );
 }

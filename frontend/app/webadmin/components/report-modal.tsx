@@ -1,6 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Report, ReportStatus, ReportType } from "@/app/webadmin/page";
 
 interface SingleReportModalProps {
@@ -24,6 +25,8 @@ function toSentenceCase(value: string): string {
 }
 
 export function SingleReportModal({ open, onClose, report, handleChangeStatus, onSuspendLesson }: SingleReportModalProps) {
+	const router = useRouter();
+	
 	if (!open || !report) return null;
 
 	return (
@@ -33,9 +36,19 @@ export function SingleReportModal({ open, onClose, report, handleChangeStatus, o
 					<h4 className="text-lg font-semibold text-foreground">
 						Report {report.id}. {report.title}
 					</h4>
-					<button type="button" onClick={onClose} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-border/50 hover:text-foreground">
-						<X className="h-4 w-4" />
-					</button>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							onClick={() => router.push(`/webadmin/review?title=${encodeURIComponent(report.lessonTitle)}&reportId=${report.id}`)}
+							className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+						>
+							<Eye className="h-3.5 w-3.5" />
+							View Lesson
+						</button>
+						<button type="button" onClick={onClose} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-border/50 hover:text-foreground">
+							<X className="h-4 w-4" />
+						</button>
+					</div>
 				</div>
 
 				<div className="space-y-2">

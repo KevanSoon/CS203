@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Send, CheckCheck, Ban } from "lucide-react";
 
 import { Report } from "../page";
@@ -42,8 +43,30 @@ const severityRank: Record<ReportType, number> = {
 	low: 1,
 };
 export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: ReportsTableProps) {
+	const searchParams = useSearchParams();
+	const router = useRouter();
+
 	const [filter, setFilter] = useState<FilterValue>("reported");
 	const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+	// Automatically open the report modal if reportId param is present on mount/reports load
+	useEffect(() => {
+		const initialReportId = searchParams.get("reportId");
+		if (initialReportId && reports.length > 0 && !selectedReport) {
+			const report = reports.find((r) => r.id === parseInt(initialReportId));
+			if (report) {
+				setSelectedReport(report);
+				// Clean up the URL securely so it doesn't stubbornly re-open the modal
+				// when the user explicitly interacts to close it later down the line.
+				const newParams = new URLSearchParams(searchParams.toString());
+				newParams.delete("reportId");
+				newParams.delete("tab");
+				
+				const qs = newParams.toString();
+				router.replace(`/webadmin${qs ? `?${qs}` : ""}`, { scroll: false });
+			}
+		}
+	}, [reports, searchParams, router]);
 
 	const filteredReports = useMemo(() => {
 		const allVisible = reports.filter((r) => r.status === "reported" || r.status === "unresolved");

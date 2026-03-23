@@ -93,6 +93,8 @@ export interface LessonReadOnlyViewProps {
   onBack: () => void;
   sidebarSelected?: string;
   onSidebarSelect?: (v: string) => void;
+  headerTitle?: string;
+  headerSubtitle?: string;
 }
 
 export function LessonReadOnlyView({
@@ -101,6 +103,8 @@ export function LessonReadOnlyView({
   onBack,
   sidebarSelected = "Lesson Applications",
   onSidebarSelect,
+  headerTitle = "Review Lesson Application",
+  headerSubtitle = "Read-only view — content as submitted",
 }: LessonReadOnlyViewProps) {
   const [selected, setSelected] = useState(sidebarSelected);
   const [chapters] = useState<ChapterForm[]>(() =>
@@ -164,10 +168,10 @@ export function LessonReadOnlyView({
               </button>
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-foreground truncate">
-                  Review Lesson Application
+                  {headerTitle}
                 </h1>
                 <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
-                  Read-only view — content as submitted
+                  {headerSubtitle}
                 </p>
               </div>
             </div>
