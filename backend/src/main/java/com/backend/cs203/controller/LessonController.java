@@ -146,7 +146,9 @@ public class LessonController {
     @PostMapping("/create")
     public ResponseEntity<CreateLessonResponse> createLesson(
             @Valid @ModelAttribute CreateLessonRequest request,
+            @RequestParam(required = false, defaultValue = "false") boolean draft,
             Authentication authentication) {
+        request.setDraft(draft);
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
@@ -175,8 +177,10 @@ public class LessonController {
     @PutMapping("/update")
     public ResponseEntity<CreateLessonResponse> updateLesson(
             @RequestParam String originalTitle,
+            @RequestParam(required = false, defaultValue = "false") boolean draft,
             @Valid @ModelAttribute CreateLessonRequest request,
             Authentication authentication) {
+        request.setDraft(draft);
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));

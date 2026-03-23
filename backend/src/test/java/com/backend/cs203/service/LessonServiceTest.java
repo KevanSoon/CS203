@@ -252,6 +252,7 @@ class LessonServiceTest {
         lesson.setDescription("Desc");
         lesson.setCreatedBy(user);
         lesson.setCreatedAt(LocalDateTime.of(2024, 3, 1, 0, 0));
+        lesson.setStatus(Lesson.LessonStatus.pending);
 
         when(lessonRepository.findByTitleAndCreatedBy("Admin Lesson", 1)).thenReturn(Optional.of(lesson));
         when(chapterRepository.findByLessonId(5)).thenReturn(Collections.emptyList());

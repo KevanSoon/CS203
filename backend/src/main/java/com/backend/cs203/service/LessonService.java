@@ -220,17 +220,21 @@ public class LessonService {
         Lesson lesson = new Lesson();
         lesson.setTitle(request.getTitle());
         lesson.setDescription(request.getDescription());
-        lesson.setStatus(Lesson.LessonStatus.pending);
+        lesson.setStatus(request.isDraft() ? Lesson.LessonStatus.saved : Lesson.LessonStatus.pending);
         lesson.setCreatedBy(user);
         lesson = lessonRepository.save(lesson);
 
         ObjectMapper mapper = new ObjectMapper();
-        List<CreateChapterRequest> chapterList;
-        try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid chapters format");
+        List<CreateChapterRequest> chapterList = List.of();
+        if (request.getChapters() != null && !request.getChapters().isBlank()) {
+            try {
+                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+                });
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid chapters format");
+            }
+        } else if (!request.isDraft()) {
+            throw new RuntimeException("A lesson must have at least one chapter");
         }
         List<String> tagList = null;
         try {
@@ -308,6 +312,9 @@ public class LessonService {
             }
         }
 
+        String message = request.isDraft()
+                ? "Lesson draft saved successfully"
+                : "Lesson created successfully and submitted for approval";
         return new CreateLessonResponse(
                 lesson.getId(),
                 lesson.getTitle(),
@@ -315,7 +322,7 @@ public class LessonService {
                 lesson.getStatus().name(),
                 user.getUsername(),
                 lesson.getCreatedAt(),
-                "Lesson created successfully and submitted for approval"
+                message
         );
     }
 
@@ -353,7 +360,8 @@ public class LessonService {
                 lesson.getCreatedBy().getUsername(),
                 lesson.getCreatedAt(),
                 chapterDetails,
-                tags
+                tags,
+                lesson.getStatus().name()
         );
     }
 
@@ -412,12 +420,16 @@ public class LessonService {
                 .orElseThrow(() -> new RuntimeException("Lesson not found or you don't have permission to edit it"));
 
         ObjectMapper mapper = new ObjectMapper();
-        List<CreateChapterRequest> chapterList;
-        try {
-            chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid chapters format");
+        List<CreateChapterRequest> chapterList = List.of();
+        if (request.getChapters() != null && !request.getChapters().isBlank()) {
+            try {
+                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
+                });
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid chapters format");
+            }
+        } else if (!request.isDraft()) {
+            throw new RuntimeException("A lesson must have at least one chapter");
         }
         List<String> tagList = null;
         try {
@@ -430,8 +442,10 @@ public class LessonService {
         }
 
         // Only allow editing pending or rejected lessons
-        if (lesson.getStatus() != Lesson.LessonStatus.pending && lesson.getStatus() != Lesson.LessonStatus.rejected) {
-            throw new RuntimeException("Only pending or rejected lessons can be edited");
+        if (lesson.getStatus() != Lesson.LessonStatus.saved
+                && lesson.getStatus() != Lesson.LessonStatus.pending
+                && lesson.getStatus() != Lesson.LessonStatus.rejected) {
+            throw new RuntimeException("Only saved, pending, or rejected lessons can be edited");
         }
 
         // Update lesson fields
@@ -450,7 +464,7 @@ public class LessonService {
             String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
             lesson.setLessonPictureUrl(imagePath);
         }
-        lesson.setStatus(Lesson.LessonStatus.pending); // re-submit for approval
+        lesson.setStatus(request.isDraft() ? Lesson.LessonStatus.saved : Lesson.LessonStatus.pending);
         lessonRepository.save(lesson);
 
         // Delete old tags and re-insert
@@ -526,6 +540,9 @@ public class LessonService {
             }
         }
 
+        String updateMessage = request.isDraft()
+                ? "Lesson draft saved successfully"
+                : "Lesson updated successfully and re-submitted for approval";
         return new CreateLessonResponse(
                 lesson.getId(),
                 lesson.getTitle(),
@@ -533,7 +550,7 @@ public class LessonService {
                 lesson.getStatus().name(),
                 user.getUsername(),
                 lesson.getCreatedAt(),
-                "Lesson updated successfully and re-submitted for approval"
+                updateMessage
         );
     }
 

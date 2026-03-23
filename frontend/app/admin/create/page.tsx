@@ -36,6 +36,7 @@ import {
     ImagePlus,
     Layers,
     Plus,
+    Save,
     Upload,
     X,
 } from "lucide-react";
@@ -57,6 +58,7 @@ function CreateLessonPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
+  const [editStatus, setEditStatus] = useState<string | null>(null);
 
   /* Lesson fields */
   const [title, setTitle] = useState("");
@@ -176,6 +178,7 @@ function CreateLessonPage() {
       setTitle(data.title);
       setDescription(data.description || "");
       setTags(data.tags || []);
+      if (data.status) setEditStatus(data.status);
 
       if (data.lessonPictureUrl) setThumbnailPreview(data.lessonPictureUrl);
       const mapped: ChapterForm[] = data.chapters.map((ch: any) => {
@@ -473,8 +476,19 @@ function CreateLessonPage() {
   };
 
   /* ─── Submit ─── */
-  const handleSubmit = async () => {
-    if (!validate()) return;
+  const handleSubmit = async (draft = false) => {
+    if (draft) {
+      // Drafts only require a title
+      if (!title.trim()) {
+        toast.error("Please enter a lesson title before saving.");
+        document
+          .querySelector('[data-field="title"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+    } else {
+      if (!validate()) return;
+    }
 
     if (!isEditMode && titleTaken) {
       toast.error(
@@ -512,21 +526,22 @@ function CreateLessonPage() {
     if (tags.length > 0) formData.append("tags", JSON.stringify(tags));
     if (lessonImage) formData.append("lessonPictureUrl", lessonImage);
 
+    const draftParam = draft ? "?draft=true" : "";
+
     if (isEditMode) {
       await api.put(
-        `/api/lesson/manage?originalTitle=${encodeURIComponent(editTitle!)}`,
+        `/api/lesson/manage?originalTitle=${encodeURIComponent(editTitle!)}${draft ? "&draft=true" : ""}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      toast.success("Lesson updated and re-submitted for approval!");
+      toast.success(draft ? "Draft saved!" : "Lesson updated and re-submitted for approval!");
     } else {
-      await api.post("/api/lesson/manage", formData, {
+      await api.post(`/api/lesson/manage${draftParam}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("Lesson created and submitted for approval!");
+      toast.success(draft ? "Draft saved!" : "Lesson created and submitted for approval!");
     }
     router.push("/admin");
-      router.push("/admin");
     } catch (err: any) {
       toast.error("Save lesson failed:", err);
     } finally {
@@ -881,6 +896,17 @@ function CreateLessonPage() {
               <Eye className="h-4 w-4" />
               Preview
             </button>
+            {/* Save Draft — hidden when editing a pending lesson */}
+            {!(isEditMode && editStatus === "pending") && (
+              <button
+                onClick={() => handleSubmit(true)}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border-2 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                Save Draft
+              </button>
+            )}
             <CartoonButton
               label={
                 saving
@@ -893,7 +919,7 @@ function CreateLessonPage() {
               textColor="text-white"
               size="sm"
               disabled={saving}
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
             />
           </div>
         </div>
