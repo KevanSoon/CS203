@@ -19,15 +19,22 @@ public class LessonPageDTO {
     private LocalDateTime createdAt;
     private List<ChapterDTO> chapters;
     private List<String> tags;
+    private String status;
 
-    /** Backwards-compatible constructor (no tags). */
+    /** Backwards-compatible constructor (no tags, no status). */
     public LessonPageDTO(Integer id, String title, String description, String createdBy,
                          LocalDateTime createdAt, List<ChapterDTO> chapters) {
-        this(id, title, description, null, createdBy, createdAt, chapters, null);
+        this(id, title, description, null, createdBy, createdAt, chapters, null, null);
     }
 
     public LessonPageDTO(Integer id, String title, String description, String lessonPictureUrl, String createdBy,
                          LocalDateTime createdAt, List<ChapterDTO> chapters) {
-        this(id, title, description, lessonPictureUrl, createdBy, createdAt, chapters, null);
+        this(id, title, description, lessonPictureUrl, createdBy, createdAt, chapters, null, null);
+    }
+
+    /** Constructor with tags but no status. */
+    public LessonPageDTO(Integer id, String title, String description, String lessonPictureUrl, String createdBy,
+                         LocalDateTime createdAt, List<ChapterDTO> chapters, List<String> tags) {
+        this(id, title, description, lessonPictureUrl, createdBy, createdAt, chapters, tags, null);
     }
 }
