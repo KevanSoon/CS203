@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.auth.AuthResponse;
+import com.backend.cs203.dto.auth.ForgotPasswordRequest;
 import com.backend.cs203.dto.auth.LoginRequest;
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.auth.ResetPasswordRequest;
 import com.backend.cs203.dto.auth.UserInfoResponse;
+import com.backend.cs203.dto.auth.VerifyOtpRequest;
 import com.backend.cs203.exception.Exceptions.AuthException;
 import com.backend.cs203.security.CookieFactory;
 import com.backend.cs203.service.AuthService;
@@ -92,9 +95,9 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest body) {
         try {
-            passwordResetService.sendOtp(body.get("email"));
+            passwordResetService.sendOtp(body.getEmail());
             return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
@@ -102,9 +105,9 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest body) {
         try {
-            passwordResetService.verifyOtp(body.get("email"), body.get("otp"));
+            passwordResetService.verifyOtp(body.getEmail(), body.getOtp());
             return ResponseEntity.ok(Map.of("message", "OTP verified"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -112,12 +115,12 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest body) {
         try {
             passwordResetService.resetPassword(
-                body.get("email"),
-                body.get("otp"),
-                body.get("password")
+                body.getEmail(),
+                body.getOtp(),
+                body.getPassword()
             );
             return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
         } catch (RuntimeException e) {
