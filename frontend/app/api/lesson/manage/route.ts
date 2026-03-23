@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 }
 
 /* ─── POST — create a new lesson ─── */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     const jwt = cookieStore.get("jwt")?.value;
 
@@ -81,12 +81,17 @@ export async function POST(request: Request) {
 
     try {
         const formData = await request.formData();
+        const draft = request.nextUrl.searchParams.get("draft") === "true";
 
-        const { data } = await axios.post(`${BACKEND_URL}/api/lesson/create`, formData, {
-            headers: {
-                Authorization: `Bearer ${jwt}`,
+        const { data } = await axios.post(
+            `${BACKEND_URL}/api/lesson/create${draft ? "?draft=true" : ""}`,
+            formData,
+            {
+                headers: {
+                    Authorization: `Bearer ${jwt}`,
+                },
             },
-        });
+        );
 
         return Response.json(data, { status: 201 });
     } catch (err: any) {
@@ -123,12 +128,13 @@ export async function PUT(request: NextRequest) {
 
     try {
         const formData = await request.formData();
+        const draft = request.nextUrl.searchParams.get("draft") === "true";
 
         const { data } = await axios.put(`${BACKEND_URL}/api/lesson/update`, formData, {
             headers: {
                 Authorization: `Bearer ${jwt}`,
             },
-            params: { originalTitle },
+            params: { originalTitle, ...(draft ? { draft: true } : {}) },
         });
 
         return Response.json(data);

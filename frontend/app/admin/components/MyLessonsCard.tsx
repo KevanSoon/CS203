@@ -10,7 +10,7 @@ import DeleteModal from "./DeleteModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type FilterValue = "pending" | "rejected";
+type FilterValue = "saved" | "pending" | "rejected";
 type StarFilter = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface Review {
@@ -306,6 +306,15 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 		);
 	}
 
+	function renderSavedTag() {
+		return (
+			<span className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary">
+				<span className="h-1.5 w-1.5 rounded-full bg-primary" />
+				Draft
+			</span>
+		);
+	}
+
 	function renderSuspendedTag() {
 		return (
 			<span className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive-light text-destructive-dark">
@@ -340,13 +349,13 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 
 			{title === "Applications" && (
 				<div className="mb-4 flex items-center gap-1 rounded-lg border border-border bg-background p-1 w-fit">
-					{(["pending", "rejected"] as const).map((value) => (
+					{(["saved", "pending", "rejected"] as const).map((value) => (
 						<button
 							key={value}
 							type="button"
 							onClick={() => setAppFilter(value)}
-							className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${appFilter === value ? (value === "pending" ? "bg-warning text-white" : "bg-destructive text-white") : "text-muted-foreground hover:text-foreground"}`}>
-							{value[0].toUpperCase() + value.slice(1)}
+							className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${appFilter === value ? (value === "saved" ? "bg-primary text-white" : value === "pending" ? "bg-warning text-white" : "bg-destructive text-white") : "text-muted-foreground hover:text-foreground"}`}>
+							{value === "saved" ? "Drafts" : value[0].toUpperCase() + value.slice(1)}
 						</button>
 					))}
 				</div>
@@ -387,13 +396,13 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 															{record.title}
 															{record.deletedAt ? ` (Deleted on ${new Date(record.createdAt).toUTCString().slice(0, -4)})` : ""}
 															{record.status === "suspended" && !record.deletedAt ? renderSuspendedTag() : null}
-															{title === "Applications" ? renderPendingTag(record.status ?? "") : null}
+															{title === "Applications" ? (record.status === "saved" ? renderSavedTag() : renderPendingTag(record.status ?? "")) : null}
 														</p>
 													</div>
 
 													{/* Action buttons — stopPropagation prevents toggling expand */}
 													<div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-														{record.status === "pending" ? (
+														{record.status === "pending" || record.status === "saved" ? (
 															<>
 																<button
 																	title="Edit lesson"
