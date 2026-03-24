@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PencilLine, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { api } from "@/app/api/api";
+import { useSiteState } from "@/app/store/SiteStore";
 
 type ProfileResponse = {
   username?: string;
@@ -34,6 +35,7 @@ const validatePassword = (password: string): string | undefined => {
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const { user, setUser } = useSiteState();
 
   const [pageError, setPageError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -152,7 +154,10 @@ export default function EditProfilePage() {
 
     setSaving(true);
     try {
-      await api.patch("/api/profile", formData);
+      const { data } = await api.patch("/api/profile", formData);
+      if (user) {
+        setUser({ ...user, profilePictureUrl: data.profilePictureUrl ?? undefined });
+      }
       toast.success("Update Successful");
       router.push("/profile");
     } catch (e: any) {

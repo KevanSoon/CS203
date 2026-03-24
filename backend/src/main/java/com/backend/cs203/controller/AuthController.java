@@ -57,6 +57,7 @@ public class AuthController {
                 .username(auth.getUsername())
                 .email(auth.getEmail())
                 .usertype(auth.getUsertype())
+                .profilePictureUrl(auth.getProfilePictureUrl())
                 .build();
 
         return cookieFactory.withCookie(cookie, userInfo);

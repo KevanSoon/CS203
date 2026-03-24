@@ -50,6 +50,7 @@ export default function LoginPage() {
         username: data.username,
         email: data.email,
         usertype: data.usertype,
+        profilePictureUrl: data.profilePictureUrl ?? undefined,
       });
 
       toast.success("Login Successful")

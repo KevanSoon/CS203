@@ -5,6 +5,7 @@ interface UserInfo {
     username: string;
     email: string;
     usertype: string;
+    profilePictureUrl?: string;
 }
 
 interface SiteState {

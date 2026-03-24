@@ -23,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final SupabaseStorageService supabaseStorageService;
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
@@ -41,11 +42,16 @@ public class AuthService {
         userRepository.save(user);
         String token = jwtUtil.generateToken(user);
 
+        String profilePictureUrl = user.getProfilePictureUrl() != null
+                ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
+                : null;
+
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .usertype(user.getUsertype().name())
+                .profilePictureUrl(profilePictureUrl)
                 .build();
     }
 
