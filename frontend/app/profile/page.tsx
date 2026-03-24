@@ -425,7 +425,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-                {!isAdmin && (
+                {!isAdmin && !isLoadingProfile &&(
                 <div className="mt-3 rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
@@ -508,7 +508,7 @@ export default function ProfilePage() {
               {/* ── Right column: cards ── */}
               <div className="md:col-span-2 space-y-6">
                 {/* Learning Progress — only for regular users */}
-                {!isAdmin && (
+                {!isAdmin && !isLoadingProfile && (
                   <CollapsibleCard
                     title="Learning Progress"
                     icon={<Award size={20} className="text-[#6C63FF]" />}
@@ -551,7 +551,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* ── ROLE-BASED CARD ── */}
-                {isAdmin ? (
+                {!isLoadingProfile && (isAdmin ? (
                   // Admin: Lesson Creation Stats
                   <CollapsibleCard
                     title="Lesson Creation Stats"
@@ -712,7 +712,7 @@ export default function ProfilePage() {
 
                   
                   </CollapsibleCard>
-                )}
+                ))}
 
                 {/* Danger Zone — same for both roles */}
                 <CollapsibleCard
