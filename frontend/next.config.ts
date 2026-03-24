@@ -7,6 +7,7 @@ const nextConfig = {
         pathname: "/storage/v1/object/**",
       },
     ],
+    unoptimized: true,
   },
 };
 
