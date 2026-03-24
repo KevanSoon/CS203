@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS user (
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP NULL DEFAULT NULL,
   deactivated_at TIMESTAMP NULL,
-  profile_picture_url VARCHAR(255)
+  profile_picture_url VARCHAR(255),
+  last_streak_date DATE NULL
 );
 
 CREATE TABLE IF NOT EXISTS lesson (
