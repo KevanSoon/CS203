@@ -76,8 +76,8 @@ export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSection
               className={`shrink-0 rounded-full object-cover shadow-sm ${open ? 'size-12' : 'size-8'}`}
             />
           ) : (
-            <div className={`grid shrink-0 place-content-center rounded-full bg-primary shadow-sm ${open ? 'size-12' : 'size-8'}`}>
-              <span className={`font-bold text-card ${open ? 'text-lg' : 'text-sm'}`}>{user.username.charAt(0).toUpperCase()}</span>
+            <div className={`grid shrink-0 place-content-center rounded-full bg-slate-200 shadow-sm ${open ? 'size-12' : 'size-8'}`}>
+              <span className={open ? 'text-2xl' : 'text-base'}>🙂</span>
             </div>
           )}
           {open && (
