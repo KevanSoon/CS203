@@ -256,7 +256,10 @@ public class UserService {
         User saved = userRepository.save(user);
         long totalCompletedLessons = userLessonProgressRepository
                 .countByUserIdAndStatus(saved.getId(), ProgressStatus.completed);
-        return new UserResponse(saved.getUsername(), saved.getEmail(), saved.getProfilePictureUrl(),
+        String signedUrl = saved.getProfilePictureUrl() != null
+                ? supabaseStorageService.getSignedUrl(saved.getProfilePictureUrl(), 3600)
+                : null;
+        return new UserResponse(saved.getUsername(), saved.getEmail(), signedUrl,
                 saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons, false);
     }
 

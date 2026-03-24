@@ -1,5 +1,6 @@
-import { ChevronDown, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export interface SidebarTitleSectionProps {
   open: boolean;
@@ -7,21 +8,10 @@ export interface SidebarTitleSectionProps {
     username: string;
     email: string;
     usertype: string;
+    profilePictureUrl?: string;
   } | null;
   selected?: string;
 }
-
-// Temp User Icon Avatar
-const UserAvatar = ({ username }: { username: string }) => {
-  // Get first letter of username for avatar
-  const initial = username.charAt(0).toUpperCase();
-  
-  return (
-    <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-primary shadow-sm">
-      <span className="text-lg font-bold text-card">{initial}</span>
-    </div>
-  );
-};
 
 const getUserTypeLabel = (usertype: string) => {
   switch (usertype) {
@@ -77,7 +67,19 @@ export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSection
         className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${!isSelected ?  'hover:bg-border' : 'bg-primary/10 shadow-sm border-l-2 border-primary'} ${!open && 'justify-center'}`}
       >
         <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
-          <UserAvatar username={user.username} />
+          {user.profilePictureUrl ? (
+            <Image
+              src={user.profilePictureUrl}
+              alt={user.username}
+              width={48}
+              height={48}
+              className={`shrink-0 rounded-full object-cover shadow-sm ${open ? 'size-12' : 'size-8'}`}
+            />
+          ) : (
+            <div className={`grid shrink-0 place-content-center rounded-full bg-primary shadow-sm ${open ? 'size-12' : 'size-8'}`}>
+              <span className={`font-bold text-card ${open ? 'text-lg' : 'text-sm'}`}>{user.username.charAt(0).toUpperCase()}</span>
+            </div>
+          )}
           {open && (
             <div
               className={`transition-opacity duration-200 ${
