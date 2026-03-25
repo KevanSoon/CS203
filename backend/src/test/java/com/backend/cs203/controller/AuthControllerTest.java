@@ -1,9 +1,7 @@
 package com.backend.cs203.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -109,13 +107,117 @@ class AuthControllerTest {
     @Test
     void login_missingUsername_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"password\":\"Password1\"}")
+                .with(csrf()))      
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_smallJwtExpiration_usesMinimumMaxAge() throws Exception {
+        AuthResponse authResponse = AuthResponse.builder()
+            .token("jwt-token")
+            .username("testuser")
+            .email("test@example.com")
+            .usertype("user")
+            .build();
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", "jwt-token").build();
+
+        when(authService.login(any())).thenReturn(authResponse);
+        when(cookieFactory.jwtCookie(anyString(), anyLong())).thenReturn(cookie);
+        when(cookieFactory.withCookie(any(ResponseCookie.class), any()))
+            .thenReturn(ResponseEntity.ok().body(
+                UserInfoResponse.builder().username("testuser").build()
+            ));
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"testuser\",\"password\":\"Password1\"}")
+                .with(csrf()))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void login_jwtExpirationLessThan1000_usesMinValue() throws Exception {
+        java.lang.reflect.Field field = AuthController.class.getDeclaredField("jwtExpirationMs");
+        field.setAccessible(true);
+        field.set(mockMvc.getDispatcherServlet()
+                .getWebApplicationContext()
+                .getBean(AuthController.class), 500L);
+
+        AuthResponse authResponse = AuthResponse.builder()
+                .token("jwt-token")
+                .username("testuser")
+                .email("test@example.com")
+                .usertype("user")
+                .build();
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", "jwt-token").build();
+
+        when(authService.login(any())).thenReturn(authResponse);
+        when(cookieFactory.jwtCookie(anyString(), anyLong())).thenReturn(cookie);
+        when(cookieFactory.withCookie(any(ResponseCookie.class), any()))
+                .thenReturn(ResponseEntity.ok().body(
+                        UserInfoResponse.builder().username("testuser").build()
+                ));
+
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"password\":\"Password1\"}")
+                        .content("{\"username\":\"testuser\",\"password\":\"Password1\"}")
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        verify(cookieFactory).jwtCookie(anyString(), longThat(v -> v <= 1L)); 
+    }
+
+    @Test
+    void login_emptyBody_returns400() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void login_callsCookieFactoryWithCorrectToken() throws Exception {
+        AuthResponse authResponse = AuthResponse.builder()
+                .token("jwt-token")
+                .username("testuser")
+                .email("test@example.com")
+                .usertype("user")
+                .build();
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", "jwt-token").build();
+
+        when(authService.login(any())).thenReturn(authResponse);
+        when(cookieFactory.jwtCookie(anyString(), anyLong())).thenReturn(cookie);
+        when(cookieFactory.withCookie(any(ResponseCookie.class), any()))
+                .thenReturn(ResponseEntity.ok().body(
+                        UserInfoResponse.builder().username("testuser").build()
+                ));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"testuser\",\"password\":\"Password1\"}")
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        verify(cookieFactory).jwtCookie(eq("jwt-token"), anyLong());
+    }
+
+    
     // ===== POST /api/auth/register =====
+
+    @Test
+    void register_invalidEmail_returns400() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"user\",\"email\":\"invalid\",\"password\":\"Password1\",\"usertype\":\"user\"}")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void register_success_returns201() throws Exception {
@@ -152,6 +254,17 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void register_nullResponse_returns500() throws Exception {
+        when(userService.registerUser(any())).thenReturn(null);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"user\",\"email\":\"test@example.com\",\"password\":\"Password1\",\"usertype\":\"user\"}")
+                        .with(csrf()))
+                .andExpect(status().is4xxClientError());
+    }
+
     // ===== POST /api/auth/logout =====
 
     @Test
@@ -162,6 +275,19 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isNoContent())
                 .andExpect(header().exists("Set-Cookie"));
+    }
+
+    @Test
+    void logout_cookieIsClearedProperly() throws Exception {
+        ResponseCookie clearCookie = ResponseCookie.from("jwt", "").maxAge(0).build();
+
+        when(cookieFactory.clearJwtCookie()).thenReturn(clearCookie);
+
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
+            .andExpect(status().isNoContent())
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("jwt=")))
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")))
+            .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Expires=")));
     }
 
     // ===== GET /api/auth/me =====
@@ -186,5 +312,83 @@ class AuthControllerTest {
     void me_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ===== POST /api/auth/forget-password =====
+
+    @Test
+    void forgotPassword_success_returns200() throws Exception {
+        mockMvc.perform(post("/api/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\"}")
+                .with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("OTP sent to your email"));
+    }
+
+    @Test
+    void forgotPassword_exceptionStillReturns200() throws Exception {
+        doThrow(new RuntimeException("Email failed"))
+            .when(passwordResetService)
+            .sendOtp(anyString());
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\"}")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("OTP sent to your email"));
+    }
+ 
+    // ===== POST /api/auth/verify-otp =====
+
+    @Test
+    void verifyOtp_success_returns200() throws Exception {
+        mockMvc.perform(post("/api/auth/verify-otp")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\",\"otp\":\"123456\"}")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("OTP verified"));
+    }
+
+    @Test
+    void verifyOtp_invalidOtp_returns400() throws Exception {
+        doThrow(new RuntimeException("Invalid OTP"))
+            .when(passwordResetService)
+            .verifyOtp(anyString(), anyString());
+
+        mockMvc.perform(post("/api/auth/verify-otp")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\",\"otp\":\"wrong\"}")
+                .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("Invalid OTP"));
+    }
+    
+    // ===== POST /api/auth/reset-password =====
+
+    @Test
+    void resetPassword_success_returns200() throws Exception {
+        mockMvc.perform(post("/api/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\",\"otp\":\"123456\",\"password\":\"NewPass1\"}")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Password reset successfully"));
+    }
+
+    @Test
+    void resetPassword_failure_returns400() throws Exception {
+        doThrow(new RuntimeException("Reset failed"))
+            .when(passwordResetService)
+            .resetPassword(anyString(), anyString(), anyString());
+
+        mockMvc.perform(post("/api/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"test@example.com\",\"otp\":\"123456\",\"password\":\"NewPass1\"}")
+                .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("Reset failed"));
     }
 }
