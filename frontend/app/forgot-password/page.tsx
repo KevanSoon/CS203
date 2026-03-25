@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
       toast.success("OTP sent! Check your inbox 📬");
       setStep("otp");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Something went wrong. Try again.");
+     
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
       toast.success("OTP verified ✅");
       setStep("password");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid OTP. Try again.");
+      
       setOtp("");
     } finally {
       setIsLoading(false);
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
       toast.success("New OTP sent! 📬");
       startCooldown();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to resend. Try again.");
+      
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +122,7 @@ export default function ForgotPasswordPage() {
         toast.success("Password reset! Go log in 🔓");
         router.push("/login");
     } catch (err: any) {
-        toast.error(err.response?.data?.message || "Reset failed. Try again.");
+        
     } finally {
         setIsLoading(false);
     }
