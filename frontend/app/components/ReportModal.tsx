@@ -20,6 +20,8 @@ export function ReportModal({ lessonId, chapters, onClose }: Props) {
   const [priority, setPriority] = useState("medium");
   const [loading, setLoading] = useState(false);
 
+  const isFormValid = title.trim() !== "" && description.trim() !== "";
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
       onClose();
@@ -78,6 +80,10 @@ export function ReportModal({ lessonId, chapters, onClose }: Props) {
           <X />
         </button>
 
+        <p className="text-xs text-muted-foreground mb-2">
+          Fields marked with <span className="text-red-500 font-semibold">*</span> are required.
+        </p>
+
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="text-red-600" />
           <h2 className="text-xl font-bold text-red-600">
@@ -90,18 +96,19 @@ export function ReportModal({ lessonId, chapters, onClose }: Props) {
           <div>
             <label className="text-sm font-medium">
               Issue Title
+              <span className="text-red-500">*</span>
             </label>
 
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full mt-1 border rounded-md p-2"
+              className="w-full mt-1 border border-red-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-md p-2"
               placeholder="Short summary of the issue"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-muted-foreground">
               Chapter (optional)
             </label>
 
@@ -141,19 +148,21 @@ export function ReportModal({ lessonId, chapters, onClose }: Props) {
           <div>
             <label className="text-sm font-medium">
               Description
+              <span className="text-red-500">*</span>
             </label>
 
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full mt-1 border rounded-md p-2 h-28"
+              className="w-full mt-1 border border-red-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 rounded-md p-2 h-28"
               placeholder="Explain the issue in detail..."
             />
           </div>
 
           <button
-            disabled={loading}
-            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-60"
+            disabled={loading || !isFormValid}
+            className={`px-4 py-2 rounded-lg text-white transition 
+              ${loading || !isFormValid ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}            
           >
             {loading ? "Submitting..." : "Submit Report"}
           </button>
