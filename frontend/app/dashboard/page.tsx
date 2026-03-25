@@ -67,7 +67,6 @@ export default function DashboardPage() {
 				setLessons(lessonsRes.data);
 
 				if (progressRes) {
-					console.log("AA", progressRes)
 					setDashboardProgress(progressRes.data);
 				}
 			} catch (err: unknown) {
@@ -81,11 +80,9 @@ export default function DashboardPage() {
 	}, []);
 
 	const merged: MergedLesson[] = useMemo(() => {
-		console.log("A",dashboardProgress)
 		const progressMap = new Map(dashboardProgress.map((p) => [p.lessonId, p]));
 		return lessons.map((lesson) => {
 			const progress = progressMap.get(lesson.id);
-			console.log(lesson.id, progress)
 			return {
 				lessonId: lesson.id,
 				title: lesson.title,
