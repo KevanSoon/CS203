@@ -55,18 +55,6 @@ export default function RecommendModal({ recommendations, onClose }: Props) {
                                         </span>
                                     )}
                                 </div>
-                                {rec.tags?.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                        {rec.tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
                             </button>
                         ))
                     )}
