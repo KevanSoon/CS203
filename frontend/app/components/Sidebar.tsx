@@ -7,6 +7,7 @@ import { SidebarToggle } from "@/app/components/SidebarToggle";
 import { api } from "@/app/api/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useSiteState } from "@/app/store/SiteStore";
+import { useProgressStore } from "@/app/store/ProgressStore";
 import { AlertTriangle } from "lucide-react";
 
 export interface ChapterItem {
@@ -65,6 +66,7 @@ export const Sidebar = ({
     try {
       await api.post("/api/auth/logout");
       useSiteState.getState().clearUser();
+      useProgressStore.getState().invalidate();
       window.location.href = "/";
     } catch (err) {
       console.error("Logout error:", err);
