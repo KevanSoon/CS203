@@ -7,6 +7,7 @@ import { api } from "@/app/api/api";
 import FilterSearch from "@/app/components/FilterSearch";
 import { useProgressStore, isDashboardStale, DashboardProgress } from "@/app/store/ProgressStore";
 import toast from "react-hot-toast";
+import { Flame, X } from "lucide-react";
 
 interface LessonSummary {
 	id: number;
@@ -54,6 +55,15 @@ export default function DashboardPage() {
 	const [lessons, setLessons] = useState<LessonSummary[]>([]);
 	const { dashboardProgress, setDashboardProgress } = useProgressStore();
 	const [loading, setLoading] = useState(true);
+	const [showStreakBrokenModal, setShowStreakBrokenModal] = useState(false);
+
+	useEffect(() => {
+		const handleEsc = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setShowStreakBrokenModal(false);
+		};
+		if (showStreakBrokenModal) window.addEventListener("keydown", handleEsc);
+		return () => window.removeEventListener("keydown", handleEsc);
+	}, [showStreakBrokenModal]);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -61,13 +71,16 @@ export default function DashboardPage() {
 			try {
 				const [lessonsRes, progressRes] = await Promise.all([
 					api.get<LessonSummary[]>("/api/lesson"),
-					isDashboardStale() || dashboardProgress.length === 0 ? api.get<DashboardProgress[]>("/api/progress/dashboard") : Promise.resolve(null),
+					isDashboardStale() || dashboardProgress.length === 0
+						? api.get<{ progress: DashboardProgress[]; streakBroken: boolean }>("/api/progress/dashboard")
+						: Promise.resolve(null),
 				]);
 
 				setLessons(lessonsRes.data);
 
 				if (progressRes) {
-					setDashboardProgress(progressRes.data);
+					setDashboardProgress(progressRes.data.progress);
+					if (progressRes.data.streakBroken) setShowStreakBrokenModal(true);
 				}
 			} catch (err: unknown) {
 				console.error(err);
@@ -243,6 +256,42 @@ export default function DashboardPage() {
 				{renderSection("Not Started", notStarted)}
 				{renderSection("Completed", completed)}
 			</div>
+
+			{showStreakBrokenModal && (
+				<div
+					className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+					onClick={() => setShowStreakBrokenModal(false)}
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative"
+					>
+						<button
+							onClick={() => setShowStreakBrokenModal(false)}
+							className="absolute top-3 right-3 p-2 rounded-md hover:bg-slate-100"
+							aria-label="Close"
+						>
+							<X size={18} />
+						</button>
+
+						<div className="flex flex-col items-center text-center gap-3 py-2">
+							<span className="grid h-14 w-14 place-items-center rounded-2xl bg-orange-100 text-orange-500">
+								<Flame size={28} />
+							</span>
+							<h3 className="text-xl font-extrabold text-slate-900">Your streak has ended</h3>
+							<p className="text-sm text-slate-500 leading-relaxed">
+								You missed a day and your daily streak has been reset to 0. Complete a lesson today to start a new streak!
+							</p>
+							<button
+								onClick={() => setShowStreakBrokenModal(false)}
+								className="mt-2 w-full rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] hover:brightness-105 transition"
+							>
+								Let's go again!
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

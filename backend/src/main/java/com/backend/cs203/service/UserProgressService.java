@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.cs203.dto.progress.ChapterProgressDTO;
 import com.backend.cs203.dto.progress.DashboardProgressDTO;
+import com.backend.cs203.dto.progress.DashboardResponseDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
@@ -52,11 +53,21 @@ public class UserProgressService {
      * lesson. Uses batch queries — O(1) queries regardless of lesson/chapter
      * count.
      */
-    @Transactional(readOnly = true)
-    public List<DashboardProgressDTO> getDashboard(String username) {
+    @Transactional
+    public DashboardResponseDTO getDashboard(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Integer userId = user.getId();
+
+        // Check and reset streak if broken
+        boolean streakBroken = false;
+        LocalDate lastStreakDate = user.getLastStreakDate();
+        if (lastStreakDate != null && lastStreakDate.isBefore(LocalDate.now().minusDays(1))) {
+            user.setStreak(0);
+            user.setLastStreakDate(null);
+            userRepository.save(user);
+            streakBroken = true;
+        }
 
         // 1 query: all approved lessons
         List<Lesson> allLessons = lessonRepository.findAll().stream()
@@ -121,7 +132,7 @@ public class UserProgressService {
             ));
         }
 
-        return result;
+        return new DashboardResponseDTO(result, streakBroken);
     }
 
     /**
