@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.backend.cs203.dto.progress.DashboardProgressDTO;
+import com.backend.cs203.dto.progress.DashboardResponseDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.entity.Card;
 import com.backend.cs203.entity.Chapter;
@@ -113,9 +114,9 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getProgress().isEmpty());
     }
 
     @Test
@@ -129,14 +130,14 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertEquals(1, result.size());
-        assertEquals(10, result.get(0).getLessonId());
-        assertEquals("not_started", result.get(0).getStatus());
-        assertEquals(0, result.get(0).getTotalItems());
-        assertEquals(0, result.get(0).getCompletedItems());
-        assertEquals(0.0, result.get(0).getProgressPercent());
+        assertEquals(1, result.getProgress().size());
+        assertEquals(10, result.getProgress().get(0).getLessonId());
+        assertEquals("not_started", result.getProgress().get(0).getStatus());
+        assertEquals(0, result.getProgress().get(0).getTotalItems());
+        assertEquals(0, result.getProgress().get(0).getCompletedItems());
+        assertEquals(0.0, result.getProgress().get(0).getProgressPercent());
     }
 
     @Test
@@ -154,9 +155,9 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getProgress().isEmpty());
     }
 
     @Test
@@ -173,10 +174,10 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(List.of(100));
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(List.of(100));
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertEquals(1, result.size());
-        DashboardProgressDTO dto = result.get(0);
+        assertEquals(1, result.getProgress().size());
+        DashboardProgressDTO dto = result.getProgress().get(0);
         assertEquals(4, dto.getTotalItems());
         assertEquals(3, dto.getCompletedItems());
         assertEquals(75.0, dto.getProgressPercent());
@@ -198,9 +199,9 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertEquals("in_progress", result.get(0).getStatus());
+        assertEquals("in_progress", result.getProgress().get(0).getStatus());
     }
 
     @Test
@@ -219,9 +220,9 @@ class UserProgressServiceTest {
         when(quizRepository.findChapterIdsWithQuiz()).thenReturn(Collections.emptyList());
         when(quizResultRepository.findCompletedChapterIdsByUserId(1)).thenReturn(Collections.emptyList());
 
-        List<DashboardProgressDTO> result = userProgressService.getDashboard("testuser");
+        DashboardResponseDTO result = userProgressService.getDashboard("testuser");
 
-        assertEquals("completed", result.get(0).getStatus());
+        assertEquals("completed", result.getProgress().get(0).getStatus());
     }
 
     // ===== getLessonProgress =====

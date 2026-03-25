@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.progress.ChapterProgressDTO;
 import com.backend.cs203.dto.progress.DashboardProgressDTO;
+import com.backend.cs203.dto.progress.DashboardResponseDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
@@ -49,27 +50,28 @@ class UserProgressControllerTest {
     @Test
     void getDashboard_authenticatedUser_returns200WithProgressList() throws Exception {
         DashboardProgressDTO dto = new DashboardProgressDTO(1, "in_progress", 10, 5, 50.0);
-        when(userProgressService.getDashboard("testuser")).thenReturn(List.of(dto));
+        when(userProgressService.getDashboard("testuser")).thenReturn(new DashboardResponseDTO(List.of(dto), false));
 
         mockMvc.perform(get("/api/progress/dashboard").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].lessonId").value(1))
-                .andExpect(jsonPath("$[0].status").value("in_progress"))
-                .andExpect(jsonPath("$[0].totalItems").value(10))
-                .andExpect(jsonPath("$[0].completedItems").value(5))
-                .andExpect(jsonPath("$[0].progressPercent").value(50.0));
+                .andExpect(jsonPath("$.progress[0].lessonId").value(1))
+                .andExpect(jsonPath("$.progress[0].status").value("in_progress"))
+                .andExpect(jsonPath("$.progress[0].totalItems").value(10))
+                .andExpect(jsonPath("$.progress[0].completedItems").value(5))
+                .andExpect(jsonPath("$.progress[0].progressPercent").value(50.0))
+                .andExpect(jsonPath("$.streakBroken").value(false));
 
         verify(userProgressService).getDashboard("testuser");
     }
 
     @Test
     void getDashboard_emptyProgressList_returns200WithEmptyArray() throws Exception {
-        when(userProgressService.getDashboard("testuser")).thenReturn(Collections.emptyList());
+        when(userProgressService.getDashboard("testuser")).thenReturn(new DashboardResponseDTO(Collections.emptyList(), false));
 
         mockMvc.perform(get("/api/progress/dashboard").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.progress").isArray())
+                .andExpect(jsonPath("$.progress").isEmpty());
     }
 
     @Test
@@ -82,13 +84,13 @@ class UserProgressControllerTest {
     void getDashboard_multipleItems_returnsAll() throws Exception {
         DashboardProgressDTO dto1 = new DashboardProgressDTO(1, "completed", 5, 5, 100.0);
         DashboardProgressDTO dto2 = new DashboardProgressDTO(2, "not_started", 8, 0, 0.0);
-        when(userProgressService.getDashboard("testuser")).thenReturn(List.of(dto1, dto2));
+        when(userProgressService.getDashboard("testuser")).thenReturn(new DashboardResponseDTO(List.of(dto1, dto2), false));
 
         mockMvc.perform(get("/api/progress/dashboard").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].status").value("completed"))
-                .andExpect(jsonPath("$[1].status").value("not_started"));
+                .andExpect(jsonPath("$.progress.length()").value(2))
+                .andExpect(jsonPath("$.progress[0].status").value("completed"))
+                .andExpect(jsonPath("$.progress[1].status").value("not_started"));
     }
 
     // ===== GET /api/progress/lesson/{lessonId} =====
