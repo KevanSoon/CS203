@@ -8,6 +8,7 @@ interface Recommendation {
     lesson_title: string;
     tags: string[];
     content: string;
+    completed?: boolean;
 }
 
 interface Props {
@@ -46,7 +47,14 @@ export default function RecommendModal({ recommendations, onClose }: Props) {
                                 onClick={() => handleNavigate(rec.lesson_title)}
                                 className="w-full text-left rounded-lg border p-4 hover:border-primary hover:bg-primary/5 transition-colors"
                             >
-                                <p className="font-semibold text-sm">{rec.lesson_title}</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="font-semibold text-sm">{rec.lesson_title}</p>
+                                    {rec.completed && (
+                                        <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                                            Completed
+                                        </span>
+                                    )}
+                                </div>
                                 {rec.tags?.length > 0 && (
                                     <div className="flex flex-wrap gap-1 mt-1.5">
                                         {rec.tags.map((tag) => (

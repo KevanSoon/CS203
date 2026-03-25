@@ -226,9 +226,16 @@ export default function LessonRoadmapPage({
         query: `${lessonTitle} ${lessonDescription}`,
         count: 4, // fetch 4, filter out current, show 3
       });
-      const filtered = (data.recommendations || []).filter(
-        (r: any) => r.lesson_title !== lessonTitle
-      ).slice(0, 3);
+      const { dashboardProgress } = useProgressStore.getState();
+      const completedIds = new Set(
+        dashboardProgress
+          .filter((dp) => dp.status === "completed")
+          .map((dp) => dp.lessonId)
+      );
+      const filtered = (data.recommendations || [])
+        .filter((r: any) => r.lesson_title !== lessonTitle)
+        .slice(0, 3)
+        .map((r: any) => ({ ...r, completed: completedIds.has(r.lesson_id) }));
       setRecommendations(filtered);
     } catch {
       setRecommendations([]);
