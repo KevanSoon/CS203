@@ -2,7 +2,6 @@ import axios from "axios";
 import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.BACKEND_URL!;
-console.log("BACKEND_URL:", BACKEND_URL);
 
 export async function GET() {
   try {
@@ -153,7 +152,6 @@ export async function POST(req: Request) {
     const jwt = cookieStore.get("jwt")?.value;
 
     if (!jwt) {
-      console.log("No JWT found in BFF");
       return Response.json({ valid: false }, { status: 401 });
     }
 
