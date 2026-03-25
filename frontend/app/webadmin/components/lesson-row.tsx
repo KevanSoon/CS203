@@ -12,6 +12,7 @@ interface Lesson {
   description: string
   createdBy: string
   createdAt: string
+  updatedAt?: string
   status: LessonStatus
   tags?: string[] | string | null
 }
@@ -203,7 +204,10 @@ export function LessonRow({
           )}
 
           <p className="text-xs text-muted-foreground">
-            {lesson.createdBy} · Created: {formatDate(lesson.createdAt)}
+            {lesson.createdBy} ·{" "}
+            {lesson.updatedAt
+              ? `Updated: ${formatDate(lesson.updatedAt)}`
+              : `Created: ${formatDate(lesson.createdAt)}`}
           </p>
         </div>
       </div>
