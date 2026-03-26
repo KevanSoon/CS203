@@ -10,7 +10,7 @@ import { api } from "@/app/api/api";
 import { QuizCard } from "./components/QuizCard";
 import { useProgressStore, LessonDetailProgress } from "@/app/store/ProgressStore";
 import ReviewModal from "@/app/components/ReviewModal";
-import ReviewViewModal from "@/app/components/ReviewViewModal";
+import ReviewUserModal from "@/app/components/ReviewUserModal";
 import { ReportModal } from "@/app/components/ReportModal";
 import RecommendModal from "./components/RecommendModal";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -482,7 +482,7 @@ export default function LessonRoadmapPage({
       )}
 
       {showReviewView && lessonId && (
-        <ReviewViewModal
+        <ReviewUserModal
           lessonId={lessonId}
           onClose={() => setShowReviewView(false)}
         />
