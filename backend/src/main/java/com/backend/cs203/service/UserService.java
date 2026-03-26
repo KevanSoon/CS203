@@ -152,7 +152,7 @@ public class UserService {
                 : null;
 
         long totalCompletedLessons = userLessonProgressRepository
-                .countByUserIdAndStatus(user.getId(), ProgressStatus.completed);
+                .countCompletedApprovedLessonsByUserId(user.getId());
 
         return new UserResponse(
             user.getUsername(),
@@ -255,7 +255,7 @@ public class UserService {
 
         User saved = userRepository.save(user);
         long totalCompletedLessons = userLessonProgressRepository
-                .countByUserIdAndStatus(saved.getId(), ProgressStatus.completed);
+                .countCompletedApprovedLessonsByUserId(saved.getId());
         String signedUrl = saved.getProfilePictureUrl() != null
                 ? supabaseStorageService.getSignedUrl(saved.getProfilePictureUrl(), 3600)
                 : null;
