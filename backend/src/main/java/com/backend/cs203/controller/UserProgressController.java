@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.progress.DashboardProgressDTO;
+import com.backend.cs203.dto.progress.DashboardResponseDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.dto.progress.MarkCardCompleteRequest;
 import com.backend.cs203.service.UserProgressService;
@@ -35,8 +36,8 @@ public class UserProgressController {
      * GET /api/lesson/.
      */
     @GetMapping("/dashboard")
-    public ResponseEntity<List<DashboardProgressDTO>> getDashboard(Authentication authentication) {
-        List<DashboardProgressDTO> dashboard = userProgressService.getDashboard(authentication.getName());
+    public ResponseEntity<DashboardResponseDTO> getDashboard(Authentication authentication) {
+        DashboardResponseDTO dashboard = userProgressService.getDashboard(authentication.getName());
         return ResponseEntity.ok(dashboard);
     }
 
