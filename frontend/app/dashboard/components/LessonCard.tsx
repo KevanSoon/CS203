@@ -179,35 +179,33 @@ export default function LessonCard({
             })()}
 
           <div className="space-y-2 mt-auto">
-            {status && (
+            {status && (status === "completed" || status === "in_progress") && (
               <span
                 className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${
                   status === "completed"
                     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : status === "in_progress"
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                 }`}
               >
-                {status === "completed"
-                  ? "Completed"
-                  : status === "in_progress"
-                  ? "In Progress"
-                  : "Not Started"}
+                {status === "completed" ? "Completed" : "In Progress"}
               </span>
             )}
 
-            <div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
-              <span>Completion</span>
-              <span>{progress}%</span>
-            </div>
+            {status !== "not_started" && status !== "completed" && (
+              <>
+                <div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
+                  <span>Completion</span>
+                  <span>{progress}%</span>
+                </div>
 
-            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-700 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-700 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <div className="text-sm sm:text-base text-muted-foreground">
