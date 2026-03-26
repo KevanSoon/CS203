@@ -19,6 +19,9 @@ export async function GET() {
     try {
         const {data} = await axios.get(`${BACKEND_URL}/api/lesson/applications/`, {
             headers: {Authorization: `Bearer ${jwt}`},
+            params: {
+                sort: "updatedAt, desc",
+            },
         });
 
         return Response.json(data);

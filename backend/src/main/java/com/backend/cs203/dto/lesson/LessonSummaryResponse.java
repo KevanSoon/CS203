@@ -13,6 +13,7 @@ public class LessonSummaryResponse {
     private final String description;
     private final String createdBy;
     private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
     private final String tags;
     private final String lessonPictureUrl;
     private final LocalDateTime deletedAt;

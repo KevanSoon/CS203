@@ -68,16 +68,10 @@ public class LessonService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Return all existing tag names for autocomplete.
-     */
     public List<String> getAllTags() {
         return lessonRepository.findAllTagNames();
     }
 
-    /**
-     * Check whether a lesson title already exists (any status).
-     */
     public boolean isTitleTaken(String title) {
         return lessonRepository.countByTitleNotDeleted(title) > 0;
     }
@@ -96,7 +90,7 @@ public class LessonService {
                 .collect(Collectors.toList());
     }
 
-    public List<LessonApplicationDTO> getUserCreatedLessonApplications(int userId) { // ← NEW
+    public List<LessonApplicationDTO> getUserCreatedLessonApplications(int userId) {
         return lessonRepository.findUserCreatedLessonApplications(userId);
     }
 
@@ -108,6 +102,7 @@ public class LessonService {
         return new AdminLessonStatsDTO(totalLessons, publishedLessons, totalAttempts, totalCompletions);
     }
 
+    // ← ADDED updatedAt to LessonSummaryResponse constructor
     private LessonSummaryResponse toResponseWithSignedUrl(LessonSummaryDTO dto) {
         String picUrl = dto.getLessonPictureUrl();
         String signedUrl = (picUrl != null)
@@ -119,6 +114,7 @@ public class LessonService {
                 dto.getDescription(),
                 dto.getCreatedBy(),
                 dto.getCreatedAt(),
+                dto.getUpdatedAt(),  
                 dto.getTags(),
                 signedUrl,
                 dto.getDeletedAt(),
@@ -141,13 +137,12 @@ public class LessonService {
                     .stream()
                     .map(quiz -> new QuizDTO(quiz.getId(), quiz.getTitle(), quiz.getQuestion(), quiz.getQuizType().name(), quiz.getOptions(), quiz.getCorrectAnswer()))
                     .collect(Collectors.toList());
-
             return new ChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getDescription(), cards, quizzes);
         }).collect(Collectors.toList());
 
         String signedUrl = lesson.getLessonPictureUrl() != null
-        ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
-        : null;
+                ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
+                : null;
 
         return new LessonPageDTO(
                 lesson.getId(),
@@ -175,7 +170,6 @@ public class LessonService {
     }
 
     public void submitReview(Integer lessonId, Integer userId, int rating, String feedback) {
-
         System.out.println("lessonId: " + lessonId);
         System.out.println("userId: " + userId);
         System.out.println("rating: " + rating);
@@ -216,7 +210,6 @@ public class LessonService {
 
     @Transactional
     public CreateLessonResponse createLesson(CreateLessonRequest request, User user) {
-        // 1. Create and save the Lesson entity
         Lesson lesson = new Lesson();
         lesson.setTitle(request.getTitle());
         lesson.setDescription(request.getDescription());
@@ -228,23 +221,23 @@ public class LessonService {
         List<CreateChapterRequest> chapterList = List.of();
         if (request.getChapters() != null && !request.getChapters().isBlank()) {
             try {
-                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
-                });
+                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
             } catch (Exception e) {
                 throw new RuntimeException("Invalid chapters format");
             }
         } else if (!request.isDraft()) {
             throw new RuntimeException("A lesson must have at least one chapter");
         }
+
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
-                });
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
         }
+
         MultipartFile lessonImage = request.getLessonPictureUrl();
         if (lessonImage != null && !lessonImage.isEmpty()) {
             String imagePath = supabaseStorageService.uploadFile("lesson-pictures", lessonImage);
@@ -252,19 +245,14 @@ public class LessonService {
             lesson = lessonRepository.save(lesson);
         }
 
-        // 2. Save tags if provided
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) {
-                    continue;
-                }
-                // Insert tag if it doesn't exist
+                if (trimmed.isEmpty()) continue;
                 entityManager.createNativeQuery(
                         "INSERT IGNORE INTO tag (name) VALUES (:name)")
                         .setParameter("name", trimmed)
                         .executeUpdate();
-                // Insert lesson_tagging
                 entityManager.createNativeQuery(
                         "INSERT INTO lesson_tagging (tag_name, lesson_id) VALUES (:tagName, :lessonId)")
                         .setParameter("tagName", trimmed)
@@ -273,7 +261,6 @@ public class LessonService {
             }
         }
 
-        // 3. Create chapters with their cards and quiz
         for (CreateChapterRequest chapterReq : chapterList) {
             Chapter chapter = new Chapter();
             chapter.setTitle(chapterReq.getTitle());
@@ -281,7 +268,6 @@ public class LessonService {
             chapter.setLesson(lesson);
             chapter = chapterRepository.save(chapter);
 
-            // Save cards for this chapter
             if (chapterReq.getCards() != null) {
                 for (CreateCardRequest cardReq : chapterReq.getCards()) {
                     Card card = new Card();
@@ -293,7 +279,6 @@ public class LessonService {
                 }
             }
 
-            // Save quiz questions for this chapter
             if (chapterReq.getQuizzes() != null) {
                 for (CreateQuizRequest quizReq : chapterReq.getQuizzes()) {
                     Quiz quiz = new Quiz();
@@ -326,9 +311,6 @@ public class LessonService {
         );
     }
 
-    /**
-     * Get full lesson page for admin editing (any status, owned by user)
-     */
     public LessonPageDTO getAdminLessonPage(String lessonTitle, Integer userId) {
         Lesson lesson = lessonRepository.findByTitleAndCreatedBy(lessonTitle, userId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found or you don't have permission to edit it"));
@@ -365,9 +347,6 @@ public class LessonService {
         );
     }
 
-    /**
-     * Get full lesson page for ROOT review (read-only, any status).
-     */
     public LessonPageDTO getRootLessonApplicationPage(String title) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Lesson title must be provided");
@@ -378,7 +357,6 @@ public class LessonService {
     }
 
     private LessonPageDTO buildLessonPageDTO(Lesson lesson) {
-
         List<Chapter> chapters = chapterRepository.findByLessonId(lesson.getId());
 
         List<ChapterDTO> chapterDetails = chapters.stream().map(chapter -> {
@@ -393,11 +371,10 @@ public class LessonService {
             return new ChapterDTO(chapter.getId(), chapter.getTitle(), chapter.getDescription(), cards, quizzes);
         }).collect(Collectors.toList());
 
-        // Fetch tags for this lesson
         List<String> tags = lessonRepository.findTagsByLessonId(lesson.getId());
         String signedUrl = lesson.getLessonPictureUrl() != null
-            ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
-            : null;
+                ? supabaseStorageService.getSignedUrl(lesson.getLessonPictureUrl(), 3600)
+                : null;
 
         return new LessonPageDTO(
                 lesson.getId(),
@@ -411,9 +388,6 @@ public class LessonService {
         );
     }
 
-    /**
-     * Update an existing lesson (replace all chapters/cards/quizzes)
-     */
     @Transactional
     public CreateLessonResponse updateLesson(String originalTitle, CreateLessonRequest request, User user) {
         Lesson lesson = lessonRepository.findByTitleAndCreatedBy(originalTitle, user.getId())
@@ -423,32 +397,29 @@ public class LessonService {
         List<CreateChapterRequest> chapterList = List.of();
         if (request.getChapters() != null && !request.getChapters().isBlank()) {
             try {
-                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {
-                });
+                chapterList = mapper.readValue(request.getChapters(), new TypeReference<List<CreateChapterRequest>>() {});
             } catch (Exception e) {
                 throw new RuntimeException("Invalid chapters format");
             }
         } else if (!request.isDraft()) {
             throw new RuntimeException("A lesson must have at least one chapter");
         }
+
         List<String> tagList = null;
         try {
             if (request.getTags() != null && !request.getTags().isBlank()) {
-                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {
-                });
+                tagList = mapper.readValue(request.getTags(), new TypeReference<List<String>>() {});
             }
         } catch (Exception e) {
             throw new RuntimeException("Invalid tags format");
         }
 
-        // Only allow editing pending or rejected lessons
         if (lesson.getStatus() != Lesson.LessonStatus.saved
                 && lesson.getStatus() != Lesson.LessonStatus.pending
                 && lesson.getStatus() != Lesson.LessonStatus.rejected) {
             throw new RuntimeException("Only saved, pending, or rejected lessons can be edited");
         }
 
-        // Update lesson fields
         lesson.setTitle(request.getTitle());
         lesson.setDescription(request.getDescription());
         MultipartFile lessonImage = request.getLessonPictureUrl();
@@ -465,9 +436,9 @@ public class LessonService {
             lesson.setLessonPictureUrl(imagePath);
         }
         lesson.setStatus(request.isDraft() ? Lesson.LessonStatus.saved : Lesson.LessonStatus.pending);
+        lesson.setUpdatedAt(LocalDateTime.now());   // ← ADDED
         lessonRepository.save(lesson);
 
-        // Delete old tags and re-insert
         entityManager.createNativeQuery(
                 "DELETE FROM lesson_tagging WHERE lesson_id = :lessonId")
                 .setParameter("lessonId", lesson.getId())
@@ -476,9 +447,7 @@ public class LessonService {
         if (tagList != null && !tagList.isEmpty()) {
             for (String tagName : tagList) {
                 String trimmed = tagName.trim();
-                if (trimmed.isEmpty()) {
-                    continue;
-                }
+                if (trimmed.isEmpty()) continue;
                 entityManager.createNativeQuery(
                         "INSERT IGNORE INTO tag (name) VALUES (:name)")
                         .setParameter("name", trimmed)
@@ -491,10 +460,8 @@ public class LessonService {
             }
         }
 
-        // Delete old chapters (cards and quizzes cascade via DB foreign keys, or delete manually)
         List<Chapter> oldChapters = chapterRepository.findByLessonId(lesson.getId());
         for (Chapter oldChapter : oldChapters) {
-            // Delete cards and quizzes for this chapter
             entityManager.createNativeQuery("DELETE FROM card WHERE chapter_id = :chapterId")
                     .setParameter("chapterId", oldChapter.getId()).executeUpdate();
             entityManager.createNativeQuery("DELETE FROM quiz WHERE chapter_id = :chapterId")
@@ -503,7 +470,6 @@ public class LessonService {
         entityManager.createNativeQuery("DELETE FROM chapter WHERE lesson_id = :lessonId")
                 .setParameter("lessonId", lesson.getId()).executeUpdate();
 
-        // Re-create chapters with cards and quizzes
         for (CreateChapterRequest chapterReq : chapterList) {
             Chapter chapter = new Chapter();
             chapter.setTitle(chapterReq.getTitle());
@@ -567,10 +533,8 @@ public class LessonService {
         lesson.setDeletedAt(LocalDateTime.now());
         lessonRepository.save(lesson);
 
-        // Remove lesson content from vector store
         vectorStoreService.deleteLesson(lessonId);
 
-        // --- Close all open reports for this lesson ---
         List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lessonId);
         for (Report report : openReports) {
             report.setStatus(Report.ReportStatus.closed);
@@ -592,7 +556,6 @@ public class LessonService {
                     String avatarUrl = user.getProfilePictureUrl() != null
                             ? supabaseStorageService.getSignedUrl(user.getProfilePictureUrl(), 3600)
                             : null;
-
                     return new LessonReviewResponse(
                             r.getId(),
                             user.getUsername(),
@@ -608,7 +571,7 @@ public class LessonService {
     @Transactional
     public void reviewLessonApplication(String title, String action) {
         System.out.println(">>> reviewLessonApplication called: title=" + title + ", action=" + action);
-        
+
         Lesson lesson = lessonRepository.findByTitleNotDeleted(title)
                 .orElseThrow(() -> new RuntimeException("Lesson not found: " + title));
 
@@ -620,12 +583,17 @@ public class LessonService {
             );
         }
 
-        String newStatus = "approve".equalsIgnoreCase(action) ? "approved" : "rejected";
-        int rows = lessonRepository.updateStatusByTitle(title, newStatus);
-        System.out.println(">>> Rows updated: " + rows);
+        Lesson.LessonStatus newStatus = "approve".equalsIgnoreCase(action)
+                ? Lesson.LessonStatus.approved
+                : Lesson.LessonStatus.rejected;
 
-        // On approval, insert lesson content into vector store for RAG
-        if ("approved".equals(newStatus)) {
+        lesson.setStatus(newStatus);
+        lesson.setUpdatedAt(LocalDateTime.now());
+        lessonRepository.save(lesson);
+
+        System.out.println(">>> Lesson saved with status=" + newStatus + " updatedAt=" + lesson.getUpdatedAt());
+
+        if (Lesson.LessonStatus.approved.equals(newStatus)) {
             LessonPageDTO lessonPage = buildLessonPageDTO(lesson);
             vectorStoreService.insertLesson(lessonPage);
         }
