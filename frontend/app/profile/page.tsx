@@ -41,8 +41,10 @@ type UserSearchResult = {
 };
 
 type AdminStats = {
+  totalLessons: number;
   publishedLessons: number;
   totalAttempts: number;
+  totalCompletions: number;
 };
 
 
@@ -560,7 +562,23 @@ export default function ProfilePage() {
                           </span>
                           <div>
                             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                              Lessons Created
+                              Total Lessons
+                            </p>
+                            <p className="text-xl font-black">
+                              {adminStats?.totalLessons ?? "--"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
+                            <BookOpen size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Lessons Published
                             </p>
                             <p className="text-xl font-black">
                               {adminStats?.publishedLessons ?? "--"}
@@ -580,6 +598,22 @@ export default function ProfilePage() {
                             </p>
                             <p className="text-xl font-black">
                               {adminStats?.totalAttempts ?? "--"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-[#F6F5FF] p-4 border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white border border-slate-100 text-[#6C63FF]">
+                            <Users size={18} />
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Total Completions
+                            </p>
+                            <p className="text-xl font-black">
+                              {adminStats?.totalCompletions ?? "--"}
                             </p>
                           </div>
                         </div>

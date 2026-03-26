@@ -5,9 +5,7 @@ import { Sidebar } from "@/app/components/Sidebar";
 import { api } from "@/app/api/api";
 
 import { CartoonButton } from "@/app/components/CartoonButton";
-import { StatsGrid } from "./components/StatsGrid";
 import { MyLessonsCard } from "./components/MyLessonsCard";
-import { FeedbacksCard } from "./components/FeedbacksCard";
 
 type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
@@ -103,7 +101,6 @@ export const AdminLessonPage = () => {
 						<CartoonButton label="+ Create Lesson" onClick={() => router.push("/admin/create")} />
 					</div>
 
-					<StatsGrid />
 
 					{/* Content Grid */}
 					<div>
@@ -111,8 +108,6 @@ export const AdminLessonPage = () => {
 							<>
 								<MyLessonsCard title="My Lessons" data={lessons} /> <MyLessonsCard title="Applications" data={applications} />
 							</>
-						) : selected === "View Alerts" ? (
-							<FeedbacksCard />
 						) : null}
 					</div>
 				</div>

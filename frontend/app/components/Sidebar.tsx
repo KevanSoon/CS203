@@ -81,8 +81,6 @@ export const Sidebar = ({
       case 'admin':
         return [
           { Icon: FileText, title: "Manage Lessons", route: "/admin" },
-          { Icon: BarChart3, title: "View Alerts", route: "/admin" },
-          { Icon: BookOpen, title: "Lesson Application", route: "/admin" },
         ];
       case 'root':
         return [
