@@ -28,6 +28,7 @@ import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.ReportRepository;
+import com.backend.cs203.service.VectorStoreService;
 
 @ExtendWith(MockitoExtension.class)
 class ReportServiceTest {
@@ -40,6 +41,9 @@ class ReportServiceTest {
 
     @Mock
     private ChapterRepository chapterRepository;
+
+    @Mock
+    private VectorStoreService vectorStoreService;
 
     @InjectMocks
     private ReportService reportService;
@@ -233,6 +237,7 @@ class ReportServiceTest {
         verify(reportRepository).findById(reportId);
         verify(lessonRepository).save(lesson);
         verify(reportRepository).save(report);
+        verify(vectorStoreService).deleteLesson(lesson.getId());
     }
 
     @Test

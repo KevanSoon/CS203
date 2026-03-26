@@ -21,11 +21,13 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final LessonRepository lessonRepository;
     private final ChapterRepository chapterRepository;
+    private final VectorStoreService vectorStoreService;
 
-    public ReportService(ReportRepository reportRepository, LessonRepository lessonRepository, ChapterRepository chapterRepository) {
+    public ReportService(ReportRepository reportRepository, LessonRepository lessonRepository, ChapterRepository chapterRepository, VectorStoreService vectorStoreService) {
         this.reportRepository = reportRepository;
         this.lessonRepository = lessonRepository;
         this.chapterRepository = chapterRepository;
+        this.vectorStoreService = vectorStoreService;
     }
 
     public void createReport(ReportCreateDTO dto, User user) {
@@ -89,6 +91,8 @@ public class ReportService {
 
         lessonRepository.save(lesson);
         reportRepository.save(report);
+
+        vectorStoreService.deleteLesson(lesson.getId());
     }
 
     public void updateReportRemarks(Integer reportId, String remarks) {
