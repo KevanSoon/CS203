@@ -28,7 +28,7 @@ async def verify_content(request: VerifyRequest) -> VerifyResponse:
 
     # Step 1: Search news sources
     print("[VERIFY] Step 1: Searching credible news sources...")
-    search_result = await crawl_evidence(f"{request.question} {request.content}")
+    search_result = await crawl_evidence(f"{request.question} gen alpha slang")
 
     # Step 2: Build DeepEval test case — use the full summary as retrieval context
     retrieval_context = [search_result.summary] if search_result.summary.strip() else ["No news articles found for this slang term."]
