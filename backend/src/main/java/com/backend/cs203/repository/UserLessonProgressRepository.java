@@ -34,6 +34,14 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
             WHERE l.created_by_id = :adminId AND l.status = 'approved' AND ulp.status = 'completed' AND l.deleted_at IS NULL
             """, nativeQuery = true)
     long countCompletionsByAdminId(@Param("adminId") Integer adminId);
+    /** Count completed lessons for a user, excluding deleted and suspended lessons. */
+    @Query(value = """
+            SELECT COUNT(*) FROM user_lesson_progress ulp
+            JOIN lesson l ON ulp.lesson_id = l.id
+            WHERE ulp.user_id = :userId AND ulp.status = 'completed' AND l.status = 'approved' AND l.deleted_at IS NULL
+            """, nativeQuery = true)
+    long countCompletedApprovedLessonsByUserId(@Param("userId") Integer userId);
+
     long countByUserIdAndStatus(Integer userId, ProgressStatus status);
 
     void deleteByUserIdAndLessonId(Integer userId, Integer lessonId);
