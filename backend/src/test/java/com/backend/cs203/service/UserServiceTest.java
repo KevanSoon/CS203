@@ -133,6 +133,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(supabaseStorageService.getSignedUrl("http://pic.url", 3600)).thenReturn("http://signed.url");
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any())).thenReturn(5L);
 
         UserResponse result = userService.getMyProfile();
 
@@ -236,6 +237,7 @@ class UserServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any())).thenReturn(0L);
 
         UpdateProfileRequest request = new UpdateProfileRequest("new@example.com", null, null);
         UserResponse result = userService.updateMyProfile(request);
@@ -256,6 +258,7 @@ class UserServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(passwordEncoder.encode("NewPassword1")).thenReturn("newEncoded");
         when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any())).thenReturn(0L);
 
         UpdateProfileRequest request = new UpdateProfileRequest("test@example.com", "NewPassword1", null);
         userService.updateMyProfile(request);
