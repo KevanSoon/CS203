@@ -75,13 +75,6 @@ const VERDICT_PILL: Record<string, string> = {
   ai_slop: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-const VERDICT_BAR: Record<string, string> = {
-  real: "bg-green-500",
-  likely_real: "bg-blue-500",
-  unverified: "bg-yellow-500",
-  ai_slop: "bg-red-500",
-};
-
 const VERDICT_ICON: Record<string, string> = {
   real: "text-green-500",
   likely_real: "text-blue-500",
@@ -122,7 +115,6 @@ function CardItem({
   const [verifyState, setVerifyState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [showScore, setShowScore] = useState(false);
   const [showAllSources, setShowAllSources] = useState(false);
 
   const handleVerify = async () => {
@@ -324,30 +316,9 @@ function CardItem({
                 </div>
               )}
 
-              {/* Score toggle */}
-              <div>
-                <button
-                  onClick={() => setShowScore((v) => !v)}
-                  className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                >
-                  <ChevronDown className={`h-3 w-3 transition-transform ${showScore ? "rotate-180" : ""}`} />
-                  {showScore ? "Hide score" : "Show score"}
-                </button>
-                {showScore && (
-                  <div className="mt-1.5 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Confidence</span>
-                      <span className="text-xs text-muted-foreground">{Math.round(verifyResult.confidence * 100)}%</span>
-                    </div>
-                    <div className="h-1 w-full rounded-full bg-border/50">
-                      <div
-                        className={`h-1 rounded-full transition-all ${VERDICT_BAR[scoreVerdict(verifyResult.confidence)]}`}
-                        style={{ width: `${verifyResult.confidence * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+              <p className="text-[10px] text-muted-foreground/70 italic">
+                This AI verification uses Gen AI. Responses may be inaccurate.
+              </p>
             </div>
           </div>
         )}
