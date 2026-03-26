@@ -70,15 +70,13 @@ public class SupabaseStorageService {
                     .body(SignedUrlResponse.class);
 
             if (response == null || response.signedURL() == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Empty signed URL response");
+                return null;
             }
 
             return storageBaseUrl + response.signedURL();
 
-        } catch (ResponseStatusException e) {
-            throw e;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate signed URL");
+            return null;
         }
     }
 
