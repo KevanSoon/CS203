@@ -58,6 +58,7 @@ def create_slang_verifier() -> GEval:
             "Score 0.7 if the retrieval_context mentions the slang term and the actual_output definition is broadly consistent, even if worded differently.",
             "Score 0.3 if the slang term appears in the retrieval_context but the actual_output definition is inconsistent or only partially correct.",
             "Score 0.0 if the slang term is not found in any retrieval_context source, or if the actual_output definition contradicts what the sources say.",
+            "In your reasoning, do not mention the numeric score. Explain only why the slang term is or is not supported by the evidence.",
         ],
         threshold=VERDICT_THRESHOLD,
     )
