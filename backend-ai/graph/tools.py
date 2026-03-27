@@ -2,11 +2,13 @@ import os
 import requests
 from langchain_core.tools import tool
 from supabase import create_client, Client
+from tavily import TavilyClient
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 EMBEDDING_API_URL = os.getenv("EMBEDDING_API_URL")
 HF_TOKEN = os.getenv("HF_TOKEN")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -58,3 +60,39 @@ def rag_search(query: str) -> str:
         docs.append(doc["content"])
 
     return "\n\n---\n\n".join(docs)
+
+
+@tool
+def tavily_video_search(slang_term: str) -> str:
+    """Search for videos about a Gen Alpha slang term on video platforms like YouTube and TikTok.
+    Use this tool ONLY when the user explicitly asks for videos related to a slang term."""
+    print(f"[TAVILY] tavily_video_search called with query: '{slang_term}'")
+    client = TavilyClient(TAVILY_API_KEY)
+    response = client.search(
+        query=f"{slang_term} slang video",
+        search_depth="advanced",
+        include_domains=["youtube.com", "tiktok.com"],
+        max_results=5,
+    )
+    results = response.get("results", [])
+
+    if not results:
+        print("[TAVILY] No video results found.")
+        return "No videos found for this slang term."
+
+    print(f"[TAVILY] Found {len(results)} video result(s).")
+    rows = []
+    for r in results:
+        title = r.get("title", "Untitled").replace("[", "").replace("]", "")
+        url = r.get("url", "")
+        raw_summary = r.get("content", "").strip()
+        clean_summary = " ".join(raw_summary.splitlines()).strip()
+        summary = clean_summary[:200].replace("|", "\\|")
+        if url:
+            rows.append(f"| [{title}]({url}) | {summary} |")
+
+    if not rows:
+        return "No videos found for this slang term."
+
+    header = "| Video | Summary |\n|-------|---------|"
+    return header + "\n" + "\n".join(rows)

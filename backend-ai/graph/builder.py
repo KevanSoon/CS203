@@ -1,21 +1,26 @@
 import os
 import uuid
+from typing import Annotated, TypedDict
 from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph, MessagesState, START, END
+from langchain_core.messages import BaseMessage, AIMessage
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.store.postgres.aio import AsyncPostgresStore
-from langgraph.prebuilt import ToolNode, tools_condition
-from graph.tools import rag_search
-
-tools = [rag_search]
+from graph.tools import rag_search, tavily_video_search
 
 DB_URI = os.getenv("SUPABASE_DB_URI", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "")
 
-#call gpt-oss:120b from ollama cloud
+
+class GraphState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
+    route: str
+    rag_context: str
+
+
 def _get_model() -> ChatOllama:
-    """Create the ChatOllama model instance."""
     api_key = os.getenv("OLLAMA_API_KEY")
     if api_key:
         return ChatOllama(
@@ -25,32 +30,108 @@ def _get_model() -> ChatOllama:
         )
     return ChatOllama(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
 
-#graph node thats calls LLM with long-term memory stored in supabase
-async def call_model(state: MessagesState, config, *, store):
+
+#classify query into 'singlish', 'video', or 'general'
+async def classify(state: GraphState):
+    last_msg = state["messages"][-1]
+    model = _get_model()
+    response = await model.ainvoke([
+        {"role": "system", "content": (
+            "You are a query classifier. Reply ONLY with one word. "
+            "Reply 'singlish' ONLY if the user explicitly asks to translate or explain something in Singlish. "
+            "Reply 'video' if the user is asking for videos about a slang term. "
+            "Reply 'general' for everything else."
+        )},
+        {"role": "user", "content": last_msg.content},
+    ])
+    raw = response.content.strip().lower()
+    if "singlish" in raw:
+        route = "singlish"
+    elif "video" in raw:
+        route = "video"
+    else:
+        route = "general"
+    print(f"[CLASSIFY] route → {route}")
+    return {"route": route}
+
+
+def route_classifier(state: GraphState):
+    return state.get("route", "general")
+
+
+# --- Shared: call RAG directly once and store in state ---
+
+async def run_rag(state: GraphState):
+    last_human = next(
+        (m for m in reversed(state["messages"]) if getattr(m, "type", None) == "human"), None
+    )
+    query = last_human.content if last_human else ""
+    rag_result = rag_search.invoke({"query": query})
+    return {"rag_context": rag_result}
+
+
+# --- Singlish flow ---
+
+#explain slang in singlish style using only the rag context
+async def singlish_translate(state: GraphState):
+    last_human = next(
+        (m for m in reversed(state["messages"]) if getattr(m, "type", None) == "human"), None
+    )
+    query = last_human.content if last_human else ""
+    rag_context = state.get("rag_context", "")
+    system_prompt = (
+        "You are a Singlish slang explainer. "
+        "Using ONLY the RAG context provided, explain the slang term in this exact structure:\n\n"
+        "**What it means:** [explain the meaning in Singlish style]\n\n"
+        "**When to use it:** [explain the context — when, where, and with who you'd say this]\n\n"
+        "**Example:** [one natural Singlish example sentence using the term]\n\n"
+        "Write ALL three sections in Singlish style — use particles and expressions like 'lah', 'leh', 'lor', 'sia', 'can', 'hor', 'wah', 'aiyo' throughout every section, not just the example. "
+        "Do NOT add facts or definitions not present in the RAG context. "
+        "Keep it conversational, like a Singaporean friend explaining it."
+    )
+    model = _get_model()
+    response = await model.ainvoke([
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"RAG Context:\n{rag_context}\n\nUser question: {query}"},
+    ])
+    return {"messages": [response]}
+
+
+# --- Video flow ---
+
+#search tavily for videos then format as markdown table
+async def video_search(state: GraphState):
+    last_human = next(
+        (m for m in reversed(state["messages"]) if getattr(m, "type", None) == "human"), None
+    )
+    query = last_human.content if last_human else ""
+    result = tavily_video_search.invoke({"slang_term": query})
+    return {"messages": [AIMessage(content=result)]}
+
+
+# --- General flow ---
+
+#plain slang explanation using rag context, with long-term memory
+async def call_model(state: GraphState, config, *, store):
     user_id = config.get("configurable", {}).get("user_id", "default_user")
     namespace = ("memories", user_id)
 
-    # Retrieve relevant memories for context
     last_content = state["messages"][-1].content if state["messages"] else ""
     memories = await store.asearch(namespace, query=last_content)
     memory_info = "\n".join(m.value["data"] for m in memories) if memories else ""
 
+    rag_context = state.get("rag_context", "")
     system_msg = (
-        "You are a Gen Alpha slang assistant. You ONLY answer questions about Gen Alpha slang, "
-        "internet lingo, or help translate and explain lesson content related to Gen Alpha slang. "
-        "If a user asks anything unrelated, respond ONLY with: "
+        "You are a Gen Alpha slang assistant. You ONLY answer questions about Gen Alpha slang and internet lingo. "
+        "Answer using ONLY the RAG context provided. Do NOT use your own training data for definitions. "
+        "If the RAG context has no relevant results, tell the user you could not find information on that term. "
+        "If a user asks anything unrelated to Gen Alpha slang, respond ONLY with: "
         "'I can only help with Gen Alpha slang — ask me about slang terms, meanings, or lesson content!' "
-        "Do NOT explain your reasoning or thought process. Do NOT repeat the rules. Just give the response directly. "
-        "When a user asks about Gen Alpha slang or internet lingo, "
-        "you MUST use the rag_search tool to search the knowledge base first. "
-        "Your answer MUST be based solely on the documents returned by rag_search. "
-        "Do NOT add definitions, examples, or explanations from your own training data. "
-        "If rag_search returns no relevant results, tell the user you could not find information on that term."
+        "Do NOT explain your reasoning or thought process. Just give the response directly."
     )
     if memory_info:
         system_msg += f"\nUser info:\n{memory_info}"
 
-    # Store every user message as a long-term memory
     last_msg = state["messages"][-1]
     if last_msg.type == "human" and last_msg.content.strip():
         await store.aput(
@@ -59,17 +140,18 @@ async def call_model(state: MessagesState, config, *, store):
             {"data": last_msg.content},
         )
 
-    model = _get_model().bind_tools(tools)
+    model = _get_model()
     response = await model.ainvoke(
-        [{"role": "system", "content": system_msg}] + state["messages"]
+        [{"role": "system", "content": system_msg},
+         {"role": "user", "content": f"RAG Context:\n{rag_context}\n\nUser question: {last_content}"}]
     )
-
     return {"messages": [response]}
 
 
 # Keep context managers alive to prevent connection cleanup
 _store_cm = None
 _checkpointer_cm = None
+
 
 #build graph with checkpointer and store connected to supabase
 async def build_graph_with_memory():
@@ -84,16 +166,31 @@ async def build_graph_with_memory():
     await store.setup()
     await checkpointer.setup()
 
-    builder = StateGraph(MessagesState)
+    builder = StateGraph(GraphState)
+    builder.add_node("classify", classify)
+    builder.add_node("run_rag", run_rag)
+    builder.add_node("singlish_translate", singlish_translate)
+    builder.add_node("video_search", video_search)
     builder.add_node("call_model", call_model)
-    builder.add_node("tools", ToolNode(tools))
-    builder.add_edge(START, "call_model")
-    builder.add_conditional_edges("call_model", tools_condition)
-    builder.add_edge("tools", "call_model")
+
+    builder.add_edge(START, "classify")
+    builder.add_conditional_edges("classify", route_classifier, {
+        "singlish": "run_rag",
+        "video": "run_rag",
+        "general": "run_rag",
+    })
+    builder.add_conditional_edges("run_rag", route_classifier, {
+        "singlish": "singlish_translate",
+        "video": "video_search",
+        "general": "call_model",
+    })
+    builder.add_edge("singlish_translate", END)
+    builder.add_edge("video_search", END)
+    builder.add_edge("call_model", END)
 
     graph = builder.compile(checkpointer=checkpointer, store=store)
-
     return graph, checkpointer, store
+
 
 #cleanup database connections
 async def close_connections():
