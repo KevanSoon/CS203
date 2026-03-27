@@ -1,7 +1,6 @@
 package com.backend.cs203.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -22,17 +21,21 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
+import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
+import com.backend.cs203.dto.lesson.LessonRatingDTO;
+import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
 
 @WebMvcTest(LessonController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
 class LessonControllerTest {
 
     @Autowired
@@ -51,6 +54,7 @@ class LessonControllerTest {
     private JwtUtil jwtUtil;
 
     // ===== GET /api/lesson/ (requires USER role) =====
+
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
         LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null, LocalDateTime.now(), "approved");
@@ -85,6 +89,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/user-lessons/ (requires ADMIN role) =====
+
     @Test
     void getUserCreatedLessons_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -111,6 +116,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/applications/ (requires ROOT role) =====
+
     @Test
     void getAllLessonApplications_withRootRole_returns200() throws Exception {
         LessonApplicationDTO dto = createApplicationDTO("Pending Lesson", "A lesson", "author", LocalDateTime.now(), "java", "pending", LocalDateTime.now());
@@ -135,6 +141,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/applications/pending (requires ROOT role) =====
+
     @Test
     void getPendingApplications_withRootRole_returns200() throws Exception {
         when(lessonService.getPendingLessonApplications()).thenReturn(Collections.emptyList());
@@ -151,6 +158,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/page (requires USER role) =====
+
     @Test
     void getLessonPage_withUserRole_returns200() throws Exception {
         LessonPageDTO pageDTO = new LessonPageDTO(
@@ -193,6 +201,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/user-applications/ (requires ADMIN role) =====
+
     @Test
     void getUserCreatedLessonApplications_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -250,6 +259,7 @@ class LessonControllerTest {
     }
 
     // ===== GET /api/lesson/admin/page (requires ADMIN role) =====
+
     @Test
     void getAdminLessonPage_withAdminRole_returns200() throws Exception {
         User user = User.builder().id(1).username("adminuser").build();
@@ -453,6 +463,210 @@ class LessonControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(lessonService, never()).getAdminLessonStats(anyInt());
+    }
+
+    
+    // ===== GET /api/lesson/{id}/review (requires USER role) =====
+
+    @Test
+    void getUserReview_notReviewed_returnsFalse() throws Exception {
+        User user = User.builder().id(1).username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(reviewRepository.existsByReviewedByIdAndLessonId(1, 1)).thenReturn(false);
+
+        mockMvc.perform(get("/api/lesson/1/review")
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasReviewed").value(false));
+
+        verify(lessonService, never()).getUserReview(anyInt(), anyInt());
+    }
+
+    @Test
+    void getUserReview_reviewExists_returnsReview() throws Exception {
+        User user = User.builder().id(1).username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(reviewRepository.existsByReviewedByIdAndLessonId(1, 1)).thenReturn(true);
+        when(lessonService.getUserReview(1, 1))
+                .thenReturn(new com.backend.cs203.dto.review.ReviewDTO(1, 1, 5, "Great"));
+
+        mockMvc.perform(get("/api/lesson/1/review")
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasReviewed").value(true))
+                .andExpect(jsonPath("$.review.lessonId").value(1))
+                .andExpect(jsonPath("$.review.userId").value(1))
+                .andExpect(jsonPath("$.review.rating").value(5))
+                .andExpect(jsonPath("$.review.feedback").value("Great"));
+    }
+
+    @Test
+    void getReviews_returns200() throws Exception {
+        when(lessonService.getReviewsForLesson(1)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/lesson/1/reviews")
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    // ===== POST /api/lesson/{id}/rating (requires USER role) =====
+
+    @Test
+    void submitReview_validRequest_returns200() throws Exception {
+        User user = User.builder().id(1).username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/lesson/1/review")
+                .contentType("application/json")
+                .content("{\"rating\":5,\"feedback\":\"Great\"}")
+                .with(user("testuser").roles("USER"))
+                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Review submitted successfully"));
+
+        verify(lessonService).submitReview(1, 1, 5, "Great");
+    }
+
+    
+    // ===== GET /api/lesson/{id}/rating (requires USER role) =====
+
+    @Test
+    void getLessonRating_withUserRole_returns200() throws Exception {
+        User user = User.builder().id(1).username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(lessonService.getLessonRating(1, 1))
+                .thenReturn(new LessonRatingDTO(1, 4.5, 10, true));
+
+        mockMvc.perform(get("/api/lesson/1/rating")
+                .with(user("testuser").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lessonId").value(1))
+                .andExpect(jsonPath("$.averageRating").value(4.5))
+                .andExpect(jsonPath("$.ratingCount").value(10))
+                .andExpect(jsonPath("$.hasReviewed").value(true));
+    }
+
+    // ===== GET /api/lesson/tags (requires ADMIN role) =====
+
+    @Test
+    void getAllTags_returns200() throws Exception {
+        when(lessonService.getAllTags()).thenReturn(List.of("java", "spring"));
+
+        mockMvc.perform(get("/api/lesson/tags")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("java"));
+    }
+
+    // ===== GET /api/lesson/check-title (requires ADMIN role) =====
+
+    @Test
+    void checkTitle_available_returnsTrue() throws Exception {
+        when(lessonService.isTitleTaken("New")).thenReturn(false);
+
+        mockMvc.perform(get("/api/lesson/check-title")
+                .param("title", "New")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void checkTitle_taken_returnsFalse() throws Exception {
+        when(lessonService.isTitleTaken("Taken")).thenReturn(true);
+
+        mockMvc.perform(get("/api/lesson/check-title")
+                .param("title", "Taken")
+                .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(false));
+    }
+
+    // ===== PATCH /api/lesson/check-title (requires ROOT role) =====
+
+    @Test
+    void reviewLessonApplication_approve_returnsApprovedMessage() throws Exception {
+        mockMvc.perform(patch("/api/lesson/applications/review")
+                .contentType("application/json")
+                .content("{\"title\":\"Lesson\",\"action\":\"approve\"}")
+                .with(user("root").roles("ROOT"))
+                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Lesson successfully approved."));
+    }
+
+    @Test
+    void reviewLessonApplication_reject_returnsRejectedMessage() throws Exception {
+        mockMvc.perform(patch("/api/lesson/applications/review")
+                .contentType("application/json")
+                .content("{\"title\":\"Lesson\",\"action\":\"reject\"}")
+                .with(user("root").roles("ROOT"))
+                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Lesson successfully rejected."));
+    }
+
+    // ===== POST /api/lesson/create (requires ADMIN role) =====
+    
+    @Test
+    void createLesson_valid_returns201() throws Exception {
+        User admin = User.builder().id(1).username("adminuser").build();
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(admin));
+
+        CreateLessonResponse response = new CreateLessonResponse(
+                1, "New Lesson", "Description", "draft", "adminuser",
+                LocalDateTime.now(), "Lesson created successfully"
+        );
+        when(lessonService.createLesson(any(), eq(admin))).thenReturn(response);
+
+        mockMvc.perform(multipart("/api/lesson/create")
+                        .file("file", "dummy".getBytes()) // if your CreateLessonRequest has a file
+                        .param("title", "New Lesson")
+                        .param("description", "Description")
+                        .param("draft", "true")
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("New Lesson"))
+                .andExpect(jsonPath("$.createdBy").value("adminuser"))
+                .andExpect(jsonPath("$.message").value("Lesson created successfully"));
+
+        verify(lessonService).createLesson(any(), eq(admin));
+    }
+
+    // ===== PUT /api/lesson/update (requires ADMIN role) =====
+    
+    @Test
+    void updateLesson_valid_returns200() throws Exception {
+        User admin = User.builder().id(1).username("adminuser").build();
+        when(userRepository.findByUsername("adminuser")).thenReturn(Optional.of(admin));
+
+        CreateLessonResponse response = new CreateLessonResponse(
+                1, "Updated Lesson", "Updated Description", "published", "adminuser",
+                LocalDateTime.now(), "Lesson updated successfully"
+        );
+        when(lessonService.updateLesson(eq("Old Lesson"), any(), eq(admin))).thenReturn(response);
+
+        mockMvc.perform(multipart("/api/lesson/update")
+                        .file("file", "dummy".getBytes()) 
+                        .param("originalTitle", "Old Lesson")
+                        .param("title", "Updated Lesson")
+                        .param("description", "Updated Description")
+                        .param("draft", "false")
+                        .with(request -> { request.setMethod("PUT"); return request; }) 
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.title").value("Updated Lesson"))
+                .andExpect(jsonPath("$.createdBy").value("adminuser"))
+                .andExpect(jsonPath("$.message").value("Lesson updated successfully"));
+
+        verify(lessonService).updateLesson(eq("Old Lesson"), any(), eq(admin));
     }
 
     // ===== Helper methods =====
