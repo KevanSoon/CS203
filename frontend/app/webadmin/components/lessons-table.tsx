@@ -35,13 +35,10 @@ export function LessonsTable({
   const [filter, setFilter] = useState<FilterValue>("pending")
 
   const filteredLessons = useMemo(() => {
-    const filtered =
-      filter === "all"
-        ? lessons.filter((l) => l.status !== "pending")
-        : lessons.filter((l) => l.status === filter)
-    return [...filtered].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
+    if (filter === "all") {
+      return lessons.filter((l) => l.status !== "pending")
+    }
+    return lessons.filter((l) => l.status === filter)
   }, [lessons, filter])
 
   const counts = {

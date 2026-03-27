@@ -34,7 +34,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
             WHERE l.status IN ('approved','suspended')
             GROUP BY l.id, l.title, l.description, u.username, l.created_at, l.lesson_picture_url
-            ORDER BY l.created_at DESC
+            ORDER BY l.updated_at DESC
             """, nativeQuery = true)
     List<LessonSummaryDTO> findAllLessons();
 
@@ -52,17 +52,17 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
             """, nativeQuery = true)
     List<LessonApplicationDTO> findUserCreatedLessons(@Param("userId") Integer userId);
 
-    @Query(value = """
-            SELECT l.title AS title, l.description AS description, l.status AS status,
-                   u.username AS createdBy, l.created_at AS createdAt,
-                   GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags
-            FROM lesson l
-            JOIN user u ON l.created_by_id = u.id
-            LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
-            WHERE l.status IN ('rejected','approved') AND l.deleted_at IS NULL
-            GROUP BY l.id, l.title, l.description, l.status, u.username, l.created_at
-            ORDER BY l.created_at DESC
-            """, nativeQuery = true)
+@Query(value = """
+        SELECT l.title AS title, l.description AS description, l.status AS status,
+               u.username AS createdBy, l.created_at AS createdAt,
+               GROUP_CONCAT(lt.tag_name ORDER BY lt.tag_name SEPARATOR ',') AS tags
+        FROM lesson l
+        JOIN user u ON l.created_by_id = u.id
+        LEFT JOIN lesson_tagging lt ON lt.lesson_id = l.id AND lt.deleted_at IS NULL
+        WHERE l.status IN ('rejected','approved') AND l.deleted_at IS NULL
+        GROUP BY l.id, l.title, l.description, l.status, u.username, l.created_at
+        ORDER BY COALESCE(l.updated_at, l.created_at) DESC
+        """, nativeQuery = true)
     List<LessonApplicationDTO> findAllLessonApplications();
 
     @Query(value = """

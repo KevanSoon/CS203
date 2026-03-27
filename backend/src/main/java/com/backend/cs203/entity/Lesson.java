@@ -58,6 +58,8 @@ public class Lesson {
    @Column(name = "lesson_picture_url")
    private String lessonPictureUrl;
 
+   @Column(name = "updated_at")
+   private LocalDateTime updatedAt;
 
    @PrePersist
    protected void onCreate() {

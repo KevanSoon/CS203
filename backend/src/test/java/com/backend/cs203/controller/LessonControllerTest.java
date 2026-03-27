@@ -1,23 +1,34 @@
 package com.backend.cs203.controller;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
@@ -25,11 +36,10 @@ import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.dto.lesson.LessonApplicationDTO;
 import com.backend.cs203.dto.lesson.LessonPageDTO;
 import com.backend.cs203.dto.lesson.LessonRatingDTO;
-import com.backend.cs203.dto.review.ReviewDTO;
 import com.backend.cs203.dto.lesson.LessonSummaryResponse;
 import com.backend.cs203.entity.User;
-import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.repository.ReviewRepository;
+import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
@@ -57,7 +67,7 @@ class LessonControllerTest {
 
     @Test
     void getAllAvailableLessons_withUserRole_returns200() throws Exception {
-        LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), "java", null, LocalDateTime.now(), "approved");
+        LessonSummaryResponse dto = new LessonSummaryResponse(1, "Test Lesson", "A test lesson", "author", LocalDateTime.now(), LocalDateTime.now(), "java", null, LocalDateTime.now(), "approved");
         when(lessonService.getAllLessons()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/lesson/").with(user("testuser").roles("USER")))
@@ -695,6 +705,11 @@ class LessonControllerTest {
 
             @Override
             public LocalDateTime getCreatedAt() {
+                return createdAt;
+            }
+
+            @Override
+            public LocalDateTime getUpdatedAt() {
                 return createdAt;
             }
 
