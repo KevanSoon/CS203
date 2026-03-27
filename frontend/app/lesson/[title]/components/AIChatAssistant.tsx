@@ -272,6 +272,11 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Disclaimer */}
+      <p className="text-center text-[10px] text-muted-foreground px-3 py-2">
+        This Chatbot uses Gen AI. Responses may be inaccurate.
+      </p>
+
       {/* Input */}
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-2">
