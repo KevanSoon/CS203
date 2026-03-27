@@ -62,12 +62,13 @@ public class VectorStoreService {
         }
 
         try {
+            System.out.println("[VectorStore] Calling URL: '" + vectorStoreUrl + "' length=" + vectorStoreUrl.length());
             Map<String, Object> payload = buildPayload(lesson);
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, buildAuthHeaders());
             restTemplate.postForEntity(vectorStoreUrl + "/vectorstore/lesson", request, String.class);
             System.out.println("[VectorStore] Inserted lesson: " + lesson.getTitle());
         } catch (Exception e) {
-            System.err.println("[VectorStore] Failed to insert lesson " + lesson.getId() + ": " + e.getMessage());
+            System.err.println("[VectorStore] Failed to insert lesson " + lesson.getId() + ": " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
