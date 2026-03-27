@@ -28,8 +28,10 @@ const getUserTypeLabel = (usertype: string) => {
 export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSectionProps) => {
   const router = useRouter();
 
-  const handleClick = () => {
-    router.push('/profile');
+  const handleClick = (usertype: string) => {
+    if(usertype !== "root"){
+      router.push('/profile');
+    }
   };
 
   // check if profile is selected
@@ -63,8 +65,8 @@ export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSection
   return (
     <div className="mb-6 border-b border-border pb-4">
       <div 
-        onClick={handleClick}
-        className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${!isSelected ?  'hover:bg-border' : 'bg-primary/10 shadow-sm border-l-2 border-primary'} ${!open && 'justify-center'}`}
+        onClick={()=>handleClick(user.usertype)}
+        className={`flex items-center rounded-md p-2 transition-colors ${user.usertype === "root" ? "" : !isSelected ?  'cursor-pointer hover:bg-border' : 'cursor-pointer bg-primary/10 shadow-sm border-l-2 border-primary'} ${!open && 'justify-center'}`}
       >
         <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
           {user.profilePictureUrl ? (

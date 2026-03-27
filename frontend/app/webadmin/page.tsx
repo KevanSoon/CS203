@@ -85,7 +85,7 @@ function DashboardContent() {
 
 	const handleSuspendLesson = async (id: number, status: ReportStatus) => {
 		await api.patch("/api/report/root/suspend", { reportId: id, status });
-				setReports((prev) =>
+		setReports((prev) =>
 			prev.map((r) =>
 				r.id === id
 					? {
@@ -97,7 +97,9 @@ function DashboardContent() {
 					: r,
 			),
 		);
-		toast.success("Report " + id + " " + status + ". Lesson has been suspended");
+		const reportRes = await api.get("/api/report/root");
+		setReports(reportRes.data);
+		toast.success("Lesson has been suspended. All reports related to the lesson have been closed");
 	};
 
 	useEffect(() => {
@@ -136,25 +138,25 @@ function DashboardContent() {
 
 	const handleApprove = async (title: string) => {
 		try {
-			await api.patch("/api/lesson/applications/review", { title, action: "approve" })
-			updateLessonStatus(title, "approved")
-			showToast(`"${title}" has been approved for publishing.`, "success")
+			await api.patch("/api/lesson/applications/review", { title, action: "approve" });
+			updateLessonStatus(title, "approved");
+			showToast(`"${title}" has been approved for publishing.`, "success");
 		} catch (err) {
-			console.error(err)
-			showToast(`Failed to approve "${title}".`, "error")
+			console.error(err);
+			showToast(`Failed to approve "${title}".`, "error");
 		}
-	}
+	};
 
 	const handleReject = async (title: string) => {
 		try {
-			await api.patch("/api/lesson/applications/review", { title, action: "reject" })
-			updateLessonStatus(title, "rejected")
-			showToast(`"${title}" has been rejected.`, "error")
+			await api.patch("/api/lesson/applications/review", { title, action: "reject" });
+			updateLessonStatus(title, "rejected");
+			showToast(`"${title}" has been rejected.`, "error");
 		} catch (err) {
-			console.error(err)
-			showToast(`Failed to reject "${title}".`, "error")
+			console.error(err);
+			showToast(`Failed to reject "${title}".`, "error");
 		}
-	}
+	};
 
 	return (
 		<div className="flex min-h-screen bg-background">
