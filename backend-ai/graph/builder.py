@@ -5,9 +5,9 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.store.postgres.aio import AsyncPostgresStore
 from langgraph.prebuilt import ToolNode, tools_condition
-from graph.tools import rag_search
+from graph.tools import rag_search, tavily_video_search
 
-tools = [rag_search]
+tools = [rag_search, tavily_video_search]
 
 DB_URI = os.getenv("SUPABASE_DB_URI", "")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "")
@@ -45,7 +45,13 @@ async def call_model(state: MessagesState, config, *, store):
         "you MUST use the rag_search tool to search the knowledge base first. "
         "Your answer MUST be based solely on the documents returned by rag_search. "
         "Do NOT add definitions, examples, or explanations from your own training data. "
-        "If rag_search returns no relevant results, tell the user you could not find information on that term."
+        "If rag_search returns no relevant results, tell the user you could not find information on that term. "
+        "NEVER append the refusal message to a response where you have already provided a slang answer. "
+        "The refusal message is exclusively for queries that are entirely unrelated to Gen Alpha slang. "
+        "When the user asks for videos about a slang term, you MUST call rag_search first to retrieve the slang definition, "
+        "then call tavily_video_search to find relevant video links. "
+        "When presenting video results, show each video's title, URL, and summary. "
+        "Do NOT re-explain the slang definition — present only the video results."
     )
     if memory_info:
         system_msg += f"\nUser info:\n{memory_info}"
