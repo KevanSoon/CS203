@@ -30,6 +30,13 @@ const WELCOME_MESSAGE: Message = {
   content: "Hey! I'm your AI study buddy. Ask me anything about the lesson!",
 };
 
+// Escape | inside markdown link text to prevent table parser splitting rows
+function preprocessMarkdown(content: string): string {
+  return content.replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_match, text, url) => {
+    return `[${text.replace(/\|/g, "&#124;")}](${url})`;
+  });
+}
+
 export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
   const user = useSiteState((s) => s.user);
   const userId = user?.username || "default_user";
@@ -253,7 +260,7 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
                       ),
                     }}
                   >
-                    {msg.content}
+                    {preprocessMarkdown(msg.content)}
                   </ReactMarkdown>
                 </div>
               ) : (
