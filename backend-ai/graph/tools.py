@@ -81,15 +81,18 @@ def tavily_video_search(slang_term: str) -> str:
         return "No videos found for this slang term."
 
     print(f"[TAVILY] Found {len(results)} video result(s).")
-    lines = []
+    rows = []
     for r in results:
-        title = r.get("title", "Untitled")
+        title = r.get("title", "Untitled").replace("[", "").replace("]", "")
         url = r.get("url", "")
-        summary = r.get("content", "").strip()
+        raw_summary = r.get("content", "").strip()
+        clean_summary = " ".join(raw_summary.splitlines()).strip()
+        summary = clean_summary[:200].replace("|", "\\|")
         if url:
-            entry = f"- Title: {title}\n  URL: {url}"
-            if summary:
-                entry += f"\n  Summary: {summary}"
-            lines.append(entry)
+            rows.append(f"| [{title}]({url}) | {summary} |")
 
-    return "\n\n".join(lines) if lines else "No videos found for this slang term."
+    if not rows:
+        return "No videos found for this slang term."
+
+    header = "| Video | Summary |\n|-------|---------|"
+    return header + "\n" + "\n".join(rows)

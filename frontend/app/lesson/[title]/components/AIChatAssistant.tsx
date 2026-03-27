@@ -220,15 +220,39 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
               )}
             </div>
             <div
-              className={`rounded-2xl px-3 py-2 max-w-[80%] text-sm ${
+              className={`rounded-2xl px-3 py-2 text-sm ${
                 msg.role === "assistant"
-                  ? "bg-muted text-foreground"
-                  : "bg-primary text-white"
+                  ? "bg-muted text-foreground w-full"
+                  : "max-w-[80%] bg-primary text-white"
               }`}
             >
               {msg.role === "assistant" ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto max-w-full my-2">
+                          <table className="min-w-full border-collapse text-xs">{children}</table>
+                        </div>
+                      ),
+                      th: ({ children }) => (
+                        <th className="border border-border px-2 py-1.5 text-left font-semibold bg-muted whitespace-nowrap">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="border border-border px-2 py-1.5 align-top max-w-[200px] break-words whitespace-normal">
+                          {children}
+                        </td>
+                      ),
+                      a: ({ href, children }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
                     {msg.content}
                   </ReactMarkdown>
                 </div>
