@@ -1,150 +1,206 @@
-USE defaultdb;
+SET time_zone = '+08:00';
 
-CREATE TABLE IF NOT EXISTS user (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50) NOT NULL UNIQUE,
-  email VARCHAR(100) NOT NULL,
-  password VARCHAR(100) NOT NULL,
-  usertype ENUM('user','admin','root') NOT NULL,
-  streak TINYINT NULL,
-  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP NULL DEFAULT NULL,
-  deactivated_at TIMESTAMP NULL,
-  profile_picture_url VARCHAR(255),
-  last_streak_date DATE NULL
+-- ====================================
+-- DROP TABLES (child tables first)
+-- ====================================
+
+DROP TABLE IF EXISTS `user_card_progress`;
+DROP TABLE IF EXISTS `user_lesson_progress`;
+DROP TABLE IF EXISTS `lesson_tagging`;
+DROP TABLE IF EXISTS `quiz_result`;
+DROP TABLE IF EXISTS `review`;
+DROP TABLE IF EXISTS `report`;
+DROP TABLE IF EXISTS `quiz`;
+DROP TABLE IF EXISTS `card`;
+DROP TABLE IF EXISTS `chapter`;
+DROP TABLE IF EXISTS `lesson`;
+DROP TABLE IF EXISTS `friendship`;
+DROP TABLE IF EXISTS `password_reset_tokens`;
+DROP TABLE IF EXISTS `tag`;
+DROP TABLE IF EXISTS `user`;
+
+-- ====================================
+-- CREATE TABLES
+-- ====================================
+
+CREATE TABLE `user` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(100) NOT NULL,
+  `usertype` enum('user','admin','root') NOT NULL,
+  `streak` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_login` timestamp NULL DEFAULT NULL,
+  `deactivated_at` timestamp NULL DEFAULT NULL,
+  `profile_picture_url` varchar(255) DEFAULT NULL,
+  `last_streak_date` date DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
 );
 
-CREATE TABLE IF NOT EXISTS lesson (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) UNIQUE NOT NULL,
-  description TEXT,
-  status ENUM('saved','pending', 'approved', 'rejected', 'suspended') NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL,
-  created_by_id INT NOT NULL,
-  lesson_picture_url VARCHAR(255),
-  FOREIGN KEY (created_by_id) REFERENCES user(id)
+CREATE TABLE `tag` (
+  `name` varchar(45) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`name`),
+  UNIQUE KEY `name` (`name`)
 );
 
-CREATE TABLE IF NOT EXISTS chapter(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    lesson_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`)
+CREATE TABLE `lesson` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `status` enum('saved','pending','approved','rejected','suspended') DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by_id` int NOT NULL,
+  `lesson_picture_url` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `title` (`title`),
+  KEY `fk_lesson_created_by_id` (`created_by_id`),
+  CONSTRAINT `fk_lesson_created_by_id` FOREIGN KEY (`created_by_id`) REFERENCES `user` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS card(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    front TEXT,
-    back TEXT,
-    display_order TINYINT,
-    chapter_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`chapter_id`) REFERENCES chapter(`id`)
+CREATE TABLE `chapter` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `lesson_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `lesson_id` (`lesson_id`),
+  CONSTRAINT `chapter_ibfk_1` FOREIGN KEY (`lesson_id`) REFERENCES `lesson` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS quiz (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  question TEXT,
-  quiz_type ENUM('mcq', 'true_false', 'fill_blank') NOT NULL DEFAULT 'mcq',
-  options TEXT,
-  correct_answer VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  chapter_id INT NOT NULL,
-  FOREIGN KEY (chapter_id) REFERENCES chapter(id)
+CREATE TABLE `card` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `front` text,
+  `back` text,
+  `display_order` tinyint DEFAULT NULL,
+  `chapter_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `chapter_id` (`chapter_id`),
+  CONSTRAINT `card_ibfk_1` FOREIGN KEY (`chapter_id`) REFERENCES `chapter` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS tag (
-  name VARCHAR(45) UNIQUE NOT NULL PRIMARY KEY,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP NULL
+CREATE TABLE `quiz` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `question` text,
+  `quiz_type` enum('mcq','true_false','fill_blank') NOT NULL DEFAULT 'mcq',
+  `options` text,
+  `correct_answer` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `chapter_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `quiz_ibfk_2` (`chapter_id`),
+  CONSTRAINT `quiz_ibfk_2` FOREIGN KEY (`chapter_id`) REFERENCES `chapter` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS lesson_tagging (
-  tag_name VARCHAR(45) NOT NULL,
-  lesson_id INT NOT NULL,
-  deleted_at TIMESTAMP NULL,
-  PRIMARY KEY (tag_name, lesson_id),
-  FOREIGN KEY (tag_name) REFERENCES tag(name),
-  FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+CREATE TABLE `user_card_progress` (
+  `user_id` int NOT NULL,
+  `card_id` int NOT NULL,
+  `completed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`,`card_id`),
+  KEY `card_id` (`card_id`),
+  CONSTRAINT `user_card_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `user_card_progress_ibfk_2` FOREIGN KEY (`card_id`) REFERENCES `card` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS friendship (
-  user1_id INT NOT NULL,
-  user2_id INT NOT NULL,
-  status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending',
-  PRIMARY KEY (user1_id, user2_id),
-  FOREIGN KEY (user1_id) REFERENCES user(id),
-  FOREIGN KEY (user2_id) REFERENCES user(id)
+CREATE TABLE `user_lesson_progress` (
+  `user_id` int NOT NULL,
+  `lesson_id` int NOT NULL,
+  `status` enum('in_progress','completed') NOT NULL DEFAULT 'in_progress',
+  `started_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `last_accessed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`,`lesson_id`),
+  KEY `lesson_id` (`lesson_id`),
+  CONSTRAINT `user_lesson_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `user_lesson_progress_ibfk_2` FOREIGN KEY (`lesson_id`) REFERENCES `lesson` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS report(
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  status ENUM('reported', 'closed', 'unresolved') NOT NULL ,
-  type ENUM ('critical', 'high','medium','low') NOT NULL,
-  last_update ENUM('root', 'admin'),
-  reported_by INT NOT NULL,
-  remarks TEXT NOT NULL,
-  lesson_id INT NOT NULL,
-  chapter_id INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`reported_by`) REFERENCES user(`username`),
-  FOREIGN KEY (`lesson_id`) REFERENCES lesson(`id`),
-  FOREIGN KEY (`chapter_id`) REFERENCES chapter(`id`)
+CREATE TABLE `lesson_tagging` (
+  `tag_name` varchar(45) NOT NULL,
+  `lesson_id` int NOT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`tag_name`,`lesson_id`),
+  KEY `lesson_id` (`lesson_id`),
+  CONSTRAINT `lesson_tagging_ibfk_1` FOREIGN KEY (`tag_name`) REFERENCES `tag` (`name`),
+  CONSTRAINT `lesson_tagging_ibfk_2` FOREIGN KEY (`lesson_id`) REFERENCES `lesson` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS user_lesson_progress (
-  user_id          INT NOT NULL,
-  lesson_id        INT NOT NULL,
-  status           ENUM('in_progress','completed') NOT NULL DEFAULT 'in_progress',
-  started_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  completed_at     TIMESTAMP NULL,
-  last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, lesson_id),
-  FOREIGN KEY (user_id)   REFERENCES user(id),
-  FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+CREATE TABLE `friendship` (
+  `status` enum('pending','confirmed') DEFAULT NULL,
+  `user1_id` int NOT NULL,
+  `user2_id` int NOT NULL,
+  PRIMARY KEY (`user1_id`,`user2_id`),
+  KEY `FKq71du22g31mjeagf9uwks6hj` (`user2_id`),
+  CONSTRAINT `FK3uos929jau1n37onhk405wbse` FOREIGN KEY (`user1_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `FKq71du22g31mjeagf9uwks6hj` FOREIGN KEY (`user2_id`) REFERENCES `user` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS user_card_progress (
-  user_id      INT NOT NULL,
-  card_id      INT NOT NULL,
-  completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, card_id),
-  FOREIGN KEY (user_id) REFERENCES user(id),
-  FOREIGN KEY (card_id) REFERENCES card(id)
+CREATE TABLE `password_reset_tokens` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `otp` varchar(255) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `password_reset_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
 );
 
--- ============================================================
--- Sample progress data for user_id = 1, lesson_id = 1
--- Chapter 1 (id 3): cards 4,5,6,7         — ALL done + quiz done (via quiz_result) → 100%
--- Chapter 2 (id 4): cards 8,9,10,11,12,13 — 4/6 done, no quiz    → partial
--- Chapter 3 (id 6): cards 14,15,16,17,18,19,20 — not started      → 0%
--- Quiz completion is derived from quiz_result table (row exists = done)
--- ============================================================
+CREATE TABLE `quiz_result` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `chapter_id` int NOT NULL,
+  `score` double NOT NULL,
+  `taken_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `attempts` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `chapter_id` (`chapter_id`),
+  CONSTRAINT `quiz_result_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `quiz_result_ibfk_2` FOREIGN KEY (`chapter_id`) REFERENCES `chapter` (`id`)
+);
 
--- Lesson-level: user 1 has started lesson 1
-INSERT INTO user_lesson_progress (user_id, lesson_id, status) VALUES
-(1, 1, 'in_progress');
+CREATE TABLE `report` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `status` enum('reported','closed','unresolved') DEFAULT NULL,
+  `type` enum('critical','high','medium','low') NOT NULL,
+  `remarks` text,
+  `reported_by` int NOT NULL,
+  `lesson_id` int NOT NULL,
+  `chapter_id` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_update` enum('admin','root') DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `reported_by` (`reported_by`),
+  KEY `lesson_id` (`lesson_id`),
+  KEY `chapter_id` (`chapter_id`),
+  CONSTRAINT `report_ibfk_1` FOREIGN KEY (`reported_by`) REFERENCES `user` (`id`),
+  CONSTRAINT `report_ibfk_2` FOREIGN KEY (`lesson_id`) REFERENCES `lesson` (`id`),
+  CONSTRAINT `report_ibfk_3` FOREIGN KEY (`chapter_id`) REFERENCES `chapter` (`id`)
+);
 
--- Chapter 1 (id 3): all 4 cards completed
-INSERT INTO user_card_progress (user_id, card_id) VALUES
-(1, 4),
-(1, 5),
-(1, 6),
-(1, 7);
-
--- Chapter 2 (id 4): 4 out of 6 cards completed
-INSERT INTO user_card_progress (user_id, card_id) VALUES
-(1, 8),
-(1, 9),
-(1, 10),
-(1, 11);
-
--- Chapter 3 (id 6): nothing completed (no rows)
--- Quiz result for chapter 1 already exists in quiz_result table (id=1, user_id=1, chapter_id=3)
+CREATE TABLE `review` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `rating` int NOT NULL,
+  `feedback` varchar(1000) DEFAULT NULL,
+  `reviewed_by` int NOT NULL,
+  `lesson_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_review` (`reviewed_by`,`lesson_id`),
+  KEY `lesson_id` (`lesson_id`),
+  CONSTRAINT `review_ibfk_1` FOREIGN KEY (`reviewed_by`) REFERENCES `user` (`id`),
+  CONSTRAINT `review_ibfk_2` FOREIGN KEY (`lesson_id`) REFERENCES `lesson` (`id`),
+  CONSTRAINT `review_chk_1` CHECK ((`rating` between 1 and 5))
+);
