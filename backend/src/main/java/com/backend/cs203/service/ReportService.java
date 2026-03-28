@@ -89,6 +89,17 @@ public class ReportService {
         }
         lesson.setStatus(Lesson.LessonStatus.suspended);
 
+        List<Report> openReports = reportRepository.findNotClosedReportsByLessonId(lesson.getId());
+        for (Report openReport : openReports) {
+            openReport.setStatus(Report.ReportStatus.closed);
+            String oldRemarks = openReport.getRemarks() == null ? "" : openReport.getRemarks();
+            if (!oldRemarks.isEmpty() && !oldRemarks.endsWith("\n")) {
+                oldRemarks += "\n";
+            }
+            openReport.setRemarks(oldRemarks + "\nWeb Admin suspended Lesson");
+            reportRepository.save(report);
+        }
+
         lessonRepository.save(lesson);
         reportRepository.save(report);
 

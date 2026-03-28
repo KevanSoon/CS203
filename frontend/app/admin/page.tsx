@@ -67,11 +67,35 @@ export const AdminLessonPage = () => {
 					reports: reportsByLesson[lesson.title] ?? [],
 				}));
 				lessonsWithReports.sort((a:Lesson, b:Lesson) => {
-					// Deleted lessons at the bottom
-					if (!!a.deletedAt !== !!b.deletedAt) {
-						return a.deletedAt ? 1 : -1;
+					const reportTypeOrder = {
+						"critical": 1,
+						"high": 2,
+						"medium": 3,
+						"low": 4
+					};
+
+					function getSortKey(lesson: Lesson) {
+						if (lesson.deletedAt) return 4;
+						if (lesson.status === "suspended") return 3;
+						if (lesson.reports && lesson.reports.length > 0) return 1;
+						return 2;
 					}
-					// If both are deleted or both are not, sort by id if present
+
+					const keyA = getSortKey(a);
+					const keyB = getSortKey(b);
+
+					if (keyA !== keyB) {
+						return keyA - keyB;
+					}
+
+					// If both have reports, order by highest report type
+					if (keyA === 1 && keyB === 1) {
+						const aHighest = Math.min(...(a.reports as Report[]).map(r => reportTypeOrder[(r as Report).type] || 5));
+						const bHighest = Math.min(...(b.reports as Report[]).map(r => reportTypeOrder[(r as Report).type] || 5));
+						if (aHighest !== bHighest) return aHighest - bHighest;
+					}
+
+					// Otherwise, sort by id if present
 					if (a.id && b.id) {
 						return a.id - b.id;
 					}
