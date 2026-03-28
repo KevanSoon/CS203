@@ -51,6 +51,16 @@ function getInitials(username: string): string {
     .join("");
 }
 
+function formatAdminLessonTitle(title: string, deletedAt?: string | null): string {
+  if (!deletedAt) return title;
+
+  const marker = "_deletedat_";
+  const markerIndex = title.indexOf(marker);
+  const baseTitle = markerIndex > 0 ? title.slice(0, markerIndex) : title;
+  const deletedOn = new Date(deletedAt).toUTCString().slice(0, -4);
+  return `${baseTitle} (Deleted on ${deletedOn})`;
+}
+
 function StarDisplay({ value, size = 11 }: { value: number; size?: number }) {
   return (
     <div className="flex gap-0.5">
@@ -382,6 +392,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
               const mergedReports = (reportOverrides[record.title] ?? record.reports ?? []) as Report[];
               const showUpdateDot = mergedReports.some((rep) => (rep.lastUpdate ?? "").toLowerCase() !== "admin");
               const isExpanded = expandedLesson === String(record.id);
+              const displayTitle = formatAdminLessonTitle(record.title, record.deletedAt);
 
               return (
                 <div
@@ -413,8 +424,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-foreground mb-1">
-                                {record.title}
-                                {record.deletedAt ? ` (Deleted on ${new Date(record.createdAt).toUTCString().slice(0, -4)})` : ""}
+                                {displayTitle}
                                 {record.status === "suspended" && !record.deletedAt ? renderSuspendedTag() : null}
                                 {title === "Applications" ? (record.status === "saved" ? renderSavedTag() : renderPendingTag(record.status ?? "")) : null}
                               </p>

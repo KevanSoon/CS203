@@ -45,6 +45,13 @@ function normalize(s: string) {
 	return s.trim().toLowerCase();
 }
 
+function getDashboardTitle(title: string, deletedAt?: string | null): string {
+	const marker = "_deletedat_";
+	const markerIndex = title.indexOf(marker);
+	const baseTitle = markerIndex > 0 ? title.slice(0, markerIndex) : title;
+	return deletedAt ? `${baseTitle} (Deleted)` : baseTitle;
+}
+
 export default function DashboardPage() {
 	const [selected, setSelected] = useState("View Lessons");
 	const [error, setError] = useState<string | null>(null);
@@ -177,6 +184,11 @@ export default function DashboardPage() {
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					{items.map((lesson) =>
 						(lesson.deletedAt || lesson.lessonStatus == "suspended") && lesson.status == "in_progress" ? (
+							(() => {
+								const displayTitle = lesson.deletedAt
+									? getDashboardTitle(lesson.title, lesson.deletedAt)
+									: `${getDashboardTitle(lesson.title)} (Suspended)`;
+								return (
 							<div
 								key={lesson.lessonId}
 								className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
@@ -191,7 +203,7 @@ export default function DashboardPage() {
 								</div>
 								<div className="p-3 sm:p-4 space-y-3 flex flex-col">
 									<div>
-										<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{lesson.title} {lesson.deletedAt ? "(Deleted)" : "(Suspended)"}</h3>
+										<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{displayTitle}</h3>
 										<p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.description}</p>
 									</div>
 									<div className="space-y-2 mt-auto">
@@ -208,6 +220,8 @@ export default function DashboardPage() {
 									</div>
 								</div>
 							</div>
+							);
+							})()
 						) : (
 							<LessonCard
 								key={lesson.lessonId}

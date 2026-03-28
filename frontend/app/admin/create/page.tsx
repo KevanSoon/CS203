@@ -47,6 +47,10 @@ import { ChapterPanel } from "@/app/components/create-lesson/ChapterPanel";
 import { SortableChapter } from "@/app/components/create-lesson/SortableWrappers";
 import { LessonPreviewShell } from "@/app/components/create-lesson/LessonPreviewShell";
 
+const LESSON_TITLE_PATTERN = /^[A-Za-z0-9 ]+$/;
+
+const isLessonTitleFormatValid = (value: string) => LESSON_TITLE_PATTERN.test(value);
+
 /* ───────────────────────────────────────────────── */
 function CreateLessonPage() {
   const router = useRouter();
@@ -140,6 +144,11 @@ function CreateLessonPage() {
       if (titleCheckTimer.current) clearTimeout(titleCheckTimer.current);
       const trimmed = val.trim();
       if (!trimmed) {
+        setTitleTaken(false);
+        setTitleChecking(false);
+        return;
+      }
+      if (!isLessonTitleFormatValid(trimmed)) {
         setTitleTaken(false);
         setTitleChecking(false);
         return;
@@ -410,6 +419,7 @@ function CreateLessonPage() {
     const errs = new Set<string>();
 
     if (!title.trim()) errs.add("title");
+    if (title.trim() && !isLessonTitleFormatValid(title.trim())) errs.add("title-format");
     if (!description.trim()) errs.add("description");
 
     for (let i = 0; i < chapters.length; i++) {
@@ -481,6 +491,18 @@ function CreateLessonPage() {
       // Drafts only require a title
       if (!title.trim()) {
         toast.error("Please enter a lesson title before saving.");
+        document
+          .querySelector('[data-field="title"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (title.trim() && !isLessonTitleFormatValid(title.trim())) {
+        toast.error("Lesson title can only contain letters, numbers, and spaces.");
+        setErrors((prev) => {
+          const next = new Set(prev);
+          next.add("title-format");
+          return next;
+        });
         document
           .querySelector('[data-field="title"]')
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -653,13 +675,25 @@ function CreateLessonPage() {
                     type="text"
                     value={title}
                     onChange={(e) => {
-                      setTitle(e.target.value);
+                      const nextTitle = e.target.value;
+                      const trimmedTitle = nextTitle.trim();
+                      setTitle(nextTitle);
                       clearError("title");
-                      checkTitle(e.target.value);
+                      if (trimmedTitle && !isLessonTitleFormatValid(trimmedTitle)) {
+                        setErrors((prev) => {
+                          if (prev.has("title-format")) return prev;
+                          const next = new Set(prev);
+                          next.add("title-format");
+                          return next;
+                        });
+                      } else {
+                        clearError("title-format");
+                      }
+                      checkTitle(nextTitle);
                     }}
                     placeholder="Lesson Title *"
                     className={`w-full text-2xl md:text-3xl font-black bg-transparent border-b-2 outline-none text-foreground placeholder:text-muted-foreground/50 focus:ring-0 pb-1 transition-colors ${
-                      errors.has("title")
+                      errors.has("title") || errors.has("title-format")
                         ? "border-destructive"
                         : titleTaken
                           ? "border-warning"
@@ -678,6 +712,7 @@ function CreateLessonPage() {
                   {!titleChecking &&
                     title.trim() &&
                     !errors.has("title") &&
+                    !errors.has("title-format") &&
                     !titleTaken && (
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <Check className="h-3.5 w-3.5 text-success" />
@@ -694,6 +729,17 @@ function CreateLessonPage() {
                       </span>
                     </div>
                   )}
+                  {errors.has("title-format") && (
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                      <span className="text-xs text-destructive font-medium">
+                        Lesson titles can only contain letters, numbers, and spaces.
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-muted-foreground/70 mt-1">
+                    Use letters, numbers, and spaces only.
+                  </p>
                 </div>
 
                 {/* Description */}
