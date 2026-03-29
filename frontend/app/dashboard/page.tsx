@@ -259,12 +259,12 @@ export default function DashboardPage() {
 
 			{showStreakBrokenModal && (
 				<div
-					className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+					className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
 					onClick={() => setShowStreakBrokenModal(false)}
 				>
 					<div
 						onClick={(e) => e.stopPropagation()}
-						className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative"
+						className="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative mx-4"
 					>
 						<button
 							onClick={() => setShowStreakBrokenModal(false)}

@@ -151,7 +151,8 @@ const PathNode = ({ node, onClick }: PathNodeProps) => {
   const isCompleted = node.status === "completed";
   const isAvailable = node.status === "available";
 
-  const label = isQuiz ? "Quiz" : node.content?.front || "";
+  const rawLabel = isQuiz ? "Quiz" : node.content?.front || "";
+  const label = rawLabel.length > 30 ? rawLabel.slice(0, 30) + "..." : rawLabel;
 
   return (
     <div className="relative flex flex-col items-center">
