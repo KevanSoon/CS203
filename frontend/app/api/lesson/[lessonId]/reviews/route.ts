@@ -35,6 +35,7 @@ export async function GET(
 
         const reviews = data.map((r: any) => ({
             id: r.id,
+            userId: r.userId,
             username: r.username ?? "Unknown User",
             profilePictureUrl: r.avatarUrl ?? null,
             rating: r.rating,
