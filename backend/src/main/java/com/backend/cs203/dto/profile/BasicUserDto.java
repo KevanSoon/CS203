@@ -5,10 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class FriendDto {
+public class BasicUserDto {
     private final Integer id;
     private final String username;
     private final String profilePictureUrl;
-    private final int streak;
-    private final boolean streakActiveToday;
 }

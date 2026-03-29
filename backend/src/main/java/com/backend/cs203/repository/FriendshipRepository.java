@@ -62,6 +62,18 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
             @Param("user2") Integer user2
     );
 
+    // Check if viewer sent a pending request to target
+    @Query("""
+        SELECT f FROM Friendship f
+        WHERE f.user1.id = :senderId
+        AND f.user2.id = :targetId
+        AND f.status = com.backend.cs203.entity.FriendshipStatus.pending
+    """)
+    Optional<Friendship> findSentPendingRequest(
+        @Param("senderId") Integer senderId,
+        @Param("targetId") Integer targetId
+    );
+
     boolean existsByUser1IdAndUser2Id(Integer user1Id, Integer user2Id);
 }
 

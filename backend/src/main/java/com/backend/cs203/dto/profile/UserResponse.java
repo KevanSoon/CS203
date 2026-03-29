@@ -8,6 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class UserResponse {
+    private Integer id;
     private String username;
     private String email;
     private String profilePictureUrl;

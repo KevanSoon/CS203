@@ -1,5 +1,7 @@
 package com.backend.cs203.service;
 
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -7,15 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.backend.cs203.repository.FriendshipRepository;
-import com.backend.cs203.repository.UserRepository;
-
-import lombok.RequiredArgsConstructor;
-
 import com.backend.cs203.dto.profile.FriendDto;
 import com.backend.cs203.entity.Friendship;
 import com.backend.cs203.entity.FriendshipStatus;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.repository.FriendshipRepository;
+import com.backend.cs203.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -26,19 +27,30 @@ public class FriendService {
     private final SupabaseStorageService supabaseStorageService;
 
     private FriendDto toFriendDto(User user) {
-    String profileUrl = null;
-
-    try {
-        String storedPath = user.getProfilePictureUrl();
-        if (storedPath != null && !storedPath.isBlank()) {
-        profileUrl = supabaseStorageService.getSignedUrl(storedPath, 3600);
+        String profileUrl = null;
+        try {
+                String storedPath = user.getProfilePictureUrl();
+                if (storedPath != null && !storedPath.isBlank()) {
+                profileUrl = supabaseStorageService.getSignedUrl(storedPath, 3600);
+                }
+        } catch (Exception e) {
+                profileUrl = null;
         }
 
-    } catch (Exception e) {
-        profileUrl = null;
-    }
+        LocalDate today = LocalDate.now();
+        LocalDate last = user.getLastStreakDate();
 
-    return new FriendDto(user.getId(), user.getUsername(), profileUrl);
+        int effectiveStreak = (last == null || last.isBefore(today.minusDays(1)))
+                ? 0
+                : (user.getStreak() != null ? user.getStreak() : 0);
+
+        return new FriendDto(
+                user.getId(),
+                user.getUsername(),
+                profileUrl,
+                effectiveStreak,
+                today.equals(last)
+        );
     }
 
     public List<FriendDto> getFriends(String username) {
@@ -212,5 +224,18 @@ public class FriendService {
         }
 
         friendshipRepository.delete(friendship);
+    }
+    
+    public List<FriendDto> getFriendsSortedByStreak(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return friendshipRepository
+            .findFriendshipsByUserId(user.getId(), FriendshipStatus.confirmed)
+            .stream()
+            .map(f -> f.getUser1().getId().equals(user.getId()) ? f.getUser2() : f.getUser1())
+            .map(this::toFriendDto)
+            .sorted(Comparator.comparingInt(FriendDto::getStreak).reversed())
+            .toList();
     }
 }

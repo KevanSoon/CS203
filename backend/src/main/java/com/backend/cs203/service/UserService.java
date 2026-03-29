@@ -2,7 +2,9 @@ package com.backend.cs203.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -18,12 +20,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
 import com.backend.cs203.dto.auth.RegisterResponse;
+import com.backend.cs203.dto.profile.BasicUserDto;
 import com.backend.cs203.dto.profile.DeleteAccountRequest;
+import com.backend.cs203.dto.profile.FriendDto;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
+import com.backend.cs203.dto.profile.UserProfileDto;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
+import com.backend.cs203.entity.FriendshipStatus;
 import com.backend.cs203.entity.User;
-import com.backend.cs203.entity.UserLessonProgress.ProgressStatus;
+import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 
@@ -37,6 +43,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FriendshipRepository friendshipRepository;
 
     private void validatePassword(String password) {
         if (password.length() < 8 || password.length() > 100) {
@@ -155,6 +162,7 @@ public class UserService {
                 .countCompletedApprovedLessonsByUserId(user.getId());
 
         return new UserResponse(
+            user.getId(),
             user.getUsername(),
             user.getEmail(),
             signedUrl,
@@ -259,7 +267,7 @@ public class UserService {
         String signedUrl = saved.getProfilePictureUrl() != null
                 ? supabaseStorageService.getSignedUrl(saved.getProfilePictureUrl(), 3600)
                 : null;
-        return new UserResponse(saved.getUsername(), saved.getEmail(), signedUrl,
+        return new UserResponse(saved.getId(), saved.getUsername(), saved.getEmail(), signedUrl,
                 saved.getStreak(), saved.getLastStreakDate(), totalCompletedLessons, false);
     }
 
@@ -295,5 +303,88 @@ public class UserService {
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileDto getUserProfile(Integer targetId) {
+        String viewerUsername = requireUsername();
+
+        User viewer = userRepository.findByUsername(viewerUsername)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        User target = userRepository.findById(targetId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (target.getDeactivatedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
+        List<User> targetFriends = getAcceptedFriends(target.getId());
+        List<User> viewerFriends = getAcceptedFriends(viewer.getId());
+
+        Set<Integer> viewerFriendIds = viewerFriends.stream()
+            .map(User::getId)
+            .collect(Collectors.toSet());
+
+        boolean isFriend = viewerFriendIds.contains(targetId);
+
+        boolean hasPendingRequest = friendshipRepository
+            .findSentPendingRequest(viewer.getId(), target.getId())
+            .isPresent();
+
+        List<BasicUserDto> commonFriends = targetFriends.stream()
+            .filter(u -> viewerFriendIds.contains(u.getId()))
+            .map(u -> new BasicUserDto(u.getId(), u.getUsername(), resolveProfileUrl(u)))
+            .toList();
+
+        LocalDate today = LocalDate.now();
+        List<FriendDto> friendLeaderboard = targetFriends.stream()
+            .map(u -> {
+                LocalDate last = u.getLastStreakDate();
+                int effectiveStreak = (last == null || last.isBefore(today.minusDays(1)))
+                    ? 0
+                    : (u.getStreak() != null ? u.getStreak() : 0);
+                return new FriendDto(
+                    u.getId(),
+                    u.getUsername(),
+                    resolveProfileUrl(u),
+                    effectiveStreak,
+                    today.equals(last)
+                );
+            })
+            .sorted(Comparator.comparingInt(FriendDto::getStreak).reversed())
+            .toList();
+        int targetStreak = target.getStreak() != null ? target.getStreak() : 0;
+
+        return new UserProfileDto(
+            target.getId(),
+            target.getUsername(),
+            resolveProfileUrl(target),
+            targetStreak,
+            targetFriends.size(),
+            isFriend,
+            hasPendingRequest,
+            commonFriends,
+            friendLeaderboard
+        );
+    }
+
+    private String resolveProfileUrl(User user) {
+        try {
+            String path = user.getProfilePictureUrl();
+            return (path != null && !path.isBlank())
+                ? supabaseStorageService.getSignedUrl(path, 3600)
+                : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private List<User> getAcceptedFriends(Integer userId) {
+        return friendshipRepository
+            .findFriendshipsByUserId(userId, FriendshipStatus.confirmed)
+            .stream()
+            .map(f -> f.getUser1().getId().equals(userId) ? f.getUser2() : f.getUser1())
+            .toList();
     }
 }
