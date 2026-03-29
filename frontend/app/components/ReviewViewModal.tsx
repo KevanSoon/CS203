@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
+import { api } from "@/app/api/api"
 
 type LessonReview = {
   id: number;
@@ -43,31 +44,17 @@ export default function ViewReviewsModal({
     const fetchReviews = async () => {
       try {
         setLoading(true);
-
-        const res = await fetch(`/api/lesson/${lessonId}/reviews`, {
-          cache: "no-store",
-        });
-
-        const data: ReviewsResponse = await res.json();
-
-        if (!res.ok) {
-          throw new Error("Failed to load reviews");
+          const res = await api.get(`/api/lesson/${lessonId}/reviews`);
+          const all = res.data.reviews || [];
+          const top5 = all
+            .sort((a: any, b: any) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+            .slice(0, 5);
+          setAllReviews(all);
+          setReviews(top5);
+        } finally {
+          setLoading(false);
         }
-
-        const all = data.reviews || [];
-
-        const top5 = all
-          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-          .slice(0, 5);
-
-        setAllReviews(all);
-        setReviews(top5);
-      } catch (err) {
-        toast.error("Failed to load reviews.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
     fetchReviews();
   }, [lessonId]);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { X, Flame } from "lucide-react";
+import { api } from "@/app/api/api"
 
 // ── Streak Tiers ─────────────────────────────────────────────────────────────
 // Edit this to add/remove tiers or change thresholds and colours.
@@ -100,8 +101,7 @@ export default function FriendCard({ friend, rank, onRemove, readonly = false }:
     if (isRemoving) return;
     setIsRemoving(true);
     try {
-      const res = await fetch(`/api/friendship/${friend.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await api.delete(`/api/friendship/${friend.id}`);
       toast.success("Friend removed");
       onRemove(friend.id);
     } catch {

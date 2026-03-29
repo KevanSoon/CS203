@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { api } from "@/app/api/api"
 
 type FriendDto = {
   id: number;
@@ -21,17 +22,14 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // don't navigate when cancelling
+    e.stopPropagation();
     try {
       setLoading(true);
-      const res = await fetch(`/api/friendship/pending/outgoing/${friend.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to cancel request");
+      await api.delete(`/api/friendship/pending/outgoing/${friend.id}`);
       toast.success("Friend request cancelled");
       if (onCancel) await onCancel();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to cancel request");
+    } catch {
+      toast.error("Failed to cancel request");
     } finally {
       setLoading(false);
     }
