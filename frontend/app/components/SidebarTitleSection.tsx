@@ -1,6 +1,7 @@
 import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState } from "react";
 
 export interface SidebarTitleSectionProps {
   open: boolean;
@@ -11,6 +12,7 @@ export interface SidebarTitleSectionProps {
     profilePictureUrl?: string;
   } | null;
   selected?: string;
+  hasHydrated?: boolean;
 }
 
 const getUserTypeLabel = (usertype: string) => {
@@ -25,8 +27,9 @@ const getUserTypeLabel = (usertype: string) => {
   }
 };
 
-export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSectionProps) => {
+export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true }: SidebarTitleSectionProps) => {
   const router = useRouter();
+  const [imgError, setImgError] = useState(false);
 
   const handleClick = (usertype: string) => {
     if(usertype !== "root"){
@@ -36,6 +39,21 @@ export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSection
 
   // check if profile is selected
   const isSelected = selected === "Profile";
+
+  // Show a neutral skeleton while the store is rehydrating from localStorage,
+  // so we never flash the default avatar before the real user data arrives.
+  if (!hasHydrated) {
+    return (
+      <div className="mb-6 border-b border-border pb-4">
+        <div className={`flex items-center rounded-md p-2 ${!open && 'justify-center'}`}>
+          <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
+            <div className={`shrink-0 rounded-full bg-muted animate-pulse ${open ? 'size-12' : 'size-8'}`} />
+            {open && <div className="space-y-1.5"><div className="h-3 w-24 rounded bg-muted animate-pulse" /><div className="h-2.5 w-16 rounded bg-muted animate-pulse" /></div>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -69,13 +87,14 @@ export const SidebarTitleSection = ({ open, user, selected}: SidebarTitleSection
         className={`flex items-center rounded-md p-2 transition-colors ${user.usertype === "root" ? "" : !isSelected ?  'cursor-pointer hover:bg-border' : 'cursor-pointer bg-primary/10 shadow-sm border-l-2 border-primary'} ${!open && 'justify-center'}`}
       >
         <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
-          {user.profilePictureUrl ? (
+          {user.profilePictureUrl && !imgError ? (
             <Image
               src={user.profilePictureUrl}
               alt={user.username}
               width={48}
               height={48}
               className={`shrink-0 rounded-full object-cover shadow-sm ${open ? 'size-12' : 'size-8'}`}
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className={`grid shrink-0 place-content-center rounded-full bg-slate-200 shadow-sm ${open ? 'size-12' : 'size-8'}`}>

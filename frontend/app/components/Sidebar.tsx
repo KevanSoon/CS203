@@ -47,6 +47,7 @@ export const Sidebar = ({
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);
+  const hasHydrated = useSiteState((s) => s._hasHydrated);
 
   const handleOptionSelect = (title: string, route: string) => {
     setSelected(title);
@@ -128,7 +129,7 @@ export const Sidebar = ({
         `}
       >
         <SidebarToggle open={open} setOpen={setOpen} />
-        <SidebarTitleSection open={open} user={user}  selected={selected}/>
+        <SidebarTitleSection open={open} user={user} selected={selected} hasHydrated={hasHydrated} />
 
         <div className="space-y-1 flex-1">
           {menuOptions.map((option) => (
