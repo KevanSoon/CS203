@@ -42,8 +42,8 @@ class FriendControllerTest {
     @Test
     void getMyFriends_authenticated_returns200() throws Exception {
         List<FriendDto> friends = List.of(
-                new FriendDto(1, "friend1", null),
-                new FriendDto(2, "friend2", null)
+                new FriendDto(1, "friend1", null, 0, false),
+                new FriendDto(2, "friend2", null, 0, false)
         );
 
         when(friendService.getFriends("testuser")).thenReturn(friends);
@@ -84,7 +84,7 @@ class FriendControllerTest {
     @Test
     void getPendingRequests_returnsPendingList() throws Exception {
         List<FriendDto> pending = List.of(
-                new FriendDto(3, "pendingUser", null)
+                new FriendDto(3, "pendingUser", null, 0, false)
         );
 
         when(friendService.getPendingRequests("testuser")).thenReturn(pending);
@@ -99,7 +99,7 @@ class FriendControllerTest {
     @Test
     void getOutgoingRequests_returnsOutgoingList() throws Exception {
         List<FriendDto> outgoing = List.of(
-                new FriendDto(4, "outgoingUser", null)
+                new FriendDto(4, "outgoingUser", null, 0, false)
         );
 
         when(friendService.getOutgoingRequests("testuser")).thenReturn(outgoing);
