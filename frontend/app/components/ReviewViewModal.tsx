@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/router";
 
 type LessonReview = {
   id: number;
+  userId: number;
   username: string;
   profilePictureUrl?: string | null;
   rating: number;
@@ -35,6 +37,7 @@ export default function ViewReviewsModal({
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -298,7 +301,10 @@ export default function ViewReviewsModal({
                         className="min-w-[calc(100%)] max-w-[calc(100%)] sm:min-w-[300px] sm:max-w-[300px] snap-start rounded-2xl border border-border bg-background p-4 shadow-sm flex flex-col gap-3"
                       >
                         {/* User info */}
-                        <div className="flex items-center gap-3">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer group/user"
+                          onClick={() => { onClose(); router.push(`/profile/${review.userId}`); }}
+                        >
                           {review.profilePictureUrl ? (
                             <Image
                               src={review.profilePictureUrl}
@@ -319,7 +325,7 @@ export default function ViewReviewsModal({
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-foreground text-sm truncate">
+                            <p className="font-semibold text-foreground text-sm truncate group-hover/user:text-[#6C63FF] transition-colors">
                               {review.username}
                             </p>
                             {review.createdAt && (
