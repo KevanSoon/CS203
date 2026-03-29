@@ -9,6 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class LessonReviewResponse {
     private Integer id;
+    private Integer userId; 
     private String username;
     private String avatarUrl;
     private Integer rating;

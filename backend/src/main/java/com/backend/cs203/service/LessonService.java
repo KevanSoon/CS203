@@ -595,6 +595,7 @@ public class LessonService {
 
                     return new LessonReviewResponse(
                             r.getId(),
+                            user.getId(),
                             user.getUsername(),
                             avatarUrl,
                             (int) r.getRating(),
