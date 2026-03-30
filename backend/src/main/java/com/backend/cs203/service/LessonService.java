@@ -572,6 +572,7 @@ public class LessonService {
                             : null;
                     return new LessonReviewResponse(
                             r.getId(),
+                            user.getId(),
                             user.getUsername(),
                             avatarUrl,
                             (int) r.getRating(),

@@ -4,9 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/router";
+import { api } from "@/app/api/api"
 
 type LessonReview = {
   id: number;
+  userId: number;
   username: string;
   profilePictureUrl?: string | null;
   rating: number;
@@ -35,36 +38,23 @@ export default function ViewReviewsModal({
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-
-        const res = await fetch(`/api/lesson/${lessonId}/reviews`, {
-          cache: "no-store",
-        });
-
-        const data: ReviewsResponse = await res.json();
-
-        if (!res.ok) {
-          throw new Error("Failed to load reviews");
+          const res = await api.get(`/api/lesson/${lessonId}/reviews`);
+          const all = res.data.reviews || [];
+          const top5 = all
+            .sort((a: any, b: any) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+            .slice(0, 5);
+          setAllReviews(all);
+          setReviews(top5);
+        } finally {
+          setLoading(false);
         }
-
-        const all = data.reviews || [];
-
-        const top5 = all
-          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-          .slice(0, 5);
-
-        setAllReviews(all);
-        setReviews(top5);
-      } catch (err) {
-        toast.error("Failed to load reviews.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
     fetchReviews();
   }, [lessonId]);
@@ -298,7 +288,10 @@ export default function ViewReviewsModal({
                         className="min-w-[calc(100%)] max-w-[calc(100%)] sm:min-w-[300px] sm:max-w-[300px] snap-start rounded-2xl border border-border bg-background p-4 shadow-sm flex flex-col gap-3"
                       >
                         {/* User info */}
-                        <div className="flex items-center gap-3">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer group/user"
+                          onClick={() => { onClose(); router.push(`/profile/${review.userId}`); }}
+                        >
                           {review.profilePictureUrl ? (
                             <Image
                               src={review.profilePictureUrl}
@@ -319,7 +312,7 @@ export default function ViewReviewsModal({
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-foreground text-sm truncate">
+                            <p className="font-semibold text-foreground text-sm truncate group-hover/user:text-[#6C63FF] transition-colors">
                               {review.username}
                             </p>
                             {review.createdAt && (
