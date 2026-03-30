@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.profile.DeleteAccountRequest;
 import com.backend.cs203.dto.profile.UpdateProfileRequest;
+import com.backend.cs203.dto.profile.UserProfileDto;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.service.UserService;
@@ -30,6 +32,11 @@ public class UserController {
     @GetMapping("/api/profile")
     public UserResponse getProfile() {
         return userService.getMyProfile();
+    }
+
+    @GetMapping("/api/profile/{userId}")
+    public ResponseEntity<UserProfileDto> getUserProfile(@PathVariable Integer userId) {
+        return ResponseEntity.ok(userService.getUserProfile(userId));
     }
 
     @PatchMapping(

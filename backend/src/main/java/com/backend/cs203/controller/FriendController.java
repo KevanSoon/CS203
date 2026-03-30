@@ -5,7 +5,12 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.profile.FriendDto;
 import com.backend.cs203.service.FriendService;
@@ -100,5 +105,11 @@ public class FriendController {
         validateAuth(authentication);
         friendService.removeFriend(id, authentication.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<FriendDto>> getFriendsLeaderboard(Authentication authentication) {
+        validateAuth(authentication);
+        return ResponseEntity.ok(friendService.getFriendsSortedByStreak(authentication.getName()));
     }
 }
