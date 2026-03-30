@@ -1,6 +1,7 @@
 package com.backend.cs203.service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LessonService {
+
+    private static final int LESSON_TITLE_MAX_LENGTH = 255;
+    private static final DateTimeFormatter DELETE_SUFFIX_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final LessonRepository lessonRepository;
     private final ChapterRepository chapterRepository;
@@ -530,7 +534,17 @@ public class LessonService {
         if (lesson.getDeletedAt() != null) {
             throw new RuntimeException("Lesson already deleted");
         }
-        lesson.setDeletedAt(LocalDateTime.now());
+
+        LocalDateTime deletedAt = LocalDateTime.now();
+        String suffix = "_deletedat_" + deletedAt.format(DELETE_SUFFIX_TIME_FORMATTER) + "_" + lesson.getId();
+        String currentTitle = lesson.getTitle() == null ? "lesson" : lesson.getTitle().trim();
+        int maxBaseLength = Math.max(1, LESSON_TITLE_MAX_LENGTH - suffix.length());
+        String baseTitle = currentTitle.length() > maxBaseLength
+            ? currentTitle.substring(0, maxBaseLength)
+            : currentTitle;
+
+        lesson.setTitle(baseTitle + suffix);
+        lesson.setDeletedAt(deletedAt);
         lessonRepository.save(lesson);
 
         vectorStoreService.deleteLesson(lessonId);
