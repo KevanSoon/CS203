@@ -642,7 +642,7 @@ export default function ProfilePage() {
 
                     {searchError && (
                       <div className="mb-4 flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                        <X size={15} className="flex-shrink-0" /> {searchError}
+                        {searchError}
                       </div>
                     )}
 

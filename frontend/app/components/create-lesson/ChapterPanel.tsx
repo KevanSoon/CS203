@@ -482,7 +482,7 @@ function QuizItem({
           !quiz.question.includes("___") && (
             <p className="text-[11px] text-warning mt-1 flex items-center gap-1">
               ⚠ Add{" "}
-              <code className="bg-warning/10 px-1 rounded">___</code> to mark
+              <code className="bg-warning/10 px-1 rounded">___</code> (3 underscores) to mark
               where the blank goes
             </p>
           )}
