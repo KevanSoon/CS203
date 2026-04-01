@@ -1,7 +1,6 @@
 import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
 
 export interface SidebarTitleSectionProps {
   open: boolean;
@@ -13,6 +12,7 @@ export interface SidebarTitleSectionProps {
   } | null;
   selected?: string;
   hasHydrated?: boolean;
+  loadingPic?: boolean;
 }
 
 const getUserTypeLabel = (usertype: string) => {
@@ -27,10 +27,8 @@ const getUserTypeLabel = (usertype: string) => {
   }
 };
 
-export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true }: SidebarTitleSectionProps) => {
+export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true, loadingPic = false }: SidebarTitleSectionProps) => {
   const router = useRouter();
-  const [imgError, setImgError] = useState(false);
-
   const handleClick = (usertype: string) => {
     if(usertype !== "root"){
       router.push('/profile');
@@ -42,7 +40,7 @@ export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true }
 
   // Show a neutral skeleton while the store is rehydrating from localStorage,
   // so we never flash the default avatar before the real user data arrives.
-  if (!hasHydrated) {
+  if (!hasHydrated || loadingPic) {
     return (
       <div className="mb-6 border-b border-border pb-4">
         <div className={`flex items-center rounded-md p-2 ${!open && 'justify-center'}`}>
@@ -87,14 +85,13 @@ export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true }
         className={`flex items-center rounded-md p-2 transition-colors ${user.usertype === "root" ? "" : !isSelected ?  'cursor-pointer hover:bg-border' : 'cursor-pointer bg-primary/10 shadow-sm border-l-2 border-primary'} ${!open && 'justify-center'}`}
       >
         <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
-          {user.profilePictureUrl && !imgError ? (
+          {user.profilePictureUrl ? (
             <Image
               src={user.profilePictureUrl}
               alt={user.username}
               width={48}
               height={48}
               className={`shrink-0 rounded-full object-cover shadow-sm ${open ? 'size-12' : 'size-8'}`}
-              onError={() => setImgError(true)}
             />
           ) : (
             <div className={`grid shrink-0 place-content-center rounded-full bg-slate-200 shadow-sm ${open ? 'size-12' : 'size-8'}`}>

@@ -47,7 +47,20 @@ export const Sidebar = ({
   const router = useRouter();
   const pathname = usePathname();
   const user = useSiteState((s) => s.user);
+  const setUser = useSiteState((s) => s.setUser);
   const hasHydrated = useSiteState((s) => s._hasHydrated);
+  const [loadingPic, setLoadingPic] = useState(false);
+
+  useEffect(() => {
+    if (!hasHydrated || !user || user.profilePictureUrl) return;
+    setLoadingPic(true);
+    api.get("/api/profile")
+      .then(({ data }) => {
+        setUser({ ...user, profilePictureUrl: data.profilePictureUrl ?? undefined });
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPic(false));
+  }, [hasHydrated, user?.username]);
 
   const handleOptionSelect = (title: string, route: string) => {
     setSelected(title);
@@ -129,7 +142,7 @@ export const Sidebar = ({
         `}
       >
         <SidebarToggle open={open} setOpen={setOpen} />
-        <SidebarTitleSection open={open} user={user} selected={selected} hasHydrated={hasHydrated} />
+        <SidebarTitleSection open={open} user={user} selected={selected} hasHydrated={hasHydrated} loadingPic={loadingPic} />
 
         <div className="space-y-1 flex-1">
           {menuOptions.map((option) => (
