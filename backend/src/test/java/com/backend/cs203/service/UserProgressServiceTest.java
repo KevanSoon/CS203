@@ -37,6 +37,7 @@ import com.backend.cs203.repository.QuizResultRepository;
 import com.backend.cs203.repository.UserCardProgressRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
 
 @ExtendWith(MockitoExtension.class)
 class UserProgressServiceTest {
@@ -97,10 +98,10 @@ class UserProgressServiceTest {
     // ===== getDashboard =====
 
     @Test
-    void getDashboard_userNotFound_throwsRuntimeException() {
+    void getDashboard_userNotFound_throwsAuthException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> userProgressService.getDashboard("ghost"));
+        assertThrows(AuthException.class, () -> userProgressService.getDashboard("ghost"));
     }
 
     @Test
@@ -228,10 +229,10 @@ class UserProgressServiceTest {
     // ===== getLessonProgress =====
 
     @Test
-    void getLessonProgress_userNotFound_throwsRuntimeException() {
+    void getLessonProgress_userNotFound_throwsAuthException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> userProgressService.getLessonProgress("ghost", 10));
+        assertThrows(AuthException.class, () -> userProgressService.getLessonProgress("ghost", 10));
     }
 
     @Test
@@ -355,10 +356,10 @@ class UserProgressServiceTest {
     // ===== markCardComplete =====
 
     @Test
-    void markCardComplete_userNotFound_throwsRuntimeException() {
+    void markCardComplete_userNotFound_throwsAuthException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class,
+        assertThrows(AuthException.class,
                 () -> userProgressService.markCardComplete("ghost", 1000));
     }
 
@@ -428,10 +429,10 @@ class UserProgressServiceTest {
     // ===== checkLessonCompletionForChapter =====
 
     @Test
-    void checkLessonCompletionForChapter_userNotFound_throwsRuntimeException() {
+    void checkLessonCompletionForChapter_userNotFound_throwsAuthException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class,
+        assertThrows(AuthException.class,
                 () -> userProgressService.checkLessonCompletionForChapter("ghost", 100));
     }
 

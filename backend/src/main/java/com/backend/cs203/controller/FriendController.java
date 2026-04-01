@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.cs203.dto.profile.FriendDto;
 import com.backend.cs203.service.FriendService;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 @RestController
 @RequestMapping("/api/friendship")
@@ -81,7 +83,7 @@ public class FriendController {
 
     private void validateAuth(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("Unauthorized");
+            throw new AuthException("Unauthorized");
         }
     }
 

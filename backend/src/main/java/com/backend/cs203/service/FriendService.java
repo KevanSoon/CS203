@@ -15,6 +15,8 @@ import com.backend.cs203.entity.FriendshipStatus;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -55,7 +57,7 @@ public class FriendService {
 
     public List<FriendDto> getFriends(String username) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new AuthException("User not found"));
 
         List<Friendship> friendships = friendshipRepository.findFriendshipsByUserId(
                 user.getId(),
@@ -76,7 +78,7 @@ public class FriendService {
     public List<FriendDto> getPendingRequests(String username) {
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         List<Friendship> incoming = friendshipRepository
                 .findIncomingPending(user.getId());
@@ -89,7 +91,7 @@ public class FriendService {
     public List<FriendDto> getOutgoingRequests(String username) {
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         List<Friendship> outgoing = friendshipRepository
                 .findOutgoingPending(user.getId());
@@ -104,7 +106,7 @@ public class FriendService {
 
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Current user not found"));
+                        new AuthException("Current user not found"));
 
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() ->
@@ -132,8 +134,7 @@ public class FriendService {
     public void cancelOutgoingRequest(Integer targetUserId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         Friendship friendship = friendshipRepository
                 .findExistingFriendship(currentUser.getId(), targetUserId)
@@ -161,7 +162,7 @@ public class FriendService {
     public void acceptFriendRequest(Integer requesterId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         Friendship friendship = friendshipRepository
                 .findExistingFriendship(requesterId, currentUser.getId())
@@ -191,7 +192,7 @@ public class FriendService {
     public void rejectFriendRequest(Integer requesterId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         Friendship friendship = friendshipRepository
                 .findIncomingRequest(requesterId, currentUser.getId())
@@ -207,7 +208,7 @@ public class FriendService {
     public void removeFriend(Integer friendId, String currentUsername) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         Friendship friendship = friendshipRepository
                 .findExistingFriendship(currentUser.getId(), friendId)
@@ -228,7 +229,7 @@ public class FriendService {
     
     public List<FriendDto> getFriendsSortedByStreak(String username) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new AuthException("User not found"));
 
         return friendshipRepository
             .findFriendshipsByUserId(user.getId(), FriendshipStatus.confirmed)

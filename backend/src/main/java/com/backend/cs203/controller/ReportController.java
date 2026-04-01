@@ -18,6 +18,7 @@ import com.backend.cs203.dto.report.ReportCreateDTO;
 import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
 
 @RestController
 @RequestMapping("/api/report")
@@ -41,7 +42,7 @@ public class ReportController {
         String username = authentication.getName();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
 
         reportService.createReport(dto, user);
 
@@ -53,7 +54,7 @@ public class ReportController {
     public ResponseEntity<List<ReportDTO>> getUserCreatedLessonReports(Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         return ResponseEntity.ok(reportService.getUserCreatedLessonReports(user.getId()));
     }
 

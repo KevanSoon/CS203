@@ -35,6 +35,8 @@ import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.service.LessonService;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +61,7 @@ public class LessonController {
     public ResponseEntity<List<LessonApplicationDTO>> getUserCreatedLessons(Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         return ResponseEntity.ok(lessonService.getUserCreatedLessons(user.getId()));
     }
 
@@ -80,7 +82,7 @@ public class LessonController {
     public ResponseEntity<List<LessonApplicationDTO>> getUserCreatedLessonApplications(Authentication authentication) { // ← NEW
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         return ResponseEntity.ok(lessonService.getUserCreatedLessonApplications(user.getId()));
     }
 
@@ -89,7 +91,7 @@ public class LessonController {
     public ResponseEntity<AdminLessonStatsDTO> getAdminLessonStats(Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         return ResponseEntity.ok(lessonService.getAdminLessonStats(user.getId()));
     }
 
@@ -105,7 +107,7 @@ public class LessonController {
             @PathVariable Integer lessonId,
             Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         return ResponseEntity.ok(lessonService.getLessonRating(lessonId, user.getId()));
     }
 
@@ -117,7 +119,7 @@ public class LessonController {
             Authentication authentication) {
 
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         lessonService.submitReview(lessonId, user.getId(), request.getRating(), request.getFeedback());
         return ResponseEntity.ok("Review submitted successfully");
     }
@@ -129,7 +131,7 @@ public class LessonController {
             Authentication authentication) {
 
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         boolean hasReviewed = reviewRepository.existsByReviewedByIdAndLessonId(user.getId(), lessonId);
         Map<String, Object> response = new HashMap<>();
@@ -151,7 +153,7 @@ public class LessonController {
         request.setDraft(draft);
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         CreateLessonResponse response = lessonService.createLesson(request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -163,7 +165,7 @@ public class LessonController {
             Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         return ResponseEntity.ok(lessonService.getAdminLessonPage(title, user.getId()));
     }
 
@@ -183,7 +185,7 @@ public class LessonController {
         request.setDraft(draft);
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         CreateLessonResponse response = lessonService.updateLesson(originalTitle, request, user);
         return ResponseEntity.ok(response);
     }
@@ -208,7 +210,7 @@ public class LessonController {
             Authentication authentication) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found. Refresh and try again"));
+                .orElseThrow(() -> new AuthException("User not found. Refresh and try again"));
         lessonService.deleteLesson(lessonId, user.getId());
         return ResponseEntity.ok("Lesson deleted successfully");
     }

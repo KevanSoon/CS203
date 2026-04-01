@@ -32,6 +32,7 @@ import com.backend.cs203.repository.QuizResultRepository;
 import com.backend.cs203.repository.UserCardProgressRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -56,7 +57,7 @@ public class UserProgressService {
     @Transactional
     public DashboardResponseDTO getDashboard(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         Integer userId = user.getId();
 
         // Check and reset streak if broken
@@ -142,7 +143,7 @@ public class UserProgressService {
     @Transactional(readOnly = true)
     public LessonProgressDTO getLessonProgress(String username, Integer lessonId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         Integer userId = user.getId();
 
         Lesson lesson = lessonRepository.findById(lessonId)
@@ -217,7 +218,7 @@ public class UserProgressService {
     @Transactional
     public void markCardComplete(String username, Integer cardId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         Integer userId = user.getId();
 
         Card card = cardRepository.findById(cardId)
@@ -240,7 +241,7 @@ public class UserProgressService {
     @Transactional
     public void checkLessonCompletionForChapter(String username, Integer chapterId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
         Integer userId = user.getId();
 
         Chapter chapter = chapterRepository.findById(chapterId)
@@ -312,7 +313,7 @@ public class UserProgressService {
 
     private void updateStreak(Integer userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AuthException("User not found"));
 
         LocalDate today = LocalDate.now();
         LocalDate lastStreakDate = user.getLastStreakDate();

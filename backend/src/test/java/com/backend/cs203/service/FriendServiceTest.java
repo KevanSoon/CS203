@@ -21,6 +21,8 @@ import com.backend.cs203.entity.FriendshipStatus;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 import org.springframework.web.server.ResponseStatusException;
 
@@ -107,7 +109,7 @@ class FriendServiceTest {
     void getFriends_userNotFound_throwsException() {
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        AuthException ex = assertThrows(AuthException.class,
                 () -> friendService.getFriends("nonexistent"));
         assertEquals("User not found", ex.getMessage());
     }

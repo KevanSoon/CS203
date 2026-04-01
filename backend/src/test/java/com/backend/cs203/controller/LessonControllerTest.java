@@ -43,6 +43,8 @@ import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 @WebMvcTest(LessonController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
@@ -466,11 +468,11 @@ class LessonControllerTest {
     }
 
     @Test
-    void getAdminLessonStats_userNotFound_returns400() throws Exception {
+    void getAdminLessonStats_userNotFound_returns401() throws Exception {
         when(userRepository.findByUsername("adminuser")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/lesson/admin/stats").with(user("adminuser").roles("ADMIN")))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
 
         verify(lessonService, never()).getAdminLessonStats(anyInt());
     }
