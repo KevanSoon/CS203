@@ -15,8 +15,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +34,7 @@ import com.backend.cs203.entity.Chapter;
 import com.backend.cs203.entity.Lesson;
 import com.backend.cs203.entity.Quiz;
 import com.backend.cs203.entity.Report;
+import com.backend.cs203.entity.Review;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
 import com.backend.cs203.dto.lesson.CreateLessonRequest;
@@ -48,6 +52,9 @@ import com.backend.cs203.exception.Exceptions.AuthException;
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
+
+    @Mock
+    private jakarta.persistence.EntityManager entityManager;
 
     @Mock
     private LessonRepository lessonRepository;
@@ -598,7 +605,7 @@ class LessonServiceTest {
         req.setTitle("T");
         req.setDescription("D");
         req.setDraft(false);
-        req.setChapters("[]");
+        req.setChapters("[]"); 
 
         when(lessonRepository.findByTitleAndCreatedBy("T", 1)).thenReturn(Optional.of(lesson));
 
@@ -606,5 +613,191 @@ class LessonServiceTest {
             () -> lessonService.updateLesson("T", req, user));
         assertEquals("Only saved, pending, or rejected lessons can be edited", ex.getMessage());
     }
+    // ===== updateLesson =====
+    @Test
+    void updateLesson_updatesTitleDescriptionAndStatus() {
+        User user = User.builder().id(1).username("author").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+        lesson.setTitle("Old Title");
+        lesson.setDescription("Old Desc");
+        lesson.setCreatedBy(user);
+        lesson.setStatus(Lesson.LessonStatus.saved);
 
+        String chaptersJson = "[{\"title\":\"Ch1\",\"description\":\"Desc1\",\"cards\":[],\"quizzes\":[]}]";
+        String tagsJson = "[\"tag1\",\"tag2\"]";
+
+        CreateLessonRequest req = new CreateLessonRequest();
+        req.setTitle("New Title");
+        req.setDescription("New Desc");
+        req.setDraft(false);
+        req.setChapters(chaptersJson);
+        req.setTags(tagsJson);
+
+        when(lessonRepository.findByTitleAndCreatedBy("Old Title", 1)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenAnswer(i -> i.getArgument(0));
+        // Mock entityManager for tag/chapters
+        jakarta.persistence.Query query = mock(jakarta.persistence.Query.class);
+        when(entityManager.createNativeQuery(any(String.class))).thenReturn(query);
+        when(query.setParameter(any(String.class), any())).thenReturn(query);
+        when(query.executeUpdate()).thenReturn(1);
+
+        CreateLessonResponse resp = lessonService.updateLesson("Old Title", req, user);
+
+        assertEquals("New Title", lesson.getTitle());
+        assertEquals("New Desc", lesson.getDescription());
+        assertEquals("pending", lesson.getStatus().name());
+        assertEquals("Lesson updated successfully and re-submitted for approval", resp.getMessage());
+        verify(lessonRepository).save(lesson);
+    }
+
+    // ===== createLesson =====
+    @Test
+    void createLesson_validRequest_savesLessonAndReturnsResponse() {
+        User user = User.builder().id(1).username("author").build();
+        CreateLessonRequest req = new CreateLessonRequest();
+        req.setTitle("T");
+        req.setDescription("D");
+        req.setDraft(false);
+        req.setChapters("[]");
+        req.setTags("[]");
+
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setTitle("T");
+        lesson.setDescription("D");
+        lesson.setStatus(Lesson.LessonStatus.pending);
+        lesson.setCreatedBy(user);
+
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
+
+        CreateLessonResponse resp = lessonService.createLesson(req, user);
+
+        assertEquals("T", resp.getTitle());
+        assertEquals("Lesson created successfully and submitted for approval", resp.getMessage());
+        verify(lessonRepository, times(1)).save(any(Lesson.class)); // once for initial, once for image (if any)
+    }
+
+    // ===== submitReview =====
+    @Test
+    void submitReview_validReview_savesReview() {
+        int lessonId = 1, userId = 2;
+        Lesson lesson = new Lesson();
+        lesson.setId(lessonId);
+        User user = User.builder().id(userId).build();
+
+        when(reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(false);
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        lessonService.submitReview(lessonId, userId, 5, "Great!");
+
+        verify(reviewRepository).save(any(Review.class));
+    }
+
+    @Test
+    void submitReview_alreadyReviewed_throwsException() {
+        int lessonId = 1, userId = 2;
+        when(reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(true);
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+            () -> lessonService.submitReview(lessonId, userId, 5, "Great!"));
+        assertEquals("You have already reviewed this lesson", ex.getMessage());
+    }
+
+    @Test
+    void submitReview_invalidRating_throwsException() {
+        int lessonId = 1, userId = 2;
+        when(reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> lessonService.submitReview(lessonId, userId, 0, "Bad"));
+    }
+
+    // ===== reviewLessonApplication =====
+    @Test
+    void reviewLessonApplication_approve_setsStatusAndCallsVectorStore() {
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setStatus(Lesson.LessonStatus.pending);
+        when(lessonRepository.findByTitleNotDeleted("T")).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
+
+        // Mock buildLessonPageDTO
+        LessonPageDTO lessonPageDTO = mock(LessonPageDTO.class);
+        LessonService spyService = spy(lessonService);
+        doReturn(lessonPageDTO).when(spyService).buildLessonPageDTO(lesson);
+
+        spyService.reviewLessonApplication("T", "approve");
+
+        assertEquals(Lesson.LessonStatus.approved, lesson.getStatus());
+        verify(lessonRepository).save(lesson);
+        verify(vectorStoreService).insertLesson(any(LessonPageDTO.class));
+    }
+
+    @Test
+    void reviewLessonApplication_reject_setsStatusRejected() {
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setStatus(Lesson.LessonStatus.pending);
+        when(lessonRepository.findByTitleNotDeleted("T")).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
+
+        lessonService.reviewLessonApplication("T", "reject");
+
+        assertEquals(Lesson.LessonStatus.rejected, lesson.getStatus());
+        verify(lessonRepository).save(lesson);
+        verify(vectorStoreService, never()).insertLesson(any());
+    }
+
+    @Test
+    void reviewLessonApplication_notPending_throwsException() {
+        Lesson lesson = new Lesson();
+        lesson.setId(1);
+        lesson.setStatus(Lesson.LessonStatus.approved);
+        when(lessonRepository.findByTitleNotDeleted("T")).thenReturn(Optional.of(lesson));
+
+        assertThrows(IllegalStateException.class,
+            () -> lessonService.reviewLessonApplication("T", "approve"));
+    }
+
+    // ===== getLessonRating =====
+    @Test
+    void getLessonRating_returnsCorrectValues() {
+        int lessonId = 1, userId = 2;
+        when(reviewRepository.findAverageRatingByLessonId(lessonId)).thenReturn(4.5);
+        when(reviewRepository.findRatingCountByLessonId(lessonId)).thenReturn(10);
+        when(reviewRepository.existsByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(true);
+
+        var dto = lessonService.getLessonRating(lessonId, userId);
+
+        assertEquals(lessonId, dto.getLessonId());
+        assertEquals(4.5, dto.getAverageRating());
+        assertEquals(10, dto.getRatingCount());
+        assertTrue(dto.isHasReviewed());
+    }
+    @Test
+    void getUserReview_returnsReviewDTO_whenReviewExists() {
+        int lessonId = 1, userId = 2;
+        Review review = new Review();
+        review.setRating((byte) 4);
+        review.setFeedback("Nice lesson!");
+        when(reviewRepository.findByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(Optional.of(review));
+
+        var dto = lessonService.getUserReview(lessonId, userId);
+
+        assertEquals(lessonId, dto.getLessonId());
+        assertEquals(userId, dto.getUserId());
+        assertEquals((byte) 4, dto.getRating());
+        assertEquals("Nice lesson!", dto.getFeedback());
+    }
+
+    @Test
+    void getUserReview_throwsException_whenReviewNotFound() {
+        int lessonId = 1, userId = 2;
+        when(reviewRepository.findByReviewedByIdAndLessonId(userId, lessonId)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> lessonService.getUserReview(lessonId, userId));
+        assertEquals("Review not found", ex.getMessage());
+    }
 }

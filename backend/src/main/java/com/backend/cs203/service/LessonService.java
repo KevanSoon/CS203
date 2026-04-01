@@ -360,7 +360,7 @@ public class LessonService {
         return buildLessonPageDTO(lesson);
     }
 
-    private LessonPageDTO buildLessonPageDTO(Lesson lesson) {
+    protected LessonPageDTO buildLessonPageDTO(Lesson lesson) {
         List<Chapter> chapters = chapterRepository.findByLessonId(lesson.getId());
 
         List<ChapterDTO> chapterDetails = chapters.stream().map(chapter -> {
