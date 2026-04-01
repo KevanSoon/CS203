@@ -25,7 +25,7 @@ public class Review {
    @Column(nullable = false)
    private Byte rating;
 
-   @Column(length = 1000)
+   @Column(nullable = false)
    private String feedback;
 
    @ManyToOne

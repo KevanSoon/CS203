@@ -25,9 +25,9 @@ DROP TABLE IF EXISTS `user`;
 
 CREATE TABLE `user` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `password` varchar(100) NOT NULL,
+  `username` varchar(25) NOT NULL,
+  `email` varchar(50) NOT NULL,
+  `password` varchar(50) NOT NULL,
   `usertype` enum('user','admin','root') NOT NULL,
   `streak` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -49,8 +49,8 @@ CREATE TABLE `tag` (
 
 CREATE TABLE `lesson` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text,
+  `title` varchar(100) NOT NULL,
+  `description` varchar(255),
   `status` enum('saved','pending','approved','rejected','suspended') DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
@@ -64,8 +64,8 @@ CREATE TABLE `lesson` (
 
 CREATE TABLE `chapter` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text,
+  `title` varchar(100) NOT NULL,
+  `description` varchar(255),
   `lesson_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -75,8 +75,8 @@ CREATE TABLE `chapter` (
 
 CREATE TABLE `card` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `front` text,
-  `back` text,
+  `front` varchar(150),
+  `back` varchar(150),
   `display_order` tinyint DEFAULT NULL,
   `chapter_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -87,8 +87,8 @@ CREATE TABLE `card` (
 
 CREATE TABLE `quiz` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `question` text,
+  `title` varchar(200) NOT NULL,
+  `question` varchar(150),
   `quiz_type` enum('mcq','true_false','fill_blank') NOT NULL DEFAULT 'mcq',
   `options` text,
   `correct_answer` varchar(255) DEFAULT NULL,
@@ -133,13 +133,13 @@ CREATE TABLE `lesson_tagging` (
 );
 
 CREATE TABLE `friendship` (
-  `status` enum('pending','confirmed') DEFAULT NULL,
+  `status` enum('pending','confirmed') NOT NULL DEFAULT 'pending',
   `user1_id` int NOT NULL,
   `user2_id` int NOT NULL,
   PRIMARY KEY (`user1_id`,`user2_id`),
-  KEY `FKq71du22g31mjeagf9uwks6hj` (`user2_id`),
-  CONSTRAINT `FK3uos929jau1n37onhk405wbse` FOREIGN KEY (`user1_id`) REFERENCES `user` (`id`),
-  CONSTRAINT `FKq71du22g31mjeagf9uwks6hj` FOREIGN KEY (`user2_id`) REFERENCES `user` (`id`)
+  KEY (`user2_id`),
+  CONSTRAINT fk_user_1 FOREIGN KEY (`user1_id`) REFERENCES `user` (`id`),
+  CONSTRAINT fk_user_2 FOREIGN KEY (`user2_id`) REFERENCES `user` (`id`)
 );
 
 CREATE TABLE `password_reset_tokens` (
@@ -170,11 +170,11 @@ CREATE TABLE `quiz_result` (
 
 CREATE TABLE `report` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `description` varchar(255) NOT NULL,
   `status` enum('reported','closed','unresolved') DEFAULT NULL,
   `type` enum('critical','high','medium','low') NOT NULL,
-  `remarks` text,
+  `remarks` varchar(255),
   `reported_by` int NOT NULL,
   `lesson_id` int NOT NULL,
   `chapter_id` int DEFAULT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE `report` (
 CREATE TABLE `review` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `rating` int NOT NULL,
-  `feedback` varchar(1000) DEFAULT NULL,
+  `feedback` varchar(255) DEFAULT NULL,
   `reviewed_by` int NOT NULL,
   `lesson_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
