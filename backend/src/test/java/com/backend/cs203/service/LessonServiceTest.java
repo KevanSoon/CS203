@@ -33,6 +33,8 @@ import com.backend.cs203.entity.Quiz;
 import com.backend.cs203.entity.Report;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.dto.lesson.AdminLessonStatsDTO;
+import com.backend.cs203.dto.lesson.CreateLessonRequest;
+import com.backend.cs203.dto.lesson.CreateLessonResponse;
 import com.backend.cs203.repository.CardRepository;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
@@ -527,6 +529,82 @@ class LessonServiceTest {
 
         verify(reportRepository, never()).findNotClosedReportsByLessonId(anyInt());
         verify(reportRepository, never()).save(any(Report.class));
+    }
+
+
+    @Test
+    void updateLesson_throwsWhenLessonNotFoundOrNotOwned() {
+        User user = User.builder().id(1).username("author").build();
+        CreateLessonRequest req = new CreateLessonRequest();
+        when(lessonRepository.findByTitleAndCreatedBy("Missing", 1)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+            () -> lessonService.updateLesson("Missing", req, user));
+        assertEquals("Lesson not found or you don't have permission to edit it", ex.getMessage());
+    }
+
+    @Test
+    void updateLesson_throwsWhenChaptersFormatInvalid() {
+        User user = User.builder().id(1).username("author").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+        lesson.setCreatedBy(user);
+        lesson.setStatus(Lesson.LessonStatus.saved);
+
+        CreateLessonRequest req = new CreateLessonRequest();
+        req.setTitle("T");
+        req.setDescription("D");
+        req.setDraft(false);
+        req.setChapters("not a json");
+
+        when(lessonRepository.findByTitleAndCreatedBy("T", 1)).thenReturn(Optional.of(lesson));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+            () -> lessonService.updateLesson("T", req, user));
+        assertEquals("Invalid chapters format", ex.getMessage());
+    }
+
+    @Test
+    void updateLesson_throwsWhenTagsFormatInvalid() {
+        User user = User.builder().id(1).username("author").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+        lesson.setCreatedBy(user);
+        lesson.setStatus(Lesson.LessonStatus.saved);
+
+        CreateLessonRequest req = new CreateLessonRequest();
+        req.setTitle("T");
+        req.setDescription("D");
+        req.setDraft(false);
+        req.setChapters("[]");
+        req.setTags("not a json");
+
+        when(lessonRepository.findByTitleAndCreatedBy("T", 1)).thenReturn(Optional.of(lesson));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+            () -> lessonService.updateLesson("T", req, user));
+        assertEquals("Invalid tags format", ex.getMessage());
+    }
+
+    @Test
+    void updateLesson_throwsWhenLessonStatusNotEditable() {
+        User user = User.builder().id(1).username("author").build();
+        Lesson lesson = new Lesson();
+        lesson.setId(10);
+        lesson.setCreatedBy(user);
+        lesson.setStatus(Lesson.LessonStatus.approved);
+
+        CreateLessonRequest req = new CreateLessonRequest();
+        req.setTitle("T");
+        req.setDescription("D");
+        req.setDraft(false);
+        req.setChapters("[]");
+
+        when(lessonRepository.findByTitleAndCreatedBy("T", 1)).thenReturn(Optional.of(lesson));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+            () -> lessonService.updateLesson("T", req, user));
+        assertEquals("Only saved, pending, or rejected lessons can be edited", ex.getMessage());
     }
 
 }
