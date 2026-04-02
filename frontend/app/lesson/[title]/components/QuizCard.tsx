@@ -160,7 +160,7 @@ export const QuizCard = ({
             const percentage = Math.round((finalScore / total) * 100);
 
             if (!previewMode) {
-                api.post("/api/quiz-result", {
+                api.post("/api/quiz", {
                     chapterId: node.id,
                     score: percentage,
                 })

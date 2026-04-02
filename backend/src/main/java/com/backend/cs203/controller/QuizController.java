@@ -1,16 +1,17 @@
 package com.backend.cs203.controller;
 
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.backend.cs203.service.QuizService;
-import com.backend.cs203.entity.Quiz;
+import com.backend.cs203.dto.quiz.QuizResultDTO;
+import com.backend.cs203.service.UserProgressService;
 
 @RestController
 @RequestMapping("/api/quiz")
@@ -18,8 +19,18 @@ public class QuizController {
     @Autowired
     private QuizService quizService;
 
-    @GetMapping("/chapter/{chapterId}")
-    public ResponseEntity<List<Quiz>> getQuizzesByChapter(@PathVariable int chapterId) {
-        return ResponseEntity.ok(quizService.getQuizzesByChapter(chapterId));
+    @Autowired
+    private UserProgressService userProgressService;
+
+
+    @PostMapping
+    public ResponseEntity<Void> saveResult(
+        @RequestBody QuizResultDTO dto,
+        Authentication authentication
+    ) {
+        String username = authentication.getName();
+        quizService.saveResult(username, dto);
+        userProgressService.checkLessonCompletionForChapter(username, dto.getChapterId());
+        return ResponseEntity.ok().build();
     }
 }

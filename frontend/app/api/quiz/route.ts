@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const response = await axios.post(
-      `${BACKEND_URL}/api/quiz-result`,
+      `${BACKEND_URL}/api/quiz`,
       body,
       {
         headers: {
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("BFF POST /api/quiz-result failed:", err);
-    return Response.json({ error: "Server error" }, { status: 500 });
+    console.error("BFF POST /api/quiz failed:", err);
+    return Response.json({ error: "Failed to update Quiz Results. Try again later" }, { status: 500 });
   }
 }
