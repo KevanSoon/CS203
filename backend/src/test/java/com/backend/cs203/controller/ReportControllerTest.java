@@ -33,7 +33,7 @@ import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.ReportService;
-import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 @WebMvcTest(ReportController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class})

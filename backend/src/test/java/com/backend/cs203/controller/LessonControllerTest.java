@@ -43,7 +43,6 @@ import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
 import com.backend.cs203.service.LessonService;
-import com.backend.cs203.exception.Exceptions.AuthException;
 
 
 @WebMvcTest(LessonController.class)
@@ -731,7 +730,7 @@ class LessonControllerTest {
             }
             @Override
             public LocalDateTime getDeletedAt() {
-                return createdAt;
+                return deletedAt;
             }
         };
     }
