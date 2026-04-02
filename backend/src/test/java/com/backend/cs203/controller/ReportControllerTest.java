@@ -127,6 +127,25 @@ class ReportControllerTest {
         verify(reportService, never()).createReport(any(ReportCreateDTO.class), any(User.class));
     }
 
+    @Test
+    void createReport_invalidJson_returns400() throws Exception {
+        String invalidJson = "{ invalid json }";
+        mockMvc.perform(post("/api/report/user")
+                        .with(user("testuser").roles("USER"))
+                        .contentType("application/json")
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createReport_emptyBody_returns400() throws Exception {
+        mockMvc.perform(post("/api/report/user")
+                        .with(user("testuser").roles("USER"))
+                        .contentType("application/json")
+                        .content(""))
+                .andExpect(status().isBadRequest());
+    }
+
     // ===== GET /api/report/admin =====
     @Test
     void getUserCreatedLessonReports_adminAuthenticated_returns200() throws Exception {
@@ -331,6 +350,15 @@ class ReportControllerTest {
         ).andExpect(status().isBadRequest());
     }
 
+    @Test
+    void updateReportStatus_invalidReportId_returns400() throws Exception {
+        mockMvc.perform(patch("/api/report/root/status")
+                        .param("reportId", "abc")
+                        .param("status", "closed")
+                        .with(user("rootuser").roles("ROOT"))
+                    ).andExpect(status().isBadRequest());
+    }
+
     // ===== PATCH /api/report/root/suspend =====
 
     @Test
@@ -379,6 +407,14 @@ class ReportControllerTest {
         ).andExpect(status().isBadRequest());
     }
 
+    @Test
+    void updateReportStatusAndSuspendLesson_invalidReportId_returns400() throws Exception {
+        mockMvc.perform(patch("/api/report/root/suspend")
+                        .param("reportId", "abc")
+                        .param("status", "resolved")
+                        .with(user("rootuser").roles("ROOT"))
+                    ).andExpect(status().isBadRequest());
+    }
     // ===== PATCH /api/report/admin/remarks =====
 
     @Test
@@ -436,4 +472,43 @@ class ReportControllerTest {
                 .with(user("adminuser").roles("ADMIN"))
         ).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void updateReportRemarks_emptyRemarks_stillCallsService() throws Exception {
+        mockMvc.perform(patch("/api/report/admin/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "")
+                        .with(user("adminuser").roles("ADMIN"))
+        ).andExpect(status().isNoContent());
+
+        verify(reportService).updateReportRemarks(10, "");
+    }
+
+    @Test
+    void updateReportRemarks_serviceNotCalled_whenForbidden() throws Exception {
+        mockMvc.perform(
+                patch("/api/report/admin/remarks")
+                        .param("reportId", "10")
+                        .param("remarks", "test")
+                        .with(user("user1").roles("USER"))
+        ).andExpect(status().isForbidden());
+
+        verify(reportService, never()).updateReportRemarks(anyInt(), anyString());
+    }
+
+    // ===== GET /api/report/root =====
+
+    @Test
+    void getAllReportsForRoot_withUserRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/report/root").with(user("user1").roles("USER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getAllReportsForRoot_withAdminRole_deniesAccess() throws Exception {
+        mockMvc.perform(get("/api/report/root")
+                .with(user("admin1").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
 }
