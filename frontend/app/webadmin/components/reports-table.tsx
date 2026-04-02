@@ -10,6 +10,12 @@ import { SingleReportModal } from "./report-modal";
 type ReportStatus = "reported" | "unresolved" | "closed";
 type ReportType = "critical" | "high" | "medium" | "low";
 type FilterValue = "reports" | ReportStatus;
+const tabBgClass: Record<FilterValue, string> = {
+  reports: "bg-accent",
+  reported: "bg-warning",
+  unresolved: "bg-destructive",
+  closed: "bg-success", 
+};
 
 interface ReportsTableProps {
 	reports: Report[];
@@ -103,7 +109,7 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 							key={tab}
 							onClick={() => setFilter(tab)}
 							className={`rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-								filter === tab ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground"
+								filter === tab ? `${tabBgClass[tab]} bg-accent text-white` : "text-muted-foreground hover:text-foreground"
 							}`}>
 							{tab[0].toUpperCase() + tab.slice(1)} ({counts[tab]})
 						</button>

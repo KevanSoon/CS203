@@ -199,6 +199,7 @@ VALUES
 (2, 7, NOW()), (2, 8, NOW()), (2, 9, NOW()), (2, 10, NOW()), (2, 11, NOW()), (2, 12, NOW()), (2, 13, NOW()),
 -- User 2 completed Lesson 2 (cards 14–17)
 (2, 14, NOW()), (2, 15, NOW()), (2, 16, NOW()), (2, 17, NOW()),
+(2,23,NOW()),
 
 -- User 3 completed Lesson 1 (cards 1–13)
 (3, 1, NOW()), (3, 2, NOW()), (3, 3, NOW()), (3, 4, NOW()), (3, 5, NOW()), (3, 6, NOW()),
