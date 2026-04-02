@@ -30,7 +30,6 @@ public class LessonReview {
     @Column(nullable = false)
     private Integer rating;
  
-    @Column(length = 1000)
     private String feedback;
  
     @Column(name = "reviewed_by", nullable = false)
