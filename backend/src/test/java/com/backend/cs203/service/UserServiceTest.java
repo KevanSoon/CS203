@@ -12,9 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.dto.auth.RegisterRequest;
@@ -33,6 +35,7 @@ import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.repository.FriendshipRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -49,11 +52,14 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private FriendshipRepository friendshipRepository;
+
     @InjectMocks
     private UserService userService;
 
     @AfterEach
-    void tearDown() {
+    void cleanup() {
         SecurityContextHolder.clearContext();
     }
 
@@ -224,6 +230,23 @@ class UserServiceTest {
         assertThrows(ResponseStatusException.class, () -> userService.deleteMyAccount(request));
     }
 
+    @Test
+    void deleteMyAccount_nullRequest_throwsBadRequest() {
+        setAuthentication("testuser");
+        assertThrows(ResponseStatusException.class, () -> userService.deleteMyAccount(null));
+    }
+
+    @Test
+    void deleteMyAccount_blankPassword_throwsBadRequest() {
+        setAuthentication("testuser");
+
+        DeleteAccountRequest request = new DeleteAccountRequest();
+        request.setPassword(" ");
+
+        assertThrows(ResponseStatusException.class,
+                () -> userService.deleteMyAccount(request));
+    }
+
     // ===== updateMyProfile =====
 
     @Test
@@ -308,6 +331,121 @@ class UserServiceTest {
         assertEquals(400, ex.getStatusCode().value());
     }
 
+    @Test
+    void updateMyProfile_nullEmail_throwsBadRequest() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UpdateProfileRequest request = new UpdateProfileRequest(null, null, null);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> userService.updateMyProfile(request));
+
+        assertEquals(400, ex.getStatusCode().value());
+    }
+
+    @Test
+    void updateMyProfile_emailTooLong_throwsBadRequest() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        String longEmail = "a".repeat(101) + "@test.com";
+
+        UpdateProfileRequest request = new UpdateProfileRequest(longEmail, null, null);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> userService.updateMyProfile(request));
+
+        assertEquals(400, ex.getStatusCode().value());
+    }
+
+    @Test
+    void updateMyProfile_passwordMissingUppercase_throwsBadRequest() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UpdateProfileRequest request =
+                new UpdateProfileRequest("test@test.com", "lowercase1", null);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> userService.updateMyProfile(request));
+        assertEquals(400, ex.getStatusCode().value());
+    }
+
+    @Test
+    void updateMyProfile_passwordMissingDigit_throwsBadRequest() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        UpdateProfileRequest request = new UpdateProfileRequest("test@test.com", "Password", null);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> userService.updateMyProfile(request));
+        assertEquals(400, ex.getStatusCode().value());
+    }
+
+    @Test
+    void updateMyProfile_withProfileImage_uploadsFile() {
+        setAuthentication("testuser");
+
+        User user = User.builder()
+                .id(1)
+                .username("testuser")
+                .email("test@test.com")
+                .profilePictureUrl(null)
+                .build();
+
+        MultipartFile file = org.mockito.Mockito.mock(MultipartFile.class);
+
+        when(file.isEmpty()).thenReturn(false);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(supabaseStorageService.uploadFile(any(), eq(file))).thenReturn("new-path");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any()))
+                .thenReturn(0L);
+
+        UpdateProfileRequest request = new UpdateProfileRequest("test@test.com", null, file);
+
+        userService.updateMyProfile(request);
+
+        verify(supabaseStorageService).uploadFile(any(), eq(file));
+    }
+
+    @Test
+    void updateMyProfile_replaceProfileImage_deletesOldFile() {
+        setAuthentication("testuser");
+
+        User user = User.builder()
+                .id(1)
+                .username("testuser")
+                .email("test@test.com")
+                .profilePictureUrl("old-path")
+                .build();
+
+        MultipartFile file = org.mockito.Mockito.mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(supabaseStorageService.uploadFile(any(), eq(file))).thenReturn("new-path");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any()))
+                .thenReturn(0L);
+
+        UpdateProfileRequest request = new UpdateProfileRequest("test@test.com", null, file);
+
+        userService.updateMyProfile(request);
+
+        verify(supabaseStorageService).deleteFile("old-path");
+    }
+
     // ===== checkAndResetStreak (via getMyProfile) =====
 
     @Test
@@ -390,6 +528,25 @@ class UserServiceTest {
         verify(userRepository, never()).save(any(User.class));
     }
 
+    @Test
+    void getMyProfile_noProfilePicture_returnsNullUrl() {
+        setAuthentication("testuser");
+
+        User user = User.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .profilePictureUrl(null)
+                .build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(userLessonProgressRepository.countCompletedApprovedLessonsByUserId(any()))
+                .thenReturn(0L);
+
+        UserResponse result = userService.getMyProfile();
+
+        assertEquals(null, result.getProfilePictureUrl());
+    }
+
     // ===== searchUsers =====
 
     @Test
@@ -440,4 +597,101 @@ class UserServiceTest {
 
         assertTrue(results.isEmpty());
     }
+
+    @Test
+    void searchUsers_currentUserNotFound_throwsNotFound() {
+        setAuthentication("missing");
+
+        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class,
+                () -> userService.searchUsers("test"));
+    }
+
+    // ===== verifyMyPassword() =====
+
+    @Test
+    void verifyMyPassword_correctPassword_returnsTrue() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").password("encoded").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("raw", "encoded")).thenReturn(true);
+
+        assertTrue(userService.verifyMyPassword("raw"));
+    }
+
+    @Test
+    void verifyMyPassword_wrongPassword_returnsFalse() {
+        setAuthentication("testuser");
+        User user = User.builder().username("testuser").password("encoded").build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
+        
+        assertFalse(userService.verifyMyPassword("wrong"));
+    }
+
+    @Test
+    void verifyMyPassword_blankPassword_returnsFalse() {
+        setAuthentication("testuser");
+        assertFalse(userService.verifyMyPassword(""));
+    }
+
+    @Test
+    void verifyMyPassword_unauthenticated_throwsUnauthorized() {
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> userService.verifyMyPassword("test"));
+        assertEquals(401, ex.getStatusCode().value());
+    }
+
+    // ===== requireUsername() =====
+    @Test
+    void requireUsername_nullAuthenticationName_throwsUnauthorized() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(null, null));
+
+        assertThrows(ResponseStatusException.class,
+                () -> userService.searchUsers("test"));
+    }
+    
+
+    // ===== getUserProfile() =====
+    @Test
+    void getUserProfile_success() {
+        setAuthentication("viewer");
+
+        User viewer = User.builder().id(1).username("viewer").build();
+        User target = User.builder().id(2).username("target").build();
+
+        when(userRepository.findByUsername("viewer")).thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2)).thenReturn(Optional.of(target));
+        when(friendshipRepository.findFriendshipsByUserId(any(), any()))
+                .thenReturn(List.of());
+        when(friendshipRepository.findSentPendingRequest(any(), any()))
+                .thenReturn(Optional.empty());
+
+        var result = userService.getUserProfile(2);
+
+        assertEquals("target", result.getUsername());
+    }
+
+    @Test
+    void getUserProfile_deactivatedTarget_throwsNotFound() {
+        setAuthentication("viewer");
+
+        User viewer = User.builder().id(1).username("viewer").build();
+        User target = User.builder()
+                .id(2)
+                .username("target")
+                .deactivatedAt(java.time.Instant.now())
+                .build();
+
+        when(userRepository.findByUsername("viewer")).thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2)).thenReturn(Optional.of(target));
+
+        assertThrows(ResponseStatusException.class,
+                () -> userService.getUserProfile(2));
+    }
+
 }
