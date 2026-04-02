@@ -4,15 +4,23 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -26,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.backend.cs203.config.SecurityConfig;
 import com.backend.cs203.dto.profile.DeleteAccountRequest;
+import com.backend.cs203.dto.profile.UserProfileDto;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.repository.UserRepository;
@@ -39,6 +48,9 @@ class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserController userController;
 
     @MockitoBean
     private UserService userService;
@@ -167,5 +179,40 @@ class UserControllerTest {
     void searchUsers_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/users/search").param("username", "test"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getUserProfile_returnsProfile() {
+    int userId = 42;
+    UserProfileDto dto = mock(UserProfileDto.class);
+    when(userService.getUserProfile(userId)).thenReturn(dto);
+
+    ResponseEntity<UserProfileDto> response = userController.getUserProfile(userId);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(userService).getUserProfile(userId);
+    }
+
+    @Test
+    void verifyPassword_returnsTrueWhenPasswordCorrect() {
+        DeleteAccountRequest req = new DeleteAccountRequest();
+        req.setPassword("secret");
+        when(userService.verifyMyPassword("secret")).thenReturn(true);
+        ResponseEntity<Boolean> response = userController.verifyPassword(req);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(userService).verifyMyPassword("secret");
+    }
+
+    @Test
+    void verifyPassword_returnsFalseWhenPasswordIncorrect() {
+        DeleteAccountRequest req = new DeleteAccountRequest();
+        req.setPassword("wrong");
+        when(userService.verifyMyPassword("wrong")).thenReturn(false);
+
+        ResponseEntity<Boolean> response = userController.verifyPassword(req);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(userService).verifyMyPassword("wrong");
     }
 }

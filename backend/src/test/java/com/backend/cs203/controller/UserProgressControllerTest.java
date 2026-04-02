@@ -2,15 +2,24 @@ package com.backend.cs203.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -27,6 +36,7 @@ import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtAuthenticationFilter;
 import com.backend.cs203.security.JwtUtil;
+import com.backend.cs203.entity.User;
 import com.backend.cs203.service.UserProgressService;
 
 @WebMvcTest(UserProgressController.class)
@@ -190,5 +200,42 @@ class UserProgressControllerTest {
                 .andExpect(status().isOk());
 
         verify(userProgressService).markCardComplete("alice", 100);
+    }
+
+    @Test
+    void resetLessonProgress_validUser_callsServiceAndReturnsOk() {
+        UserRepository userRepository = mock(UserRepository.class);
+        UserProgressService userProgressService = mock(UserProgressService.class);
+        UserProgressController controller = new UserProgressController(userProgressService, userRepository);
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("testuser");
+        User user = new User();
+        user.setId(123);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        ResponseEntity<Void> response = controller.resetLessonProgress(42, auth);
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(userRepository).findByUsername("testuser");
+        verify(userProgressService).resetLessonProgress(123, 42);
+    }
+
+    @Test
+    void resetLessonProgress_userNotFound_throwsException() {
+        UserRepository userRepository = mock(UserRepository.class);
+        UserProgressService userProgressService = mock(UserProgressService.class);
+        UserProgressController controller = new UserProgressController(userProgressService, userRepository);
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("ghost");
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+            controller.resetLessonProgress(99, auth)
+        );
+        assertTrue(ex.getMessage().contains("User not found"));
+        verify(userRepository).findByUsername("ghost");
+        verify(userProgressService, never()).resetLessonProgress(anyInt(), anyInt());
     }
 }
