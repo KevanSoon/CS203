@@ -10,6 +10,7 @@ import com.backend.cs203.entity.QuizResult;
 import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.QuizResultRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.exception.Exceptions.AuthException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +23,7 @@ public class QuizResultService {
 
     public void saveResult(String username, QuizResultDTO dto) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new AuthException("User not found"));
 
         Integer userId = user.getId();
 

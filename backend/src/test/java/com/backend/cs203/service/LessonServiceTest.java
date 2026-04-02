@@ -41,8 +41,8 @@ import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
-import com.backend.cs203.exception.Exceptions;
-import com.backend.cs203.service.VectorStoreService;
+import com.backend.cs203.exception.Exceptions.AuthException;
+
 
 @ExtendWith(MockitoExtension.class)
 class LessonServiceTest {
