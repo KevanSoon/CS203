@@ -1,6 +1,5 @@
 package com.backend.cs203.controller;
 
-import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.backend.cs203.dto.progress.DashboardProgressDTO;
 import com.backend.cs203.dto.progress.DashboardResponseDTO;
 import com.backend.cs203.dto.progress.LessonProgressDTO;
 import com.backend.cs203.dto.progress.MarkCardCompleteRequest;

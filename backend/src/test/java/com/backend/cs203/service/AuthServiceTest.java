@@ -24,7 +24,6 @@ import com.backend.cs203.entity.User;
 import com.backend.cs203.exception.Exceptions.AuthException;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.security.JwtUtil;
-import com.backend.cs203.service.SupabaseStorageService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
