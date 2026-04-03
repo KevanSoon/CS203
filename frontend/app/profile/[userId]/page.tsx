@@ -670,7 +670,19 @@ export default function ProfilePage() {
                               ) : pendingFriends.some((f) => f.id === user.id) ? (
                                 <div className="flex gap-2">
                                   <button onClick={() => handleAcceptFriend(user.id)} className="text-xs font-semibold px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700">Accept</button>
-                                  <button onClick={() => setPendingFriends((prev) => prev.filter((f) => f.id !== user.id))} className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200">Reject</button>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await api.post(`/api/friendship/reject/${user.id}`);
+                                        setPendingFriends((prev) => prev.filter((f) => f.id !== user.id));
+                                      } catch {
+                                        // error toast handled by interceptor
+                                      }
+                                    }}
+                                    className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                                  >
+                                    Reject
+                                  </button>
                                 </div>
                               ) : outgoingFriends.some((f) => f.id === user.id) ? (
                                 <AddFriendButton targetUserId={user.id} initialSent={true} onSuccess={loadOutgoing} />

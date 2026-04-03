@@ -2,6 +2,8 @@ package com.backend.cs203.dto.profile;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,6 +15,7 @@ public class UserProfileDto {
     private final String profilePictureUrl;
     private final int streak;
     private final int friendCount;
+    @JsonProperty("isFriend")
     private final boolean isFriend;
     private final boolean hasPendingRequest;
     private final List<BasicUserDto> commonFriends;

@@ -301,6 +301,7 @@ public class UserService {
                 .stream()
                 .filter(user -> !user.getUsername().equals(currentUsername))
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
+                .filter(user -> user.getDeactivatedAt() == null)
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
     }
@@ -326,12 +327,12 @@ public class UserService {
             .map(User::getId)
             .collect(Collectors.toSet());
 
-        boolean isFriend = viewerFriendIds.contains(targetId);
+        boolean isFriend = viewerFriends.stream().anyMatch(u -> u.getId().equals(target.getId()));
 
         boolean hasPendingRequest = friendshipRepository
             .findSentPendingRequest(viewer.getId(), target.getId())
             .isPresent();
-
+            
         List<BasicUserDto> commonFriends = targetFriends.stream()
             .filter(u -> viewerFriendIds.contains(u.getId()))
             .map(u -> new BasicUserDto(u.getId(), u.getUsername(), resolveProfileUrl(u)))
@@ -385,6 +386,7 @@ public class UserService {
             .findFriendshipsByUserId(userId, FriendshipStatus.confirmed)
             .stream()
             .map(f -> f.getUser1().getId().equals(userId) ? f.getUser2() : f.getUser1())
+            .filter(u -> u.getDeactivatedAt() == null)
             .toList();
     }
 }
