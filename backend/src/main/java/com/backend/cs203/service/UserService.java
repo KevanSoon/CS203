@@ -229,7 +229,7 @@ public class UserService {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // ✅ validate email (required)
+        // validate email (required)
         String email = request.getEmail();
         if (email == null || email.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -238,27 +238,29 @@ public class UserService {
         email = validateEmail(request.getEmail());
         user.setEmail(email);
 
-        // ✅ password optional
+        // password optional
         String password = request.getPassword();
         if (password != null && !password.isBlank()) {
             validatePassword(password);
             user.setPassword(passwordEncoder.encode(password));
         }
 
-        // ✅ profile image (optional)
+        // profile image (optional)
         MultipartFile profileImage = request.getProfileImage();
         if (profileImage != null && !profileImage.isEmpty()) {
             String existingUrl = user.getProfilePictureUrl();
-
-            //check if there is image url in database
-            if (existingUrl != null) {
-                //delete file from supabase storage
-                supabaseStorageService.deleteFile(existingUrl);
+            try {
+                if (existingUrl != null) {
+                    supabaseStorageService.deleteFile(existingUrl);
+                }
+                String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
+                user.setProfilePictureUrl(newPath);
+            } catch (Exception e) {
+                throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to upload profile picture. Please try again."
+                );
             }
-
-            //upload new image and store url path
-            String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
-            user.setProfilePictureUrl(newPath);
         }
 
         User saved = userRepository.save(user);

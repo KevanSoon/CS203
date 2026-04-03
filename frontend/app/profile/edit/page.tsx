@@ -162,7 +162,11 @@ export default function EditProfilePage() {
       router.push("/profile");
     } catch (e: any) {
       if (e?.response?.status === 401) { router.replace("/login"); return; }
-      setPageError(e?.response?.data?.message || "Failed to update profile");
+      if (e?.response?.status === 500 && imageFile) {
+        setPageError("Failed to upload profile picture. Please try a different image.");
+      } else {
+        setPageError(e?.response?.data?.message || "Failed to update profile");
+      }
     } finally {
       setSaving(false);
     }
