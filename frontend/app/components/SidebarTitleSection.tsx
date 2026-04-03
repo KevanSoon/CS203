@@ -5,6 +5,7 @@ import Image from "next/image";
 export interface SidebarTitleSectionProps {
   open: boolean;
   user: {
+    id: number;
     username: string;
     email: string;
     usertype: string;
@@ -31,7 +32,7 @@ export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true, 
   const router = useRouter();
   const handleClick = (usertype: string) => {
     if(usertype !== "root"){
-      router.push('/profile/${user?.id}');
+      router.push(`/profile/${user?.id}`);
     }
   };
 

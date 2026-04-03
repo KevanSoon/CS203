@@ -8,6 +8,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class UserInfoResponse {
+    private Integer id;
     private String username;
     private String email;
     private String usertype;

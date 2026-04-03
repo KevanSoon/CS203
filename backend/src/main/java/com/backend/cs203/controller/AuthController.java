@@ -54,6 +54,7 @@ public class AuthController {
 
         // Return user info only (token is in HttpOnly cookie)
         UserInfoResponse userInfo = UserInfoResponse.builder()
+                .id(auth.getId())
                 .username(auth.getUsername())
                 .email(auth.getEmail())
                 .usertype(auth.getUsertype())
