@@ -18,6 +18,7 @@ public class UserProfileDto {
     @JsonProperty("isFriend")
     private final boolean isFriend;
     private final boolean hasPendingRequest;
+    private final boolean hasIncomingRequest;
     private final List<BasicUserDto> commonFriends;
     private final List<FriendDto> friendLeaderboard;
 }

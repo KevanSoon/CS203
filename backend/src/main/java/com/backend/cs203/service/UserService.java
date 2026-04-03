@@ -332,7 +332,11 @@ public class UserService {
         boolean hasPendingRequest = friendshipRepository
             .findSentPendingRequest(viewer.getId(), target.getId())
             .isPresent();
-            
+
+        boolean hasIncomingRequest = friendshipRepository
+            .findSentPendingRequest(target.getId(), viewer.getId())
+            .isPresent();
+
         List<BasicUserDto> commonFriends = targetFriends.stream()
             .filter(u -> viewerFriendIds.contains(u.getId()))
             .map(u -> new BasicUserDto(u.getId(), u.getUsername(), resolveProfileUrl(u)))
@@ -365,6 +369,7 @@ public class UserService {
             targetFriends.size(),
             isFriend,
             hasPendingRequest,
+            hasIncomingRequest,
             commonFriends,
             friendLeaderboard
         );
