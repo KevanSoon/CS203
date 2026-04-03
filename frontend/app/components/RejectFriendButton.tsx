@@ -1,5 +1,6 @@
 "use client";
 
+import { api } from "@/app/api/api";
 import toast from "react-hot-toast";
 
 export default function RejectFriendButton({
@@ -11,20 +12,11 @@ export default function RejectFriendButton({
 }) {
   const handleReject = async () => {
     try {
-        const res = await fetch(`/api/friendship/reject/${requesterId}`, {
-            method: "POST",
-        });
-
-        if (res.status >= 200 && res.status < 300) {
-            toast.success("Friend request rejected");
-            onReject(requesterId);
-            return;
-        }
-
-        toast.error(`Failed to reject request (status ${res.status})`);
-    } catch (err) {
-        console.error(err);
-        toast.error("Failed to reject request");
+      await api.post(`/api/friendship/reject/${requesterId}`);
+      toast.success("Friend request rejected");
+      onReject(requesterId);
+    } catch {
+      toast.error("Failed to reject request");
     }
   };
 
