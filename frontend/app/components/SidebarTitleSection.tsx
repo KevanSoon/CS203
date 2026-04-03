@@ -31,7 +31,7 @@ export const SidebarTitleSection = ({ open, user, selected, hasHydrated = true, 
   const router = useRouter();
   const handleClick = (usertype: string) => {
     if(usertype !== "root"){
-      router.push('/profile');
+      router.push('/profile/${user?.id}');
     }
   };
 
