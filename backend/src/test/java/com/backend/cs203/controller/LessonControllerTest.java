@@ -650,6 +650,34 @@ class LessonControllerTest {
         verify(lessonService).createLesson(any(), eq(admin));
     }
 
+    @Test
+    void createLesson_titleTooLong_returns400() throws Exception {
+        String longTitle = "A".repeat(101);
+
+        mockMvc.perform(multipart("/api/lesson/create")
+                        .param("title", longTitle)
+                        .param("description", "Description")
+                        .param("draft", "true")
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isBadRequest());
+
+        verify(lessonService, never()).createLesson(any(), any());
+    }
+
+    @Test
+    void createLesson_descriptionTooLong_returns400() throws Exception {
+        String longDescription = "D".repeat(256);
+
+        mockMvc.perform(multipart("/api/lesson/create")
+                        .param("title", "Valid Title")
+                        .param("description", longDescription)
+                        .param("draft", "true")
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isBadRequest());
+
+        verify(lessonService, never()).createLesson(any(), any());
+    }
+
     // ===== PUT /api/lesson/update (requires ADMIN role) =====
     
     @Test
@@ -678,6 +706,38 @@ class LessonControllerTest {
                 .andExpect(jsonPath("$.message").value("Lesson updated successfully"));
 
         verify(lessonService).updateLesson(eq("Old Lesson"), any(), eq(admin));
+    }
+
+    @Test
+    void updateLesson_titleTooLong_returns400() throws Exception {
+        String longTitle = "U".repeat(101);
+
+        mockMvc.perform(multipart("/api/lesson/update")
+                        .param("originalTitle", "Old Lesson")
+                        .param("title", longTitle)
+                        .param("description", "Updated Description")
+                        .param("draft", "false")
+                        .with(request -> { request.setMethod("PUT"); return request; })
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isBadRequest());
+
+        verify(lessonService, never()).updateLesson(any(), any(), any());
+    }
+
+    @Test
+    void updateLesson_descriptionTooLong_returns400() throws Exception {
+        String longDescription = "U".repeat(256);
+
+        mockMvc.perform(multipart("/api/lesson/update")
+                        .param("originalTitle", "Old Lesson")
+                        .param("title", "Updated Lesson")
+                        .param("description", longDescription)
+                        .param("draft", "false")
+                        .with(request -> { request.setMethod("PUT"); return request; })
+                        .with(user("adminuser").roles("ADMIN")))
+                .andExpect(status().isBadRequest());
+
+        verify(lessonService, never()).updateLesson(any(), any(), any());
     }
 
     // ===== Helper methods =====
