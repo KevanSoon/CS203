@@ -337,13 +337,13 @@ public class UserService {
             .findSentPendingRequest(target.getId(), viewer.getId())
             .isPresent();
 
-        List<BasicUserDto> commonFriends = targetFriends.stream()
+        List<BasicUserDto> commonFriends = targetFriends.parallelStream()
             .filter(u -> viewerFriendIds.contains(u.getId()))
             .map(u -> new BasicUserDto(u.getId(), u.getUsername(), resolveProfileUrl(u)))
             .toList();
 
         LocalDate today = LocalDate.now();
-        List<FriendDto> friendLeaderboard = targetFriends.stream()
+        List<FriendDto> friendLeaderboard = targetFriends.parallelStream()
             .map(u -> {
                 LocalDate last = u.getLastStreakDate();
                 int effectiveStreak = (last == null || last.isBefore(today.minusDays(1)))

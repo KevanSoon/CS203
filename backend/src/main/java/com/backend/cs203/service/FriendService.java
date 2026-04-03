@@ -64,7 +64,7 @@ public class FriendService {
                 FriendshipStatus.confirmed
             );
 
-        return friendships.stream()
+        return friendships.parallelStream()
             .map(f -> f.getUser1().getId().equals(user.getId()) ? f.getUser2() : f.getUser1())
             .filter(u -> u.getDeactivatedAt() == null)
             .map(this::toFriendDto)
@@ -229,7 +229,7 @@ public class FriendService {
 
         return friendshipRepository
             .findFriendshipsByUserId(user.getId(), FriendshipStatus.confirmed)
-            .stream()
+            .parallelStream()
             .map(f -> f.getUser1().getId().equals(user.getId()) ? f.getUser2() : f.getUser1())
             .filter(u -> u.getDeactivatedAt() == null)
             .map(this::toFriendDto)
