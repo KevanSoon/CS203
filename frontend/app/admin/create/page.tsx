@@ -2,6 +2,7 @@
 
 import { api } from "@/app/api/api";
 import {
+  CREATE_LESSON_LIMITS,
   OPTION_KEYS_MCQ,
   emptyCard,
   emptyChapter,
@@ -256,6 +257,10 @@ function CreateLessonPage() {
   const addTag = (tagName?: string, keepDropdownOpen = false) => {
     const t = (tagName || tagInput).trim();
     if (!t || tags.includes(t)) return;
+    if (t.length > CREATE_LESSON_LIMITS.tagName) {
+      toast.error(`Tag cannot exceed ${CREATE_LESSON_LIMITS.tagName} characters.`);
+      return;
+    }
     setTags([...tags, t]);
     setTagInput("");
     if (!keepDropdownOpen) setTagDropdownOpen(false);
@@ -418,22 +423,45 @@ function CreateLessonPage() {
   const validate = (): boolean => {
     const errs = new Set<string>();
 
-    if (!title.trim()) errs.add("title");
-    if (title.trim() && !isLessonTitleFormatValid(title.trim())) errs.add("title-format");
-    if (!description.trim()) errs.add("description");
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedTitle) errs.add("title");
+    if (trimmedTitle && !isLessonTitleFormatValid(trimmedTitle)) errs.add("title-format");
+    if (trimmedTitle.length > CREATE_LESSON_LIMITS.lessonTitle) errs.add("title-length");
+
+    if (!trimmedDescription) errs.add("description");
+    if (trimmedDescription.length > CREATE_LESSON_LIMITS.lessonDescription) errs.add("description");
 
     for (let i = 0; i < chapters.length; i++) {
       const ch = chapters[i];
       if (!ch.title.trim()) errs.add(`chapter-${i}-title`);
+      if (ch.title.trim().length > CREATE_LESSON_LIMITS.chapterTitle)
+        errs.add(`chapter-${i}-title`);
+      if (ch.description.trim().length > CREATE_LESSON_LIMITS.chapterDescription)
+        errs.add(`chapter-${i}-description`);
 
       for (let j = 0; j < ch.cards.length; j++) {
         if (!ch.cards[j].front.trim()) errs.add(`chapter-${i}-card-${j}-front`);
         if (!ch.cards[j].back.trim()) errs.add(`chapter-${i}-card-${j}-back`);
+        if (ch.cards[j].front.trim().length > CREATE_LESSON_LIMITS.cardFront)
+          errs.add(`chapter-${i}-card-${j}-front`);
+        if (ch.cards[j].back.trim().length > CREATE_LESSON_LIMITS.cardBack)
+          errs.add(`chapter-${i}-card-${j}-back`);
       }
 
       for (let q = 0; q < ch.quizzes.length; q++) {
         const quiz = ch.quizzes[q];
+        const quizTitle = (quiz.title.trim() || `${ch.title.trim()} Quiz`).trim();
+        const quizCorrectAnswer = quiz.correctAnswer.trim();
+
+        if (quizTitle.length > CREATE_LESSON_LIMITS.quizTitle)
+          errs.add(`chapter-${i}-quiz-${q}-question`);
         if (!quiz.question.trim()) errs.add(`chapter-${i}-quiz-${q}-question`);
+        if (quiz.question.trim().length > CREATE_LESSON_LIMITS.quizQuestion)
+          errs.add(`chapter-${i}-quiz-${q}-question`);
+        if (quizCorrectAnswer.length > CREATE_LESSON_LIMITS.quizCorrectAnswer)
+          errs.add(`chapter-${i}-quiz-${q}-answer`);
 
         if (quiz.quizType === "fill_blank") {
           // fill_blank: question must contain ___, needs ≥2 word bank options and a correct answer
@@ -501,6 +529,18 @@ function CreateLessonPage() {
         setErrors((prev) => {
           const next = new Set(prev);
           next.add("title-format");
+          return next;
+        });
+        document
+          .querySelector('[data-field="title"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      if (title.trim().length > CREATE_LESSON_LIMITS.lessonTitle) {
+        toast.error(`Lesson title cannot exceed ${CREATE_LESSON_LIMITS.lessonTitle} characters.`);
+        setErrors((prev) => {
+          const next = new Set(prev);
+          next.add("title-length");
           return next;
         });
         document
@@ -689,11 +729,13 @@ function CreateLessonPage() {
                       } else {
                         clearError("title-format");
                       }
+                      clearError("title-length");
                       checkTitle(nextTitle);
                     }}
+                    maxLength={CREATE_LESSON_LIMITS.lessonTitle}
                     placeholder="Lesson Title *"
                     className={`w-full text-2xl md:text-3xl font-black bg-transparent border-b-2 outline-none text-foreground placeholder:text-muted-foreground/50 focus:ring-0 pb-1 transition-colors ${
-                      errors.has("title") || errors.has("title-format")
+                      errors.has("title") || errors.has("title-format") || errors.has("title-length")
                         ? "border-destructive"
                         : titleTaken
                           ? "border-warning"
@@ -737,8 +779,16 @@ function CreateLessonPage() {
                       </span>
                     </div>
                   )}
+                  {errors.has("title-length") && (
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                      <span className="text-xs text-destructive font-medium">
+                        Lesson title cannot exceed {CREATE_LESSON_LIMITS.lessonTitle} characters.
+                      </span>
+                    </div>
+                  )}
                   <p className="text-[11px] text-muted-foreground/70 mt-1">
-                    Use letters, numbers, and spaces only.
+                    Use letters, numbers, and spaces only. Max {CREATE_LESSON_LIMITS.lessonTitle} characters.
                   </p>
                 </div>
 
@@ -750,6 +800,7 @@ function CreateLessonPage() {
                       setDescription(e.target.value);
                       clearError("description");
                     }}
+                    maxLength={CREATE_LESSON_LIMITS.lessonDescription}
                     placeholder="Describe what this lesson covers... *"
                     rows={2}
                     className={`w-full bg-transparent border-b outline-none text-foreground placeholder:text-muted-foreground/50 resize-none focus:ring-0 text-sm pb-1 transition-colors ${
@@ -786,6 +837,7 @@ function CreateLessonPage() {
                           setTagInput(e.target.value);
                           setTagDropdownOpen(true);
                         }}
+                        maxLength={CREATE_LESSON_LIMITS.tagName}
                         onFocus={() => setTagDropdownOpen(true)}
                         onBlur={() =>
                           setTimeout(() => setTagDropdownOpen(false), 200)

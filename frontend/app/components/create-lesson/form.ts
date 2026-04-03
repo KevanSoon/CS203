@@ -35,6 +35,19 @@ export interface ChapterForm {
 export const OPTION_KEYS_MCQ = ["A", "B", "C", "D"] as const;
 export const OPTION_KEYS_TF = ["A", "B"] as const;
 
+export const CREATE_LESSON_LIMITS = {
+  lessonTitle: 100,
+  lessonDescription: 255,
+  chapterTitle: 100,
+  chapterDescription: 255,
+  cardFront: 150,
+  cardBack: 150,
+  quizTitle: 200,
+  quizQuestion: 150,
+  quizCorrectAnswer: 255,
+  tagName: 45,
+} as const;
+
 export function emptyCard(): CardForm {
   return { id: crypto.randomUUID(), front: "", back: "" };
 }
