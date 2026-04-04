@@ -78,9 +78,7 @@ export default function DashboardPage() {
 			try {
 				const [lessonsRes, progressRes] = await Promise.all([
 					api.get<LessonSummary[]>("/api/lesson"),
-					isDashboardStale() || dashboardProgress.length === 0
-						? api.get<{ progress: DashboardProgress[]; streakBroken: boolean }>("/api/progress/dashboard")
-						: Promise.resolve(null),
+					isDashboardStale() || dashboardProgress.length === 0 ? api.get<{ progress: DashboardProgress[]; streakBroken: boolean }>("/api/progress/dashboard") : Promise.resolve(null),
 				]);
 
 				setLessons(lessonsRes.data);
@@ -172,8 +170,8 @@ export default function DashboardPage() {
 	const isFiltering = selectedTags.length > 0 || (mode === "search" && query.trim().length > 0);
 
 	const inProgress = filteredLessons.filter((l) => l.status === "in_progress");
-	const notStarted = filteredLessons.filter((l) => l.status === "not_started" && !l.deletedAt);
-	const completed = filteredLessons.filter((l) => l.status === "completed" && !l.deletedAt);
+	const notStarted = filteredLessons.filter((l) => l.status === "not_started" && !l.deletedAt && l.lessonStatus !== "suspended");
+	const completed = filteredLessons.filter((l) => l.status === "completed" && !l.deletedAt && l.lessonStatus !== "suspended");
 
 	const renderSection = (title: string, items: MergedLesson[]) => {
 		if (items.length === 0) return null;
@@ -185,42 +183,44 @@ export default function DashboardPage() {
 					{items.map((lesson) =>
 						(lesson.deletedAt || lesson.lessonStatus == "suspended") && lesson.status == "in_progress" ? (
 							(() => {
-								const displayTitle = lesson.deletedAt
-									? getDashboardTitle(lesson.title, lesson.deletedAt)
-									: `${getDashboardTitle(lesson.title)} (Suspended)`;
+								const displayTitle = lesson.deletedAt ? getDashboardTitle(lesson.title, lesson.deletedAt) : `${getDashboardTitle(lesson.title)} (Suspended)`;
 								return (
-							<div
-								key={lesson.lessonId}
-								className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
-								<div className="overflow-hidden">
-									<img src={lesson.lessonPictureUrl ?? "/images/questionmark.jpg"} alt={title} className="w-full object-cover h-44 sm:h-52 transition-transform duration-500" />
-									<button
-										className="absolute top-2 right-2 p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 pointer-events-auto"
-										title="Remove this lesson"
-										onClick={() => handleDeleteProgress(lesson.lessonId)}>
-										X
-									</button>
-								</div>
-								<div className="p-3 sm:p-4 space-y-3 flex flex-col">
-									<div>
-										<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{displayTitle}</h3>
-										<p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.description}</p>
-									</div>
-									<div className="space-y-2 mt-auto">
-										<span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-											In Progress
-										</span>
-										<div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
-											<span>Completion</span>
-											<span>{lesson.progressPercent}%</span>
+									<div
+										key={lesson.lessonId}
+										className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer opacity-50 pointer-events-none grayscale md:hover:shadow-none md:hover:translate-y-0">
+										<div className="overflow-hidden">
+											<img
+												src={lesson.lessonPictureUrl ?? "/images/questionmark.jpg"}
+												alt={title}
+												className="w-full object-cover h-44 sm:h-52 transition-transform duration-500"
+											/>
+											<button
+												className="absolute top-2 right-2 p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 pointer-events-auto"
+												title="Remove this lesson"
+												onClick={() => handleDeleteProgress(lesson.lessonId)}>
+												X
+											</button>
 										</div>
-										<div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-											<div className="h-full bg-primary transition-all duration-700 ease-out" style={{ width: `${lesson.progressPercent}%` }} />
+										<div className="p-3 sm:p-4 space-y-3 flex flex-col">
+											<div>
+												<h3 className="text-sm sm:text-base font-bold leading-snug line-clamp-2">{displayTitle}</h3>
+												<p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.description}</p>
+											</div>
+											<div className="space-y-2 mt-auto">
+												<span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+													In Progress
+												</span>
+												<div className="flex justify-between text-[11px] sm:text-xs font-semibold text-muted-foreground">
+													<span>Completion</span>
+													<span>{lesson.progressPercent}%</span>
+												</div>
+												<div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+													<div className="h-full bg-primary transition-all duration-700 ease-out" style={{ width: `${lesson.progressPercent}%` }} />
+												</div>
+											</div>
 										</div>
 									</div>
-								</div>
-							</div>
-							);
+								);
 							})()
 						) : (
 							<LessonCard
@@ -272,19 +272,9 @@ export default function DashboardPage() {
 			</div>
 
 			{showStreakBrokenModal && (
-				<div
-					className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
-					onClick={() => setShowStreakBrokenModal(false)}
-				>
-					<div
-						onClick={(e) => e.stopPropagation()}
-						className="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative mx-4"
-					>
-						<button
-							onClick={() => setShowStreakBrokenModal(false)}
-							className="absolute top-3 right-3 p-2 rounded-md hover:bg-slate-100"
-							aria-label="Close"
-						>
+				<div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center" onClick={() => setShowStreakBrokenModal(false)}>
+					<div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-xl animate-scaleIn relative mx-4">
+						<button onClick={() => setShowStreakBrokenModal(false)} className="absolute top-3 right-3 p-2 rounded-md hover:bg-slate-100" aria-label="Close">
 							<X size={18} />
 						</button>
 
@@ -293,13 +283,10 @@ export default function DashboardPage() {
 								<Flame size={28} />
 							</span>
 							<h3 className="text-xl font-extrabold text-slate-900">Your streak has ended</h3>
-							<p className="text-sm text-slate-500 leading-relaxed">
-								You missed a day and your daily streak has been reset to 0. Complete a lesson today to start a new streak!
-							</p>
+							<p className="text-sm text-slate-500 leading-relaxed">You missed a day and your daily streak has been reset to 0. Complete a lesson today to start a new streak!</p>
 							<button
 								onClick={() => setShowStreakBrokenModal(false)}
-								className="mt-2 w-full rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] hover:brightness-105 transition"
-							>
+								className="mt-2 w-full rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-3 text-sm font-bold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] hover:brightness-105 transition">
 								Let's go again!
 							</button>
 						</div>

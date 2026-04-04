@@ -75,6 +75,7 @@ public class FriendService {
             .toList();
     }
 
+
     public List<FriendDto> getPendingRequests(String username) {
 
         User user = userRepository.findByUsername(username)

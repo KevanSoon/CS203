@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, X } from "lucide-react";
 import { api } from "@/app/api/api";
 import toast from "react-hot-toast";
@@ -13,6 +14,7 @@ interface Props {
 
 export function ReportModal({ lessonId, chapters, onClose }: Props) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -56,6 +58,7 @@ export function ReportModal({ lessonId, chapters, onClose }: Props) {
       toast.success("Report submitted successfully.");
       setDescription("");
       onClose();
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       toast.error("Failed to submit report.");

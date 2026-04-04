@@ -75,6 +75,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
     );
 
     boolean existsByUser1IdAndUser2Id(Integer user1Id, Integer user2Id);
+
+    void deleteAllByUser1IdOrUser2Id(Integer user1Id, Integer user2Id);
 }
 
 
