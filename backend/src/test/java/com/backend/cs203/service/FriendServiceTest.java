@@ -22,7 +22,7 @@ import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.exception.Exceptions.AuthException;
-
+import com.backend.cs203.service.impl.FriendServiceImpl;
 
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,7 +36,7 @@ class FriendServiceTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private FriendService friendService;
+    private FriendServiceImpl friendService;
 
     // ===== getFriends =====
 
