@@ -325,15 +325,6 @@ function CardItem({
           </div>
         )}
 
-        {!readOnly && (
-          <button
-            onClick={() => toast("Card media upload coming soon!", { icon: "🖼️" })}
-            className="w-full py-2 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <ImagePlus className="h-3 w-3" />
-            Add Media
-          </button>
-        )}
       </div>
     </div>
   );

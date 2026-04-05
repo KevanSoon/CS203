@@ -31,6 +31,7 @@ import com.backend.cs203.dto.profile.UpdateProfileRequest;
 import com.backend.cs203.dto.profile.UserResponse;
 import com.backend.cs203.dto.profile.UserSearchResult;
 import com.backend.cs203.entity.User;
+import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 
@@ -42,6 +43,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private FriendshipRepository friendshipRepository;
 
     @Mock
     private UserLessonProgressRepository userLessonProgressRepository;

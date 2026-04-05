@@ -193,6 +193,8 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
         }
 
+        friendshipRepository.deleteAllByUser1IdOrUser2Id(user.getId(), user.getId());
+
         Instant now = Instant.now();
         user.setUsername(user.getUsername() + "_" + now.toEpochMilli());
         user.setDeactivatedAt(now);
@@ -301,6 +303,7 @@ public class UserService {
 
         return userRepository.findTop3ByUsernameContainingIgnoreCase(username)
                 .stream()
+                .filter(user -> user.getDeactivatedAt()  == null)
                 .filter(user -> !user.getUsername().equals(currentUsername))
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
                 .filter(user -> user.getDeactivatedAt() == null)
