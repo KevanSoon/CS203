@@ -36,7 +36,6 @@ import com.backend.cs203.entity.User;
 import com.backend.cs203.repository.FriendshipRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
-import com.backend.cs203.repository.FriendshipRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -55,9 +54,6 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private FriendshipRepository friendshipRepository;
 
     @InjectMocks
     private UserService userService;
