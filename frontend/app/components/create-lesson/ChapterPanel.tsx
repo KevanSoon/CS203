@@ -30,7 +30,7 @@ import {
 import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { OPTION_KEYS_MCQ, optionKeysForType, CardForm, ChapterForm, QuizForm, QuizType } from "./form";
+import { CREATE_LESSON_LIMITS, OPTION_KEYS_MCQ, optionKeysForType, CardForm, ChapterForm, QuizForm, QuizType } from "./form";
 import { SortableCard, SortableQuiz } from "./SortableWrappers";
 
 const QUIZ_TYPE_LABELS: Record<QuizType, string> = {
@@ -205,6 +205,7 @@ function CardItem({
                 onUpdateCard("front", e.target.value);
                 clearError(frontKey);
               }}
+              maxLength={CREATE_LESSON_LIMITS.cardFront}
               placeholder="Question or term..."
               rows={2}
               className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
@@ -234,6 +235,7 @@ function CardItem({
                 onUpdateCard("back", e.target.value);
                 clearError(backKey);
               }}
+              maxLength={CREATE_LESSON_LIMITS.cardBack}
               placeholder="Answer or definition..."
               rows={2}
               className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
@@ -442,6 +444,7 @@ function QuizItem({
               onUpdateQuiz("question", e.target.value);
               clearError(`chapter-${ci}-quiz-${qi}-question`);
             }}
+            maxLength={CREATE_LESSON_LIMITS.quizQuestion}
             placeholder={
               quiz.quizType === "fill_blank"
                 ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
@@ -705,6 +708,7 @@ export function ChapterPanel({
                 callbacks?.clearError(`chapter-${ci}-title`);
               }}
               onClick={(e) => e.stopPropagation()}
+              maxLength={CREATE_LESSON_LIMITS.chapterTitle}
               placeholder={`Chapter ${ci + 1} title *`}
               className={`flex-1 bg-transparent font-semibold text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-0 border-b-2 pb-0.5 transition-colors ${
                 errors.has(`chapter-${ci}-title`)
@@ -756,9 +760,18 @@ export function ChapterPanel({
             <input
               type="text"
               value={chapter.description}
-              onChange={(e) => callbacks?.onUpdateDescription(e.target.value)}
+              data-field={`chapter-${ci}-description`}
+              onChange={(e) => {
+                callbacks?.onUpdateDescription(e.target.value);
+                callbacks?.clearError(`chapter-${ci}-description`);
+              }}
+              maxLength={CREATE_LESSON_LIMITS.chapterDescription}
               placeholder="Chapter description (optional)"
-              className="w-full text-sm bg-transparent border-b border-border/50 outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors"
+              className={`w-full text-sm bg-transparent border-b outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors ${
+                errors.has(`chapter-${ci}-description`)
+                  ? "border-destructive"
+                  : "border-border/50"
+              }`}
             />
           )}
 
