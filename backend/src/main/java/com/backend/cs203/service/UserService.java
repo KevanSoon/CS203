@@ -229,7 +229,7 @@ public class UserService {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // ✅ validate email (required)
+        // validate email (required)
         String email = request.getEmail();
         if (email == null || email.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -238,27 +238,29 @@ public class UserService {
         email = validateEmail(request.getEmail());
         user.setEmail(email);
 
-        // ✅ password optional
+        // password optional
         String password = request.getPassword();
         if (password != null && !password.isBlank()) {
             validatePassword(password);
             user.setPassword(passwordEncoder.encode(password));
         }
 
-        // ✅ profile image (optional)
+        // profile image (optional)
         MultipartFile profileImage = request.getProfileImage();
         if (profileImage != null && !profileImage.isEmpty()) {
             String existingUrl = user.getProfilePictureUrl();
-
-            //check if there is image url in database
-            if (existingUrl != null) {
-                //delete file from supabase storage
-                supabaseStorageService.deleteFile(existingUrl);
+            try {
+                if (existingUrl != null) {
+                    supabaseStorageService.deleteFile(existingUrl);
+                }
+                String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
+                user.setProfilePictureUrl(newPath);
+            } catch (Exception e) {
+                throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to upload profile picture. Please try again."
+                );
             }
-
-            //upload new image and store url path
-            String newPath = supabaseStorageService.uploadFile("profile-pictures/" + user.getId(), profileImage);
-            user.setProfilePictureUrl(newPath);
         }
 
         User saved = userRepository.save(user);
@@ -301,6 +303,7 @@ public class UserService {
                 .stream()
                 .filter(user -> !user.getUsername().equals(currentUsername))
                 .filter(user -> user.getUsertype() == currentUser.getUsertype())
+                .filter(user -> user.getDeactivatedAt() == null)
                 .map(user -> new UserSearchResult(user.getId(), user.getUsername()))
                 .collect(Collectors.toList());
     }
@@ -326,19 +329,23 @@ public class UserService {
             .map(User::getId)
             .collect(Collectors.toSet());
 
-        boolean isFriend = viewerFriendIds.contains(targetId);
+        boolean isFriend = viewerFriends.stream().anyMatch(u -> u.getId().equals(target.getId()));
 
         boolean hasPendingRequest = friendshipRepository
             .findSentPendingRequest(viewer.getId(), target.getId())
             .isPresent();
 
-        List<BasicUserDto> commonFriends = targetFriends.stream()
+        boolean hasIncomingRequest = friendshipRepository
+            .findSentPendingRequest(target.getId(), viewer.getId())
+            .isPresent();
+
+        List<BasicUserDto> commonFriends = targetFriends.parallelStream()
             .filter(u -> viewerFriendIds.contains(u.getId()))
             .map(u -> new BasicUserDto(u.getId(), u.getUsername(), resolveProfileUrl(u)))
             .toList();
 
         LocalDate today = LocalDate.now();
-        List<FriendDto> friendLeaderboard = targetFriends.stream()
+        List<FriendDto> friendLeaderboard = targetFriends.parallelStream()
             .map(u -> {
                 LocalDate last = u.getLastStreakDate();
                 int effectiveStreak = (last == null || last.isBefore(today.minusDays(1)))
@@ -364,6 +371,7 @@ public class UserService {
             targetFriends.size(),
             isFriend,
             hasPendingRequest,
+            hasIncomingRequest,
             commonFriends,
             friendLeaderboard
         );
@@ -385,6 +393,7 @@ public class UserService {
             .findFriendshipsByUserId(userId, FriendshipStatus.confirmed)
             .stream()
             .map(f -> f.getUser1().getId().equals(userId) ? f.getUser2() : f.getUser1())
+            .filter(u -> u.getDeactivatedAt() == null)
             .toList();
     }
 }

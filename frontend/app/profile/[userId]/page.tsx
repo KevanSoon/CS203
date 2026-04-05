@@ -61,6 +61,7 @@ type VisitedProfile = {
   friendCount: number;
   isFriend: boolean;
   hasPendingRequest: boolean;
+  hasIncomingRequest: boolean;
   commonFriends: BasicUser[];
   friendLeaderboard: FriendDto[];
 };
@@ -346,6 +347,24 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAcceptFromProfile = async () => {
+    if (!visitedProfile) return;
+    try {
+      await api.post(`/api/friendship/${visitedProfile.userId}`);
+      setVisitedProfile((prev) => prev ? { ...prev, isFriend: true, hasIncomingRequest: false } : prev);
+    } catch {
+    }
+  };
+
+  const handleRejectFromProfile = async () => {
+    if (!visitedProfile) return;
+    try {
+      await api.post(`/api/friendship/reject/${visitedProfile.userId}`);
+      setVisitedProfile((prev) => prev ? { ...prev, hasIncomingRequest: false } : prev);
+    } catch {
+    }
+  };
+
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const isAdmin = userType === "admin";
@@ -413,32 +432,51 @@ export default function ProfilePage() {
 
                     {/* CTA */}
                     <div className="mt-4">
-                      {isOwnProfile ? (
-                        <button
-                          type="button"
-                          onClick={() => router.push("/profile/edit")}
-                          className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105"
-                        >
-                          <PencilLine size={16} /> Edit profile
-                        </button>
-                      ) : visitedProfile?.isFriend ? (
+                    {isOwnProfile ? (
+                      <button onClick={() => router.push("/profile/edit")} className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105">
+                        <PencilLine size={16} /> Edit profile
+                      </button>
+                    ) : visitedProfile?.isFriend ? (
+                      <div className="flex flex-col items-center gap-2">
                         <span className="inline-flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-5 py-2 text-sm font-semibold text-green-700">
                           <UserCheck size={16} /> Friends
                         </span>
-                      ) : visitedProfile?.hasPendingRequest ? (
-                        <span className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-500">
-                          <Clock size={16} /> Request Sent
-                        </span>
-                      ) : (
                         <button
-                          onClick={handleAddFriend}
-                          disabled={isSendingRequest}
-                          className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-5 py-2 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={() => handleRemoveVisitedFriend(visitedProfile.userId)}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
                         >
-                          <UserPlus size={16} />
-                          {isSendingRequest ? "Sending..." : "Add Friend"}
+                          <X size={16} /> Remove Friend
                         </button>
-                      )}
+                      </div>
+                    ) : visitedProfile?.hasIncomingRequest ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleAcceptFromProfile}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-green-600 px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105"
+                        >
+                          <UserCheck size={16} /> Accept
+                        </button>
+                        <button
+                          onClick={handleRejectFromProfile}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                        >
+                          <X size={16} /> Reject
+                        </button>
+                      </div>
+                    ) : visitedProfile?.hasPendingRequest ? (
+                      <span className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-500">
+                        <Clock size={16} /> Request Sent
+                      </span>
+                    ) : (
+                      <button
+                        onClick={handleAddFriend}
+                        disabled={isSendingRequest}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-[#6C63FF] to-[#9D94EB] px-5 py-2 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(108,99,255,0.25)] transition hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <UserPlus size={16} />
+                        {isSendingRequest ? "Sending..." : "Add Friend"}
+                      </button>
+                    )}
                     </div>
                   </div>
                 </div>
@@ -670,7 +708,19 @@ export default function ProfilePage() {
                               ) : pendingFriends.some((f) => f.id === user.id) ? (
                                 <div className="flex gap-2">
                                   <button onClick={() => handleAcceptFriend(user.id)} className="text-xs font-semibold px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700">Accept</button>
-                                  <button onClick={() => setPendingFriends((prev) => prev.filter((f) => f.id !== user.id))} className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200">Reject</button>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await api.post(`/api/friendship/reject/${user.id}`);
+                                        setPendingFriends((prev) => prev.filter((f) => f.id !== user.id));
+                                      } catch {
+                                        // error toast handled by interceptor
+                                      }
+                                    }}
+                                    className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                                  >
+                                    Reject
+                                  </button>
                                 </div>
                               ) : outgoingFriends.some((f) => f.id === user.id) ? (
                                 <AddFriendButton targetUserId={user.id} initialSent={true} onSuccess={loadOutgoing} />

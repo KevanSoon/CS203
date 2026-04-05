@@ -17,7 +17,7 @@ type ProfileResponse = {
 const validateEmail = (email: string): string | undefined => {
   if (!email) return "Send to where ah? My carrier pigeon on leave leh.";
   if (email.length > 100) return "Email too long leh! Max 100 characters only.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!/^[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}$/.test(email)) {
     return "Eh this email not correct leh. Check again!";
   }
   return undefined;
@@ -162,7 +162,11 @@ export default function EditProfilePage() {
       router.push("/profile");
     } catch (e: any) {
       if (e?.response?.status === 401) { router.replace("/login"); return; }
-      setPageError(e?.response?.data?.message || "Failed to update profile");
+      if (e?.response?.status === 500 && imageFile) {
+        setPageError("Failed to upload profile picture. Please try a different image.");
+      } else {
+        setPageError(e?.response?.data?.message || "Failed to update profile");
+      }
     } finally {
       setSaving(false);
     }
@@ -264,7 +268,9 @@ export default function EditProfilePage() {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6C63FF]/30"
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#6C63FF]/30 ${
+                emailErr ? "border-red-400 bg-red-50/30" : "border-slate-200 bg-white"
+              }`}
               type="email"
               placeholder="you@example.com"
             />

@@ -64,14 +64,10 @@ public class FriendService {
                 FriendshipStatus.confirmed
             );
 
-        return friendships.stream()
-            .map(f -> {
-                if (f.getUser1().getId().equals(user.getId())) {
-                    return toFriendDto(f.getUser2());
-                } else {
-                    return toFriendDto(f.getUser1());
-                }
-            })
+        return friendships.parallelStream()
+            .map(f -> f.getUser1().getId().equals(user.getId()) ? f.getUser2() : f.getUser1())
+            .filter(u -> u.getDeactivatedAt() == null)
+            .map(this::toFriendDto)
             .toList();
     }
 
@@ -233,8 +229,9 @@ public class FriendService {
 
         return friendshipRepository
             .findFriendshipsByUserId(user.getId(), FriendshipStatus.confirmed)
-            .stream()
+            .parallelStream()
             .map(f -> f.getUser1().getId().equals(user.getId()) ? f.getUser2() : f.getUser1())
+            .filter(u -> u.getDeactivatedAt() == null)
             .map(this::toFriendDto)
             .sorted(Comparator.comparingInt(FriendDto::getStreak).reversed())
             .toList();

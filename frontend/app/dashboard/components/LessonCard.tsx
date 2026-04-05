@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { X, AlertTriangle, MessageSquare } from "lucide-react";
 import { getVisibleTags } from "@/app/utils/tags";
 import ViewReviewsModal from "@/app/components/ReviewViewModal";
+import { api } from "@/app/api/api";
 
 type LessonCardProps = {
   image: string;
@@ -43,16 +44,9 @@ export default function LessonCard({
   useEffect(() => {
     const fetchRating = async () => {
       try {
-        const res = await fetch(`/api/lesson/${lessonId}/rating`, {
-          cache: "no-store",
-        });
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-        setRatingData(data);
-      } catch (err) {
-        console.error("Failed to fetch rating", err);
+        const res = await api.get(`/api/lesson/${lessonId}/rating`);
+        setRatingData(res.data);
+      } catch {
       }
     };
 

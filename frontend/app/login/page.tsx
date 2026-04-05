@@ -47,6 +47,7 @@ export default function LoginPage() {
       const data = res.data;
 
       setUser({
+        id: data.id,
         username: data.username,
         email: data.email,
         usertype: data.usertype,

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, devtools } from "zustand/middleware";
 
 interface UserInfo {
+    id: number;
     username: string;
     email: string;
     usertype: string;
@@ -37,7 +38,7 @@ export const useSiteState = create<SiteState>()(
         // always fetch a fresh one from the API on each session.
         partialize: (state) => ({
           user: state.user
-            ? { username: state.user.username, email: state.user.email, usertype: state.user.usertype }
+            ? { id: state.user.id, username: state.user.username, email: state.user.email, usertype: state.user.usertype }
             : null,
         }),
         onRehydrateStorage: () => (state) => {
