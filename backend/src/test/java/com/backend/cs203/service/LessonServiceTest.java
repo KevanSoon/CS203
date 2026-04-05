@@ -47,6 +47,7 @@ import com.backend.cs203.repository.ReportRepository;
 import com.backend.cs203.repository.ReviewRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
+import com.backend.cs203.service.impl.LessonServiceImpl;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -80,7 +81,7 @@ class LessonServiceTest {
     private SupabaseStorageService supabaseStorageService;
 
     @InjectMocks
-    private LessonService lessonService;
+    private LessonServiceImpl lessonService;
 
     @Mock
     private ReportRepository reportRepository;
@@ -724,7 +725,7 @@ class LessonServiceTest {
 
         // Mock buildLessonPageDTO
         LessonPageDTO lessonPageDTO = mock(LessonPageDTO.class);
-        LessonService spyService = spy(lessonService);
+        LessonServiceImpl spyService = spy(lessonService);
         doReturn(lessonPageDTO).when(spyService).buildLessonPageDTO(lesson);
 
         spyService.reviewLessonApplication("T", "approve");
