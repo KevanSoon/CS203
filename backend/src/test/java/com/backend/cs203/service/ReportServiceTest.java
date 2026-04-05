@@ -28,6 +28,7 @@ import com.backend.cs203.dto.report.ReportDTO;
 import com.backend.cs203.repository.ChapterRepository;
 import com.backend.cs203.repository.LessonRepository;
 import com.backend.cs203.repository.ReportRepository;
+import com.backend.cs203.service.impl.ReportServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class ReportServiceTest {
@@ -45,7 +46,7 @@ class ReportServiceTest {
     private VectorStoreService vectorStoreService;
 
     @InjectMocks
-    private ReportService reportService;
+    private ReportServiceImpl reportService;
 
     @Test
     void createReport_withLessonAndChapter_savesReportCorrectly() {
