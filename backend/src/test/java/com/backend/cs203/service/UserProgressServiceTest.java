@@ -38,6 +38,7 @@ import com.backend.cs203.repository.UserCardProgressRepository;
 import com.backend.cs203.repository.UserLessonProgressRepository;
 import com.backend.cs203.repository.UserRepository;
 import com.backend.cs203.exception.Exceptions.AuthException;
+import com.backend.cs203.service.impl.UserProgressServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class UserProgressServiceTest {
@@ -52,7 +53,7 @@ class UserProgressServiceTest {
     @Mock private UserCardProgressRepository userCardProgressRepository;
 
     @InjectMocks
-    private UserProgressService userProgressService;
+    private UserProgressServiceImpl userProgressService;
 
     private User user;
     private Lesson lesson;
