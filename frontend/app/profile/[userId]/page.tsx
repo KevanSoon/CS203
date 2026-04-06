@@ -24,6 +24,7 @@ import AddFriendButton from "@/app/components/AddFriendButton";
 import OutgoingFriendCard from "@/app/components/OutgoingFriendCard";
 import IncomingFriendCard from "@/app/components/IncomingFriendCard";
 import FriendCard from "@/app/components/FriendCard";
+import { useSiteState } from "@/app/store/SiteStore";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,7 @@ function CollapsibleCard({
 export default function ProfilePage() {
   const { userId } = useParams();
   const router = useRouter();
+  const { user: storeUser } = useSiteState();
   const [selected, setSelected] = useState("Profile");
 
   // Viewer identity
@@ -211,40 +213,37 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const load = async () => {
-        const targetId = Number(userId);
-        try {
-        const [ownRes, visitedRes] = await Promise.all([
-            api.get("/api/profile"),
-            api.get(`/api/profile/${targetId}`),
-        ]);
+      const targetId = Number(userId);
+      const isSelf = storeUser?.id === targetId;
+      setIsOwnProfile(isSelf);
 
-        const own: OwnProfile = ownRes.data;
-        setOwnProfile(own);
-
-        const isSelf = own.id === targetId;
-        setIsOwnProfile(isSelf);
-
+      try {
         if (isSelf) {
-            const resolvedType = own.usertype || "user";
-            setUserType(resolvedType);
+          const res = await api.get("/api/profile");
+          const own: OwnProfile = res.data;
+          setOwnProfile(own);
 
-            await Promise.all([
-            ...(resolvedType === "admin"
-                ? [api.get("/api/lesson/admin/stats").then((r) => setAdminStats(r.data))]
-                : [loadFriends(), loadPending(), loadOutgoing()]),
-            ]);
+          const resolvedType = own.usertype || "user";
+          setUserType(resolvedType);
+
+          await Promise.all(
+            resolvedType === "admin"
+              ? [api.get("/api/lesson/admin/stats").then((r) => setAdminStats(r.data))]
+              : [loadFriends(), loadPending(), loadOutgoing()]
+          );
         } else {
-            setVisitedProfile(visitedRes.data);
+          const res = await api.get(`/api/profile/${targetId}`);
+          setVisitedProfile(res.data);
         }
-        } catch {
-        router.replace("/profile");
-        } finally {
+      } catch {
+        router.replace("/profile/" + (storeUser?.id ?? ""));
+      } finally {
         setIsLoading(false);
-        }
+      }
     };
 
-    load();
-    }, [userId]);
+    if (storeUser !== undefined) load(); // wait for store to hydrate
+  }, [userId, storeUser?.id]);
 
   // ── Delete password debounce ───────────────────────────────────────────────
 

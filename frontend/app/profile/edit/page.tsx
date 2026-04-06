@@ -159,7 +159,7 @@ export default function EditProfilePage() {
         setUser({ ...user, profilePictureUrl: data.profilePictureUrl ?? undefined });
       }
       toast.success("Update Successful");
-      router.push("/profile");
+      router.push(`/profile/${user?.id}`);
     } catch (e: any) {
       if (e?.response?.status === 401) { router.replace("/login"); return; }
       if (e?.response?.status === 500 && imageFile) {
