@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -305,5 +306,81 @@ class FriendServiceTest {
                 () -> friendService.rejectFriendRequest(1, "me"));
 
         assertEquals("404 NOT_FOUND \"Friend request not found\"", ex.getMessage());
+    }
+    
+    @Test
+    void removeFriend_success_deletesFriendship() {
+        User me = User.builder().id(1).username("me").build();
+        User friend = User.builder().id(2).username("friend").build();
+        Friendship friendship = new Friendship(me, friend, FriendshipStatus.confirmed);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2)).thenReturn(Optional.of(friendship));
+
+        friendService.removeFriend(2, "me");
+    }
+
+    @Test
+    void removeFriend_notConfirmed_throwsException() {
+        User me = User.builder().id(1).username("me").build();
+        User friend = User.builder().id(2).username("friend").build();
+        Friendship friendship = new Friendship(me, friend, FriendshipStatus.pending);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2)).thenReturn(Optional.of(friendship));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.removeFriend(2, "me"));
+
+        assertEquals("400 BAD_REQUEST \"Cannot remove non-confirmed friendship\"", ex.getMessage());
+    }
+
+    @Test
+    void removeFriend_notFound_throwsException() {
+        User me = User.builder().id(1).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findExistingFriendship(1, 2)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> friendService.removeFriend(2, "me"));
+
+        assertEquals("404 NOT_FOUND \"Friendship not found\"", ex.getMessage());
+    }
+
+    @Test
+    void getFriendsSortedByStreak_returnsFriendsSortedByStreakDescending() {
+        User me = User.builder().id(1).username("me").build();
+        User friend1 = User.builder().id(2).username("friend1").streak(5).lastStreakDate(LocalDate.now()).build();
+        User friend2 = User.builder().id(3).username("friend2").streak(10).lastStreakDate(LocalDate.now()).build();
+        User friend3 = User.builder().id(4).username("friend3").streak(3).lastStreakDate(LocalDate.now()).build();
+
+        Friendship f1 = new Friendship(me, friend1, FriendshipStatus.confirmed);
+        Friendship f2 = new Friendship(me, friend2, FriendshipStatus.confirmed);
+        Friendship f3 = new Friendship(me, friend3, FriendshipStatus.confirmed);
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findFriendshipsByUserId(1, FriendshipStatus.confirmed))
+                .thenReturn(List.of(f1, f2, f3));
+
+        List<FriendDto> result = friendService.getFriendsSortedByStreak("me");
+
+        assertEquals(3, result.size());
+        assertEquals("friend2", result.get(0).getUsername());
+        assertEquals("friend1", result.get(1).getUsername());
+        assertEquals("friend3", result.get(2).getUsername());
+    }
+
+    @Test
+    void getFriendsSortedByStreak_noFriends_returnsEmptyList() {
+        User me = User.builder().id(1).username("me").build();
+
+        when(userRepository.findByUsername("me")).thenReturn(Optional.of(me));
+        when(friendshipRepository.findFriendshipsByUserId(1, FriendshipStatus.confirmed))
+                .thenReturn(Collections.emptyList());
+
+        List<FriendDto> result = friendService.getFriendsSortedByStreak("me");
+
+        assertTrue(result.isEmpty());
     }
 }
