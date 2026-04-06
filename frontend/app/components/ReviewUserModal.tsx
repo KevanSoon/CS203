@@ -58,6 +58,9 @@ export default function ReviewUserModal({ lessonId, onClose }: Props) {
     ));
   };
 
+  // Prevent rendering the modal container while loading to avoid a blank modal appearance
+  if (loading) return null;
+
   return (
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -81,19 +84,13 @@ export default function ReviewUserModal({ lessonId, onClose }: Props) {
         </div>
 
         <div className="p-5">
-          {loading && (
-            <div className="h-[120px] rounded-xl bg-muted animate-pulse" />
-          )}
-
-          {!loading && !review && (
+          {!review ? (
             <div className="text-center py-10">
               <p className="text-sm text-muted-foreground">
                 You have not submitted a review yet.
               </p>
             </div>
-          )}
-
-          {!loading && review && (
+          ) : (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <div className="flex">{renderStars(review.rating)}</div>

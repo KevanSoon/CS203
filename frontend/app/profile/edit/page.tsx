@@ -42,6 +42,7 @@ export default function EditProfilePage() {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [originalEmail, setOriginalEmail] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -63,6 +64,7 @@ export default function EditProfilePage() {
         const p = res.data as ProfileResponse;
         setUsername(p.username ?? "");
         setEmail(p.email ?? "");
+        setOriginalEmail(p.email ?? "");
         setProfilePictureUrl(p.profilePictureUrl ?? "");
       } catch (e: any) {
         if (e?.response?.status === 401) { router.replace("/login"); return; }
@@ -99,13 +101,20 @@ export default function EditProfilePage() {
   const imageErr = useMemo(() => {
     if (!imageFile) return undefined;
     if (!imageFile.type.startsWith("image/")) return "Please upload an image file leh.";
-    // optional size limit
     const maxMb = 5;
     if (imageFile.size > maxMb * 1024 * 1024) return `Image too big leh. Max ${maxMb}MB.`;
     return undefined;
   }, [imageFile]);
 
+  const hasChanges = useMemo(() => {
+    if (email.trim() !== originalEmail) return true;
+    if (imageFile) return true;
+    if (password) return true;
+    return false;
+  }, [email, originalEmail, imageFile, password]);
+
   const canSave = useMemo(() => {
+    if (!hasChanges) return false;
     if (emailErr) return false;
     if (imageErr) return false;
     if (password) {
@@ -113,7 +122,7 @@ export default function EditProfilePage() {
       if (confirmErr) return false;
     }
     return true;
-  }, [emailErr, imageErr, password, passwordErr, confirmErr]);
+  }, [hasChanges, emailErr, imageErr, password, passwordErr, confirmErr]);
 
   const existingPic = profilePictureUrl || "";
 
