@@ -2,11 +2,11 @@
 
 import Lottie from "lottie-react";
 import shibaAnimation from "@/public/shiba.json";
-import catAnimation from "@/public/cat.json";
-import pandaAnimation from "@/public/panda.json";
+import shibaAngryAnimation from "@/public/shiba_angry.json";
+import shibaFlirtingAnimation from "@/public/shiba_flirting.json";
 import { Star, Crown, Lock, Check } from "lucide-react";
 
-const chapterMascots = [shibaAnimation, catAnimation, pandaAnimation];
+const chapterMascots = [shibaAnimation, shibaAngryAnimation, shibaFlirtingAnimation];
 
 interface Node {
   id: number;
