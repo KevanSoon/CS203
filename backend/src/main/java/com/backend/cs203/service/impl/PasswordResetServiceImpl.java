@@ -30,8 +30,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenSaver tokenSaver;
 
-    @Value("${resend.api.key}")
-    private String resendApiKey;
+    private final Resend resend;
 
     @Value("${resend.from.email}")
     private String fromEmail;
@@ -106,7 +105,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     private void sendOtpEmail(String email, String otp) {
         try {
-            Resend resend = new Resend(resendApiKey);
             CreateEmailOptions params = CreateEmailOptions.builder()
                 .from(fromEmail)
                 .to(email)
