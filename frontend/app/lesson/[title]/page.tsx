@@ -201,7 +201,16 @@ export default function LessonRoadmapPage({
           progress = lessonProgress[data.id];
         }
 
-        setChapters(mapChaptersFromDTO(data.chapters, progress));
+        const mappedChapters = mapChaptersFromDTO(data.chapters, progress);
+        setChapters(mappedChapters);
+
+        // Find the first uncompleted chapter and set it as selected
+        const firstUncompletedIndex = mappedChapters.findIndex(
+          (chapter) => !chapter.nodes.every((node) => node.status === "completed")
+        );
+        if (firstUncompletedIndex !== -1) {
+          setSelectedChapter(firstUncompletedIndex);
+        }
       } catch (err: any) {
         console.error("Failed to fetch lesson page:", err);
         setError(err.response?.data?.error || "Failed to load lesson");
