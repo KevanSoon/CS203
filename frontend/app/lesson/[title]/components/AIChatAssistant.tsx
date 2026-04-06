@@ -13,6 +13,21 @@ interface Message {
   id: number;
   role: "user" | "assistant";
   content: string;
+  isThinking?: boolean;
+}
+
+function TypingDots({ className }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 ${className ?? ""}`}>
+      {[0, 150, 300].map((delay) => (
+        <span
+          key={delay}
+          className="w-2 h-2 rounded-full bg-current animate-bounce"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </span>
+  );
 }
 
 interface Thread {
@@ -104,7 +119,8 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
     const thinkingMessage: Message = {
       id: Date.now() + 1,
       role: "assistant",
-      content: "Thinking...",
+      content: "",
+      isThinking: true,
     };
 
     setMessages((prev) => [...prev, userMessage, thinkingMessage]);
@@ -121,7 +137,7 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === thinkingMessage.id
-            ? { ...msg, content: data.response }
+            ? { ...msg, content: data.response, isThinking: false }
             : msg
         )
       );
@@ -130,7 +146,7 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === thinkingMessage.id
-            ? { ...msg, content: "Sorry, something went wrong. Please try again." }
+            ? { ...msg, content: "Sorry, something went wrong. Please try again.", isThinking: false }
             : msg
         )
       );
@@ -152,7 +168,7 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h2 className="font-bold text-foreground flex-1">AI Study Buddy</h2>
+          <h2 className="font-bold text-foreground flex-1">Simislang Study Buddy</h2>
           <button
             onClick={startNewChat}
             disabled={loading}
@@ -234,35 +250,39 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
               }`}
             >
               {msg.role === "assistant" ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      table: ({ children }) => (
-                        <div className="overflow-x-auto max-w-full my-2">
-                          <table className="min-w-full border-collapse text-xs">{children}</table>
-                        </div>
-                      ),
-                      th: ({ children }) => (
-                        <th className="border border-border px-2 py-1.5 text-left font-semibold bg-muted whitespace-nowrap">
-                          {children}
-                        </th>
-                      ),
-                      td: ({ children }) => (
-                        <td className="border border-border px-2 py-1.5 align-top max-w-[200px] break-words whitespace-normal">
-                          {children}
-                        </td>
-                      ),
-                      a: ({ href, children }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">
-                          {children}
-                        </a>
-                      ),
-                    }}
-                  >
-                    {preprocessMarkdown(msg.content)}
-                  </ReactMarkdown>
-                </div>
+                msg.isThinking ? (
+                  <TypingDots />
+                ) : (
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto max-w-full my-2">
+                            <table className="min-w-full border-collapse text-xs">{children}</table>
+                          </div>
+                        ),
+                        th: ({ children }) => (
+                          <th className="border border-border px-2 py-1.5 text-left font-semibold bg-muted whitespace-nowrap">
+                            {children}
+                          </th>
+                        ),
+                        td: ({ children }) => (
+                          <td className="border border-border px-2 py-1.5 align-top max-w-[200px] break-words whitespace-normal">
+                            {children}
+                          </td>
+                        ),
+                        a: ({ href, children }) => (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">
+                            {children}
+                          </a>
+                        ),
+                      }}
+                    >
+                      {preprocessMarkdown(msg.content)}
+                    </ReactMarkdown>
+                  </div>
+                )
               ) : (
                 msg.content
               )}
@@ -289,7 +309,7 @@ export const AIChatAssistant = ({ onClose }: AIChatAssistantProps) => {
             disabled={loading}
             className="flex-1 bg-muted rounded-full px-4 py-2 text-base text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
           />
-          <CartoonButton label={loading ? "..." : "Send"} onClick={handleSend} />
+          <CartoonButton label={loading ? <TypingDots className="py-1" /> : "Send"} onClick={handleSend} />
         </div>
       </div>
     </div>
