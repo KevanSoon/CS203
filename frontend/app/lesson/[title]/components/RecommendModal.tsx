@@ -25,7 +25,7 @@ export default function RecommendModal({ recommendations, onClose }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
             <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl">
                 <div className="flex items-center gap-2 mb-2 justify-center">
                     <Sparkles className="h-5 w-5 text-primary" />

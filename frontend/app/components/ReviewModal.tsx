@@ -4,6 +4,8 @@ import { useState } from "react";
 import { api } from "@/app/api/api";
 import { Star } from "lucide-react";
 import { toast } from "react-hot-toast";
+import Lottie from "lottie-react";
+import confettiAnimation from "@/public/Confetti.json";
 
 interface Props {
     lessonId: number;
@@ -36,8 +38,15 @@ export default function ReviewModal({ lessonId, onClose, onSubmitted }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+            {/* Confetti overlay — plays once, non-interactive */}
+            <Lottie
+                animationData={confettiAnimation}
+                loop={false}
+                className="pointer-events-none absolute inset-0 w-full h-full"
+                rendererSettings={{ preserveAspectRatio: "xMidYMid slice" }}
+            />
+            <div className="relative bg-white rounded-xl w-full max-w-md p-6 shadow-xl">
                 <h2 className="text-xl font-bold mb-4 text-center">🎉 Lesson completed !!! 🎉</h2>
                 <p className="text-sm text-muted-foreground text-center mb-6">How was this lesson?</p>
 
