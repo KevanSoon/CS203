@@ -1,5 +1,7 @@
+import React from "react";
+
 interface CartoonButtonProps {
-  label: string;
+  label: React.ReactNode;
   color?: string;
   textColor?: string;
   hasHighlight?: boolean;
