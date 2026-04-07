@@ -80,7 +80,7 @@ To further support learning:
 
 ## 🧩 System Architecture
 
-> *(Insert system architecture diagram here)*
+![System Architecture Diagram](system-architecture.png)
 
 ---
 
