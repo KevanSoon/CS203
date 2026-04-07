@@ -152,7 +152,7 @@ class PasswordResetServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> passwordResetService.sendOtp("test@example.com"));
-        assertEquals(502, ex.getStatusCode().value());
+        assertEquals(422, ex.getStatusCode().value());
     }
 
     // =========================================================================
