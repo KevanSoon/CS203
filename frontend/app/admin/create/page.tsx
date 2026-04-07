@@ -64,6 +64,8 @@ function CreateLessonPage() {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
   const [editStatus, setEditStatus] = useState<string | null>(null);
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [descFocused, setDescFocused] = useState(false);
 
   /* Lesson fields */
   const [title, setTitle] = useState("");
@@ -734,6 +736,8 @@ function CreateLessonPage() {
                     }}
                     maxLength={CREATE_LESSON_LIMITS.lessonTitle}
                     placeholder="Lesson Title *"
+                    onFocus={() => setTitleFocused(true)}
+                    onBlur={() => setTitleFocused(false)}
                     className={`w-full text-2xl md:text-3xl font-black bg-transparent border-b-2 outline-none text-foreground placeholder:text-muted-foreground/50 focus:ring-0 pb-1 transition-colors ${
                       errors.has("title") || errors.has("title-format") || errors.has("title-length")
                         ? "border-destructive"
@@ -787,8 +791,11 @@ function CreateLessonPage() {
                       </span>
                     </div>
                   )}
-                  <p className="text-[11px] text-muted-foreground/70 mt-1">
-                    Use letters, numbers, and spaces only. Max {CREATE_LESSON_LIMITS.lessonTitle} characters.
+                  <p className="text-[11px] text-muted-foreground/70 mt-1 flex justify-between">
+                    <span>Use letters, numbers, and spaces only. Max {CREATE_LESSON_LIMITS.lessonTitle} characters.</span>
+                    <span className={titleFocused && title.length >= CREATE_LESSON_LIMITS.lessonTitle ? "text-destructive font-medium" : ""}>
+                      {title.length} / {CREATE_LESSON_LIMITS.lessonTitle}
+                    </span>
                   </p>
                 </div>
 
@@ -803,12 +810,19 @@ function CreateLessonPage() {
                     maxLength={CREATE_LESSON_LIMITS.lessonDescription}
                     placeholder="Describe what this lesson covers... *"
                     rows={2}
+                    onFocus={() => setDescFocused(true)}
+                    onBlur={() => setDescFocused(false)}
                     className={`w-full bg-transparent border-b outline-none text-foreground placeholder:text-muted-foreground/50 resize-none focus:ring-0 text-sm pb-1 transition-colors ${
                       errors.has("description")
                         ? "border-destructive"
                         : "border-transparent focus:border-primary"
                     }`}
                   />
+                  <p className={`text-[11px] mt-1 text-right transition-colors ${
+                    descFocused && description.length >= CREATE_LESSON_LIMITS.lessonDescription ? "text-destructive font-medium" : "text-muted-foreground/70"
+                  }`}>
+                    {description.length} / {CREATE_LESSON_LIMITS.lessonDescription}
+                  </p>
                 </div>
 
                 {/* Tags autocomplete */}

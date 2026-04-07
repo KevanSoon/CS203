@@ -151,7 +151,7 @@ function DashboardContent() {
 		try {
 			await api.patch("/api/lesson/applications/review", { title, action: "reject" });
 			updateLessonStatus(title, "rejected");
-			showToast(`"${title}" has been rejected.`, "error");
+			showToast(`"${title}" has been rejected.`, "success");
 		} catch (err) {
 			console.error(err);
 			showToast(`Failed to reject "${title}".`, "error");

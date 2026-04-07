@@ -42,6 +42,12 @@ function toSentenceCase(value: string): string {
 	return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function getCleanTitle(title: string): string {
+	const marker = "_deletedat_";
+	const idx = title.indexOf(marker);
+	return idx > 0 ? title.slice(0, idx) : title;
+}
+
 const severityRank: Record<ReportType, number> = {
 	critical: 4,
 	high: 3,
@@ -137,7 +143,7 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
 											<div className="mt-1 flex flex-wrap items-center gap-2">
 												<span className="text-xs text-muted-foreground">
-													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+													Lesson: {getCleanTitle(report.lessonTitle)} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
 												</span>
 												<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(report.status)}`}>{toSentenceCase(report.status)}</span>{" "}
 											</div>
@@ -148,7 +154,7 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
 											<div className="mt-2 flex flex-wrap items-center gap-2">
 												<span className="text-xs text-muted-foreground">
-													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+													Lesson: {getCleanTitle(report.lessonTitle)} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
 												</span>
 											</div>
 											<div className="mt-2 flex flex-wrap items-center gap-2">
@@ -163,7 +169,7 @@ export function ReportsTable({ reports, handleChangeStatus, onSuspendLesson }: R
 											<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${severityBadgeClass(report.type)}`}>{toSentenceCase(report.type)}</span>
 											<div className="mt-2 flex flex-wrap items-center gap-2">
 												<span className="text-xs text-muted-foreground">
-													Lesson: {report.lessonTitle} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
+													Lesson: {getCleanTitle(report.lessonTitle)} {report.chapterTitle ? ` · ${report.chapterTitle}` : ""}
 												</span>
 											</div>
 										</>

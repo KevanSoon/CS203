@@ -140,7 +140,7 @@ export default function LessonCard({ image, title, description, progress, lesson
 							const { visible, remaining } = getVisibleTags(tags);
 
 							return (
-								<div className="flex flex-wrap gap-1 mt-2 overflow-hidden max-h-[72px]">
+								<div className="flex flex-wrap gap-1 mt-2">
 									{visible.map((tag) => (
 										<span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-primary/15 text-primary font-semibold whitespace-nowrap border border-primary/20">
 											{tag}

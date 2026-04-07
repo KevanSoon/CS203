@@ -116,6 +116,8 @@ function CardItem({
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showAllSources, setShowAllSources] = useState(false);
+  const [frontFocused, setFrontFocused] = useState(false);
+  const [backFocused, setBackFocused] = useState(false);
 
   const handleVerify = async () => {
     setVerifyState("loading");
@@ -199,21 +201,30 @@ function CardItem({
               {card.front}
             </p>
           ) : (
-            <textarea
-              value={card.front}
-              onChange={(e) => {
-                onUpdateCard("front", e.target.value);
-                clearError(frontKey);
-              }}
-              maxLength={CREATE_LESSON_LIMITS.cardFront}
-              placeholder="Question or term..."
-              rows={2}
-              className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                errors.has(frontKey)
-                  ? "border-destructive ring-1 ring-destructive/50"
-                  : "border-border/50"
-              }`}
-            />
+            <>
+              <textarea
+                value={card.front}
+                onChange={(e) => {
+                  onUpdateCard("front", e.target.value);
+                  clearError(frontKey);
+                }}
+                onFocus={() => setFrontFocused(true)}
+                onBlur={() => setFrontFocused(false)}
+                maxLength={CREATE_LESSON_LIMITS.cardFront}
+                placeholder="Question or term..."
+                rows={2}
+                className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
+                  errors.has(frontKey)
+                    ? "border-destructive ring-1 ring-destructive/50"
+                    : "border-border/50"
+                }`}
+              />
+              <p className={`text-[11px] mt-0.5 text-right transition-colors ${
+                frontFocused && card.front.length >= CREATE_LESSON_LIMITS.cardFront ? "text-destructive font-medium" : "text-muted-foreground/70"
+              }`}>
+                {card.front.length} / {CREATE_LESSON_LIMITS.cardFront}
+              </p>
+            </>
           )}
         </div>
 
@@ -229,21 +240,30 @@ function CardItem({
               {card.back}
             </p>
           ) : (
-            <textarea
-              value={card.back}
-              onChange={(e) => {
-                onUpdateCard("back", e.target.value);
-                clearError(backKey);
-              }}
-              maxLength={CREATE_LESSON_LIMITS.cardBack}
-              placeholder="Answer or definition..."
-              rows={2}
-              className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
-                errors.has(backKey)
-                  ? "border-destructive ring-1 ring-destructive/50"
-                  : "border-border/50"
-              }`}
-            />
+            <>
+              <textarea
+                value={card.back}
+                onChange={(e) => {
+                  onUpdateCard("back", e.target.value);
+                  clearError(backKey);
+                }}
+                onFocus={() => setBackFocused(true)}
+                onBlur={() => setBackFocused(false)}
+                maxLength={CREATE_LESSON_LIMITS.cardBack}
+                placeholder="Answer or definition..."
+                rows={2}
+                className={`w-full rounded-lg bg-background/60 border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none transition-colors ${
+                  errors.has(backKey)
+                    ? "border-destructive ring-1 ring-destructive/50"
+                    : "border-border/50"
+                }`}
+              />
+              <p className={`text-[11px] mt-0.5 text-right transition-colors ${
+                backFocused && card.back.length >= CREATE_LESSON_LIMITS.cardBack ? "text-destructive font-medium" : "text-muted-foreground/70"
+              }`}>
+                {card.back.length} / {CREATE_LESSON_LIMITS.cardBack}
+              </p>
+            </>
           )}
         </div>
 
@@ -364,6 +384,7 @@ function QuizItem({
   const qHasErr = Array.from(errors).some((k) =>
     k.startsWith(`chapter-${ci}-quiz-${qi}`),
   );
+  const [questionFocused, setQuestionFocused] = useState(false);
 
   return (
     <div
@@ -429,25 +450,34 @@ function QuizItem({
             {quiz.question}
           </p>
         ) : (
-          <textarea
-            value={quiz.question}
-            onChange={(e) => {
-              onUpdateQuiz("question", e.target.value);
-              clearError(`chapter-${ci}-quiz-${qi}-question`);
-            }}
-            maxLength={CREATE_LESSON_LIMITS.quizQuestion}
-            placeholder={
-              quiz.quizType === "fill_blank"
-                ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
-                : "Write your quiz question here... *"
-            }
-            rows={2}
-            className={`w-full bg-card/50 rounded-xl border px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 resize-none transition-colors ${
-              errors.has(`chapter-${ci}-quiz-${qi}-question`)
-                ? "border-destructive"
-                : "border-border/50"
-            }`}
-          />
+          <>
+            <textarea
+              value={quiz.question}
+              onChange={(e) => {
+                onUpdateQuiz("question", e.target.value);
+                clearError(`chapter-${ci}-quiz-${qi}-question`);
+              }}
+              onFocus={() => setQuestionFocused(true)}
+              onBlur={() => setQuestionFocused(false)}
+              maxLength={CREATE_LESSON_LIMITS.quizQuestion}
+              placeholder={
+                quiz.quizType === "fill_blank"
+                  ? `Use ___ for the blank, e.g. "The ___ is the powerhouse of the cell"`
+                  : "Write your quiz question here... *"
+              }
+              rows={2}
+              className={`w-full bg-card/50 rounded-xl border px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-warning/50 resize-none transition-colors ${
+                errors.has(`chapter-${ci}-quiz-${qi}-question`)
+                  ? "border-destructive"
+                  : "border-border/50"
+              }`}
+            />
+            <p className={`text-[11px] mt-0.5 text-right transition-colors ${
+              questionFocused && quiz.question.length >= CREATE_LESSON_LIMITS.quizQuestion ? "text-destructive font-medium" : "text-muted-foreground/70"
+            }`}>
+              {quiz.question.length} / {CREATE_LESSON_LIMITS.quizQuestion}
+            </p>
+          </>
         )}
 
         {/* Fill-blank preview */}
@@ -651,6 +681,8 @@ export function ChapterPanel({
   const [localExpanded, setLocalExpanded] = useState(chapterProp.isExpanded ?? true);
   const isExpanded = readOnly ? localExpanded : chapterProp.isExpanded;
   const chapter = readOnly ? { ...chapterProp, isExpanded } : chapterProp;
+  const [chTitleFocused, setChTitleFocused] = useState(false);
+  const [chDescFocused, setChDescFocused] = useState(false);
 
   const chapterHasErr = !readOnly &&
     Array.from(errors).some((k) => k.startsWith(`chapter-${ci}-`));
@@ -698,6 +730,8 @@ export function ChapterPanel({
                 callbacks?.onUpdateTitle(e.target.value);
                 callbacks?.clearError(`chapter-${ci}-title`);
               }}
+            onFocus={() => setChTitleFocused(true)}
+              onBlur={() => setChTitleFocused(false)}
               onClick={(e) => e.stopPropagation()}
               maxLength={CREATE_LESSON_LIMITS.chapterTitle}
               placeholder={`Chapter ${ci + 1} title *`}
@@ -714,6 +748,11 @@ export function ChapterPanel({
           )}
           <span className="hidden sm:inline text-xs text-muted-foreground shrink-0 ml-2">
             {chapter.cards.length} card{chapter.cards.length !== 1 ? "s" : ""} · {chapter.quizzes.length} quiz question{chapter.quizzes.length !== 1 ? "s" : ""}
+            {!readOnly && isExpanded && (
+              <span className={`ml-2 ${chTitleFocused && chapter.title.length >= CREATE_LESSON_LIMITS.chapterTitle ? "text-destructive font-medium" : "text-muted-foreground/60"}`}>
+                · {chapter.title.length}/{CREATE_LESSON_LIMITS.chapterTitle}
+              </span>
+            )}
           </span>
         </div>
 
@@ -746,22 +785,31 @@ export function ChapterPanel({
               <p className="text-sm text-muted-foreground">{chapter.description}</p>
             )
           ) : (
-            <input
-              type="text"
-              value={chapter.description}
-              data-field={`chapter-${ci}-description`}
-              onChange={(e) => {
-                callbacks?.onUpdateDescription(e.target.value);
-                callbacks?.clearError(`chapter-${ci}-description`);
-              }}
-              maxLength={CREATE_LESSON_LIMITS.chapterDescription}
-              placeholder="Chapter description (optional)"
-              className={`w-full text-sm bg-transparent border-b outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors ${
-                errors.has(`chapter-${ci}-description`)
-                  ? "border-destructive"
-                  : "border-border/50"
-              }`}
-            />
+            <>
+              <input
+                type="text"
+                value={chapter.description}
+                data-field={`chapter-${ci}-description`}
+                onChange={(e) => {
+                  callbacks?.onUpdateDescription(e.target.value);
+                  callbacks?.clearError(`chapter-${ci}-description`);
+                }}
+                onFocus={() => setChDescFocused(true)}
+                onBlur={() => setChDescFocused(false)}
+                maxLength={CREATE_LESSON_LIMITS.chapterDescription}
+                placeholder="Chapter description (optional)"
+                className={`w-full text-sm bg-transparent border-b outline-none text-foreground placeholder:text-muted-foreground/50 pb-2 focus:border-primary transition-colors ${
+                  errors.has(`chapter-${ci}-description`)
+                    ? "border-destructive"
+                    : "border-border/50"
+                }`}
+              />
+              <p className={`text-[11px] mt-0.5 text-right transition-colors ${
+                chDescFocused && chapter.description.length >= CREATE_LESSON_LIMITS.chapterDescription ? "text-destructive font-medium" : "text-muted-foreground/70"
+              }`}>
+                {chapter.description.length} / {CREATE_LESSON_LIMITS.chapterDescription}
+              </p>
+            </>
           )}
 
           {/* ── Flashcards ── */}

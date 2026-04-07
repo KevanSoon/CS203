@@ -400,10 +400,10 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 														</div>
 
 														<div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-															{record.status === "pending" || record.status === "saved" ? (
+															{record.status === "pending" || record.status === "saved" || record.status === "rejected" ? (
 																<>
 																	<button
-																		title="Edit lesson"
+																		title={record.status === "rejected" ? "Edit and resubmit" : "Edit lesson"}
 																		className="p-2 text-muted-foreground hover:text-foreground transition-colors"
 																		onClick={() => router.push(`/admin/create?edit=${encodeURIComponent(record.title)}`)}>
 																		<Pencil className="h-4 w-4" />
@@ -439,7 +439,7 @@ export const MyLessonsCard = ({ title, data }: MyLessonsCardProps) => {
 																	/>
 																	<ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
 																</>
-															) : !record.deletedAt && record.status !== "rejected" ? (
+															) : !record.deletedAt ? (
 																<Trash2
 																	className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
 																	onClick={() => {

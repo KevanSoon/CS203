@@ -20,7 +20,9 @@ export default function Toaster() {
         const flash = getCookie("flash_toast");
         if (!flash) return;
 
-        if (flash === "unauthenticated" || flash === "unauthorized") {
+        if (flash === "unauthenticated") {
+            toast.error("You are not logged in. Please log in to continue.");
+        } else if (flash === "unauthorized") {
             toast.error("You do not have the permissions to access this resource.");
         } else if (flash === "already_authenticated") {
             toast.error("Please logout before going back to the homepage");
