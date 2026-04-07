@@ -145,14 +145,14 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void sendOtp_resendFails_throwsInternalServerError() throws ResendException {
+    void sendOtp_resendFails_throwsBadGateway() throws ResendException {
         when(resend.emails()).thenReturn(emails);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(activeUser));
         when(emails.send(any(CreateEmailOptions.class))).thenThrow(new RuntimeException("Resend down"));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> passwordResetService.sendOtp("test@example.com"));
-        assertEquals(500, ex.getStatusCode().value());
+        assertEquals(502, ex.getStatusCode().value());
     }
 
     // =========================================================================
