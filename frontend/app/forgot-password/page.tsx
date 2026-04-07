@@ -39,7 +39,26 @@ export default function ForgotPasswordPage() {
       toast.success("OTP sent! Check your inbox 📬");
       setStep("otp");
     } catch (err: any) {
-     
+      const status = err?.response?.status;
+      const message = err?.response?.data?.message || "Failed to send OTP";
+
+      if (status === 422) {
+        toast.error("Email service is down. Please try again later 📭");
+        return;
+      }
+
+      if (status === 403) {
+        toast.error(message);
+        return;
+      }
+
+      if (status === 404) {
+        toast.success("OTP sent! Check your inbox 📬");
+        setStep("otp");
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +95,16 @@ export default function ForgotPasswordPage() {
       toast.success("New OTP sent! 📬");
       startCooldown();
     } catch (err: any) {
-      
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || "Failed to resend OTP";
+
+      if (status === 422) {
+        toast.error("Email service unavailable. Try again later 📭");
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

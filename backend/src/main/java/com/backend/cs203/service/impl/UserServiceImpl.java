@@ -264,7 +264,7 @@ public class UserServiceImpl implements UserService {
                 user.setProfilePictureUrl(newPath);
             } catch (Exception e) {
                 throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    HttpStatus.UNPROCESSABLE_ENTITY,
                     "Failed to upload profile picture. Please try again."
                 );
             }

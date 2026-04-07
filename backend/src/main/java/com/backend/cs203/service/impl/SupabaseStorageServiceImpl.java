@@ -54,9 +54,9 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
             return filePath;
 
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process file");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to process file");
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload to storage");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to upload to storage");
         }
     }
 
@@ -94,7 +94,7 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
                     .toBodilessEntity();
         }
         catch (Exception e) {
-             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete from storage");
+             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to delete from storage");
         }
     }
 

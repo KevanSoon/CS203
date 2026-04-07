@@ -120,7 +120,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 .build();
             resend.emails().send(params);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to send OTP email");
         }
     }
 
