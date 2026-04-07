@@ -37,7 +37,6 @@ export default function EditProfilePage() {
   const router = useRouter();
   const { user, setUser } = useSiteState();
 
-  const [pageError, setPageError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
   const [username, setUsername] = useState("");
@@ -56,7 +55,6 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     const load = async () => {
-      setPageError("");
       setSuccessMsg("");
 
       try {
@@ -67,8 +65,8 @@ export default function EditProfilePage() {
         setOriginalEmail(p.email ?? "");
         setProfilePictureUrl(p.profilePictureUrl ?? "");
       } catch (e: any) {
+        toast.error(e?.response?.data?.message || "Failed to load profile");
         if (e?.response?.status === 401) { router.replace("/login"); return; }
-        setPageError(e?.response?.data?.message || "Failed to load profile");
       } finally {
         setLoading(false);
       }
@@ -130,7 +128,6 @@ export default function EditProfilePage() {
 
   const onPickImage: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0] || null;
-    setPageError("");
     setSuccessMsg("");
 
     if (!file) {
@@ -147,7 +144,6 @@ export default function EditProfilePage() {
   };
 
   const onSave = async () => {
-    setPageError("");
     setSuccessMsg("");
 
     if (!canSave) return;
@@ -170,12 +166,21 @@ export default function EditProfilePage() {
       toast.success("Update Successful");
       router.push(`/profile/${user?.id}`);
     } catch (e: any) {
-      if (e?.response?.status === 401) { router.replace("/login"); return; }
-      if (e?.response?.status === 500 && imageFile) {
-        setPageError("Failed to upload profile picture. Please try a different image.");
-      } else {
-        setPageError(e?.response?.data?.message || "Failed to update profile");
+      const status = e?.response?.status;
+      const message =
+        e?.response?.data?.message || "Failed to update profile";
+
+      if (status === 401) {
+        router.replace("/login");
+        return;
       }
+
+      if (imageFile && [400, 422, 502, 500].includes(status)) {
+        toast.error(message || "Failed to upload profile picture");
+        return;
+      }
+
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -218,12 +223,6 @@ export default function EditProfilePage() {
 
         {/* Form card */}
         <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur">
-          {pageError && (
-            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {pageError}
-            </div>
-          )}
-
           {successMsg && (
             <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
               {successMsg}
