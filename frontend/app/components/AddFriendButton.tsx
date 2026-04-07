@@ -43,7 +43,7 @@ export default function AddFriendButton({
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/friendship/outgoing/pending/${targetUserId}`, {
+      const res = await fetch(`/api/friendship/pending/outgoing/${targetUserId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to cancel request");
