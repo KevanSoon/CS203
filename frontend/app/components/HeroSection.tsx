@@ -34,10 +34,10 @@ const HeroSection = () => {
           </h2>
           <p className="text-lg text-muted-foreground">
             From &ldquo;Rizz&rdquo; to &ldquo;Kilat&rdquo; and
-            &ldquo;Sus&rdquo; to &ldquo;Hantu.&rdquo; Join Singapore&apos;s
-            first community-driven platform designed to help parents, educators,
-            and marketers bridge the generational language gap. Verified by
-            humans, powered by AI.
+            &ldquo;Sus&rdquo; to &ldquo;Hantu.&rdquo; Singapore&apos;s first
+            platform where vetted Lesson Admins create structured slang lessons
+            &mdash; chapters, flashcards, and quizzes &mdash; verified by
+            moderators and AI, so you know what you&apos;re learning is legit.
           </p>
           <div className="flex gap-4 flex-wrap">
             <Link href="/signup">
