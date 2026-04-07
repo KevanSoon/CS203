@@ -17,9 +17,11 @@ const FooterCTA = () => {
           Sign up to start learning — or apply to become a Lesson Admin and
           share what you know.
         </p>
-        <Link href="/signup">
-          <CartoonButton label="Join the Community Now" />
-        </Link>
+        <div className="flex justify-center">
+          <Link href="/signup">
+            <CartoonButton label="Join the Community Now" />
+          </Link>
+        </div>
       </div>
     </section>
   );
