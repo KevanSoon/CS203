@@ -35,6 +35,7 @@ public class JwtUtil {
                 .subject(user.getUsername())
                 .claim("email", user.getEmail())
                 .claim("usertype", user.getUsertype().name())
+                .claim("id", user.getId())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey())
