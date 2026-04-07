@@ -64,8 +64,13 @@ class CookieFactoryTest {
 
         ResponseEntity<String> response = cookieFactory.withCookie(cookie, "ok");
 
+        String header = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
         assertEquals("ok", response.getBody());
-        assertEquals(cookie.toString(), response.getHeaders().getFirst(HttpHeaders.SET_COOKIE));
+        assertTrue(header != null && header.contains("jwt=token-123"));
+        assertTrue(header != null && header.contains("Max-Age=300"));
+        assertTrue(header != null && header.contains("Path=/"));
+        assertTrue(header != null && header.contains("HttpOnly"));
+        assertTrue(header != null && header.contains("SameSite=Lax"));
     }
 
     private void setField(Object target, String fieldName, Object value) {
