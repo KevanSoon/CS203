@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, ArrowRight, Check, Crown, RotateCcw } from "lucide-react";
 import { api } from "@/app/api/api";
 import toast from "react-hot-toast";
@@ -109,6 +109,7 @@ export const QuizCard = ({
         ? selected?.trim().toLowerCase() === correctAnswerText.trim().toLowerCase()
         : selected === correctAnswerText;
     const score = results.filter((r) => r === true).length;
+    const isFullMarks = score === total;
     const timerPercent = (timeLeft / timeLimit) * 100;
     const timerColor =
         timeLeft > timeLimit * 0.5
@@ -135,14 +136,28 @@ export const QuizCard = ({
         return () => clearTimeout(t);
     }, [timeLeft, checked, timeUp, finished, previewMode]);
 
+    const handleComplete = useCallback(() => {
+        if (onComplete) onComplete();
+        else onClose();
+    }, [onComplete, onClose]);
+
+    const handleClose = useCallback(() => {
+        // If they finished with full marks, trigger completion logic before closing
+        if (finished && isFullMarks) {
+            handleComplete();
+        } else {
+            onClose();
+        }
+    }, [finished, isFullMarks, handleComplete, onClose]);
+
     // ESC to close
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") handleClose();
         };
         window.addEventListener("keydown", handleEsc);
         return () => window.removeEventListener("keydown", handleEsc);
-    }, [onClose]);
+    }, [handleClose]);
 
     const handleCheck = () => {
         if (!selected && !timeUp) return;
@@ -186,17 +201,10 @@ export const QuizCard = ({
         setTimeUp(false);
     };
 
-    const handleComplete = () => {
-        if (onComplete) onComplete();
-        else onClose();
-    };
-
-    const isFullMarks = score === total;
-
     return (
         <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn px-4"
-            onClick={onClose}
+            onClick={handleClose}
         >
             <div
                 onClick={(e) => e.stopPropagation()}
@@ -204,7 +212,7 @@ export const QuizCard = ({
             >
                 {/* Close button */}
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute -top-12 right-0 text-white hover:text-gray-200 transition z-50"
                 >
                     <X size={32} />
@@ -272,7 +280,7 @@ export const QuizCard = ({
                                     <>
                                         <button
                                             onClick={handleRetry}
-                                            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 bg-primary text-white font-semibold text-base hover:bg-primary-dark hover:scale-[1.02] transition-all shadow-md"
+                                            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 bg-primary text-white font-semibold text-base hover:scale-[1.02] transition-all shadow-md"
                                         >
                                             Try Again
                                             <RotateCcw className="h-4 w-4" />
