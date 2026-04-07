@@ -149,7 +149,7 @@ function CardItem({
           </div>
           <button
             onClick={onRemoveCard}
-            className="absolute top-3 right-3 z-10 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+            className="absolute top-3 right-3 z-10 p-1 text-muted-foreground hover:text-destructive transition-all opacity-100 sm:opacity-0 md:group-hover:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -712,10 +712,8 @@ export function ChapterPanel({
               {chapter.title || `Chapter ${ci + 1}`}
             </span>
           )}
-          <span className="text-xs text-muted-foreground shrink-0 ml-2">
-            {chapter.cards.length} card{chapter.cards.length !== 1 ? "s" : ""}
-            {" · "}
-            {chapter.quizzes.length} quiz question{chapter.quizzes.length !== 1 ? "s" : ""}
+          <span className="hidden sm:inline text-xs text-muted-foreground shrink-0 ml-2">
+            {chapter.cards.length} card{chapter.cards.length !== 1 ? "s" : ""} · {chapter.quizzes.length} quiz question{chapter.quizzes.length !== 1 ? "s" : ""}
           </span>
         </div>
 
