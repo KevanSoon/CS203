@@ -329,11 +329,11 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (target.getUsertype() != User.UserType.user) {
-            throw new RuntimeException("User not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         if (target.getDeactivatedAt() != null) {
-            throw new RuntimeException("User not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         List<User> targetFriends = getAcceptedFriends(target.getId());

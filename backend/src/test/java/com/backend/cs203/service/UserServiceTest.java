@@ -663,7 +663,11 @@ class UserServiceTest {
         setAuthentication("viewer");
 
         User viewer = User.builder().id(1).username("viewer").build();
-        User target = User.builder().id(2).username("target").build();
+        User target = User.builder()
+        .id(2)
+        .username("target")
+        .usertype(User.UserType.user)
+        .build();
 
         when(userRepository.findByUsername("viewer")).thenReturn(Optional.of(viewer));
         when(userRepository.findById(2)).thenReturn(Optional.of(target));
@@ -685,6 +689,7 @@ class UserServiceTest {
         User target = User.builder()
                 .id(2)
                 .username("target")
+                .usertype(User.UserType.user) 
                 .deactivatedAt(java.time.Instant.now())
                 .build();
 
