@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -54,9 +54,9 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
             return filePath;
 
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(422), "Failed to process file");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to process file");
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(502), "Failed to upload to storage");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to upload to storage");
         }
     }
 
@@ -94,21 +94,21 @@ public class SupabaseStorageServiceImpl implements SupabaseStorageService {
                     .toBodilessEntity();
         }
         catch (Exception e) {
-             throw new ResponseStatusException(HttpStatusCode.valueOf(502), "Failed to delete from storage");
+             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to delete from storage");
         }
     }
 
     //file validation
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(400), "File is empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
         }
         if (file.getSize() > 5 * 1024 * 1024) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(400), "File too large (max 5MB)");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File too large (max 5MB)");
         }
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new ResponseStatusException(HttpStatusCode.valueOf(400), "Only image files are allowed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image files are allowed");
         }
     }
 

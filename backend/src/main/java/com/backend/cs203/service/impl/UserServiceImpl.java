@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -265,7 +264,7 @@ public class UserServiceImpl implements UserService {
                 user.setProfilePictureUrl(newPath);
             } catch (Exception e) {
                 throw new ResponseStatusException(
-                    HttpStatusCode.valueOf(502),
+                    HttpStatus.UNPROCESSABLE_ENTITY,
                     "Failed to upload profile picture. Please try again."
                 );
             }

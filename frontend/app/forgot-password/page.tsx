@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
       const status = err?.response?.status;
       const message = err?.response?.data?.message || "Failed to send OTP";
 
-      if (status === 502) {
+      if (status === 422) {
         toast.error("Email service is down. Please try again later 📭");
         return;
       }
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
       const message =
         err?.response?.data?.message || "Failed to resend OTP";
 
-      if (status === 502) {
+      if (status === 422) {
         toast.error("Email service unavailable. Try again later 📭");
         return;
       }
