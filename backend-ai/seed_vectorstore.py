@@ -50,7 +50,7 @@ LESSONS = [
     {
         "id": 1,
         "title": "Intro to Gen-Alpha",
-        "description": "Learn about Gen-Alpha slang and how deeply it can impact your daily life",
+        "description": "Learn about Gen-Alpha slang and how deeply it can impact your daily life. This highly informative course explores the origins, usage, and cultural significance of modern slang, providing real-life examples and practical applications for all ages.",
         "tags": ["Slang for Beginners", "Culture", "67"],
         "chapters": [
             {
@@ -92,7 +92,7 @@ LESSONS = [
     {
         "id": 2,
         "title": "The Sigma Mindset",
-        "description": "How to be the most Alpha Sigma around",
+        "description": "Discover how to be the most Alpha Sigma around by mastering the Sigma mindset. This lesson delves into the psychology of independence, self-improvement, and nonconformity, offering actionable strategies and real-world scenarios to help you stand out.",
         "tags": ["Gen-Alpha", "Highly Advanced Lesson for Skibidi Sigma", "Advanced", "Skibidi", "Sigma"],
         "chapters": [
             {
@@ -121,7 +121,7 @@ LESSONS = [
     {
         "id": 3,
         "title": "The Chill & Reactive Personality",
-        "description": "Learn slang used by laid-back, observant, and reactive personalities, people who comment on situations rather than lead them.",
+        "description": "Learn slang used by laid-back, observant, and reactive personalities\u2014people who comment on situations rather than lead them. This lesson covers the nuances of chill communication, social observation, and how to navigate group dynamics with ease.",
         "tags": ["Gaming", "Multiplayer Games", "Child-Friendly"],
         "chapters": [
             {
@@ -141,7 +141,7 @@ LESSONS = [
     {
         "id": 4,
         "title": "Competitive & Toxic Gamer Personality",
-        "description": "Learn slang used in competitive gaming environments, including teamwork, trash talk, and high-pressure situations.",
+        "description": "Learn slang used in competitive gaming environments, including teamwork, trash talk, and high-pressure situations. Explore the language of esports, the psychology behind competitive banter, and how to thrive in both friendly and intense matches.",
         "tags": ["Gaming", "Multiplayer Games"],
         "chapters": [
             {
@@ -159,7 +159,7 @@ LESSONS = [
     {
         "id": 5,
         "title": "Gaming Slang & Culture",
-        "description": "Learn slang commonly used in gaming communities, especially in competitive and online multiplayer environments.",
+        "description": "Learn slang commonly used in gaming communities, especially in competitive and online multiplayer environments. This lesson covers the evolution of gaming language, its impact on player identity, and how to communicate effectively with fellow gamers.",
         "tags": ["Gaming", "Multiplayer Games", "Child-Friendly"],
         "chapters": [
             {
@@ -179,7 +179,7 @@ LESSONS = [
     {
         "id": 6,
         "title": "Streaming & Online Gamer Personality",
-        "description": "Learn slang used in livestreams, gaming communities, and chat culture (e.g. Twitch, Discord, TikTok streams).",
+        "description": "Learn slang used in livestreams, gaming communities, and chat culture (e.g., Twitch, Discord, TikTok streams). Understand the fast-paced world of online interaction, meme culture, and how digital slang shapes the way we connect and entertain audiences.",
         "tags": ["Gaming", "Multiplayer Games"],
         "chapters": [
             {
@@ -197,7 +197,7 @@ LESSONS = [
     {
         "id": 10,
         "title": "NSFW Content Here",
-        "description": "I am a bad guy",
+        "description": "This lesson explores NSFW content and the reasons why certain slang terms are considered inappropriate.",
         "tags": ["Slang for Beginners", "Boomer Curated"],
         "chapters": [
             {
@@ -213,7 +213,7 @@ LESSONS = [
     {
         "id": 11,
         "title": "F*** C**** D***",
-        "description": "K****** C****C***B* P*****",
+        "description": "This lesson investigates the use of explicit and censored language in modern slang, analyzing why such terms gain popularity.",
         "tags": [],
         "chapters": [
             {
