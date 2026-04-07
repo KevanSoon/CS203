@@ -328,6 +328,10 @@ public class UserServiceImpl implements UserService {
         User target = userRepository.findById(targetId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        if (target.getUsertype() != User.UserType.user) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
         if (target.getDeactivatedAt() != null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }

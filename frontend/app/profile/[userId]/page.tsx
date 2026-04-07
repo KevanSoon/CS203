@@ -139,8 +139,9 @@ function CollapsibleCard({
 export default function ProfilePage() {
   const { userId } = useParams();
   const router = useRouter();
-  const { user: storeUser } = useSiteState();
+  const { user: storeUser, _hasHydrated } = useSiteState();
   const [selected, setSelected] = useState("Profile");
+  
 
   // Viewer identity
   const [ownProfile, setOwnProfile] = useState<OwnProfile | null>(null);
@@ -217,6 +218,20 @@ export default function ProfilePage() {
       const isSelf = storeUser?.id === targetId;
       setIsOwnProfile(isSelf);
 
+      const resolvedUserType = storeUser?.usertype;
+
+      if (resolvedUserType === "root") {
+        router.replace("/webadmin");
+        toast.error("Unauthorized");
+        return;
+      }
+
+      if (resolvedUserType === "admin" && !isSelf) {
+        router.replace("/profile/" + storeUser?.id);
+        toast.error("Unauthorized");
+        return;
+      }
+
       try {
         if (isSelf) {
           const res = await api.get("/api/profile");
@@ -242,7 +257,7 @@ export default function ProfilePage() {
       }
     };
 
-    if (storeUser !== undefined) load(); // wait for store to hydrate
+    if (_hasHydrated) load(); // wait for store to hydrate
   }, [userId, storeUser?.id]);
 
   // ── Delete password debounce ───────────────────────────────────────────────
