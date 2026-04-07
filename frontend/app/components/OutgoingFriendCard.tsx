@@ -18,7 +18,6 @@ type Props = {
 
 export default function OutgoingFriendCard({ friend, onCancel }: Props) {
   const router = useRouter();
-  const [hover, setHover] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async (e: React.MouseEvent) => {
@@ -38,8 +37,6 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
   return (
     <div
       onClick={() => router.push(`/profile/${friend.id}`)}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 cursor-pointer"
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -58,9 +55,7 @@ export default function OutgoingFriendCard({ friend, onCancel }: Props) {
       <button
         onClick={handleCancel}
         disabled={loading}
-        className={`rounded-md border border-red-200 bg-red-50 px-2 text-xs font-semibold text-red-600 transition-opacity duration-200 hover:bg-red-100 ${
-          hover ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className="rounded-md border border-red-200 bg-red-50 px-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
       >
         {loading ? "..." : "Cancel"}
       </button>

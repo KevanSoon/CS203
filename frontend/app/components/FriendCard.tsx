@@ -6,59 +6,39 @@ import toast from "react-hot-toast";
 import { X, Flame } from "lucide-react";
 import { api } from "@/app/api/api"
 
-// ── Streak Tiers ─────────────────────────────────────────────────────────────
-// Edit this to add/remove tiers or change thresholds and colours.
-// Keep sorted by minStreak descending — highest tier first.
-
 type StreakTier = {
   minStreak: number;
-  badge: string;
-  badgeText: string;
   cardBg: string;
   cardBorder: string;
   cardHover: string;
   flameColor: string;
   countColor: string;
-  badgeBg: string;
-  badgeTextColor: string;
 };
 
 const STREAK_TIERS: StreakTier[] = [
   {
     minStreak: 30,
-    badge: "🌟",
-    badgeText: "Legendary",
     cardBg: "bg-purple-50",
     cardBorder: "border-purple-300",
     cardHover: "hover:border-purple-400",
     flameColor: "text-purple-500",
     countColor: "text-purple-600",
-    badgeBg: "bg-purple-100",
-    badgeTextColor: "text-purple-700",
   },
   {
     minStreak: 14,
-    badge: "🔥",
-    badgeText: "On Fire",
     cardBg: "bg-red-50",
     cardBorder: "border-red-300",
     cardHover: "hover:border-red-400",
     flameColor: "text-red-500",
     countColor: "text-red-600",
-    badgeBg: "bg-red-100",
-    badgeTextColor: "text-red-700",
   },
   {
     minStreak: 7,
-    badge: "🔆",
-    badgeText: "Hot",
     cardBg: "bg-orange-50",
     cardBorder: "border-orange-200",
     cardHover: "hover:border-orange-300",
     flameColor: "text-orange-400",
     countColor: "text-orange-500",
-    badgeBg: "bg-orange-100",
-    badgeTextColor: "text-orange-600",
   },
 ];
 
@@ -70,14 +50,11 @@ const DEFAULT_STYLE = {
   countColor: "text-slate-400",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 type FriendDto = {
   id: number;
   username: string;
   profilePictureUrl?: string;
   streak: number;
-  streakActiveToday: boolean;
 };
 
 type Props = {
@@ -93,8 +70,7 @@ export default function FriendCard({ friend, rank, onRemove, readonly = false }:
   const router = useRouter();
   const [isRemoving, setIsRemoving] = useState(false);
 
-  const tier = STREAK_TIERS.find((t) => friend.streak >= t.minStreak) ?? null;
-  const style = tier ?? DEFAULT_STYLE;
+  const style = STREAK_TIERS.find((t) => friend.streak >= t.minStreak) ?? DEFAULT_STYLE;
 
   const handleRemove = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -139,23 +115,13 @@ export default function FriendCard({ friend, rank, onRemove, readonly = false }:
       {/* Username */}
       <p className="flex-1 text-sm font-bold text-slate-900 truncate">{friend.username}</p>
 
-      {/* Active today dot */}
-      {friend.streakActiveToday && (
-        <span className="h-2 w-2 rounded-full bg-green-400 flex-shrink-0" title="Completed a lesson today" />
-      )}
-
-      {/* Streak + tier badge */}
+      {/* Streak */}
       <span className={`flex items-center gap-1 text-sm font-black flex-shrink-0 ${style.countColor}`}>
         <Flame size={14} className={style.flameColor} />
         {friend.streak}
-        {tier && (
-          <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${tier.badgeBg} ${tier.badgeTextColor}`}>
-            {tier.badge} {tier.badgeText}
-          </span>
-        )}
       </span>
 
-      {/* Remove button — hidden when readonly */}
+      {/* Remove button */}
       {!readonly && (
         <button
           onClick={handleRemove}
