@@ -1,0 +1,31 @@
+name: Warmup Embedding API
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Midnight UTC daily
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping embedding endpoint
+        env:
+          EMBEDDING_API_URL: ${{ secrets.EMBEDDING_API_URL }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST "$EMBEDDING_API_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            -d '{"texts": ["warmup"]}')
+
+          echo "HTTP status: $HTTP_STATUS"
+          cat response.json
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Warmup failed with status $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Warmup successful"

@@ -12,13 +12,16 @@ const FooterCTA = () => {
           <span className="text-primary">Get the Rizz.</span>
         </h3>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-          Join thousands of Singaporean educators and parents who are finally
-          understanding what the younger generation is saying. Sign up today and
-          start bonding better!
+          Join Singapore&apos;s growing community of parents, educators, and
+          marketers finally understanding what the younger generation is saying.
+          Sign up to start learning — or apply to become a Lesson Admin and
+          share what you know.
         </p>
-        <Link href="/signup">
-          <CartoonButton label="Join the Community Now" />
-        </Link>
+        <div className="flex justify-center">
+          <Link href="/signup">
+            <CartoonButton label="Join the Community Now" />
+          </Link>
+        </div>
       </div>
     </section>
   );

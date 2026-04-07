@@ -1,6 +1,6 @@
 package com.backend.cs203.controller;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,6 +78,7 @@ class FriendControllerTest {
         mockMvc.perform(get("/api/friendship").with(user("testuser").roles("USER")))
                 .andExpect(status().isBadRequest());
     }
+    
 
     // ===== GET /api/friendship/pending =====
 
@@ -92,6 +93,12 @@ class FriendControllerTest {
         mockMvc.perform(get("/api/friendship/pending").with(user("testuser").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].username").value("pendingUser"));
+    }
+
+    @Test
+    void getPending_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(get("/api/friendship/pending"))
+            .andExpect(status().isUnauthorized());
     }
 
     // ===== GET /api/friendship/pending/outgoing =====
@@ -116,6 +123,16 @@ class FriendControllerTest {
 
         mockMvc.perform(post("/api/friendship/pending/outgoing/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void sendFriendRequest_serviceThrows_returns400() throws Exception {
+        doThrow(new RuntimeException("error"))
+            .when(friendService).sendFriendRequest(5, "testuser");
+
+        mockMvc.perform(post("/api/friendship/pending/outgoing/5")
+            .with(user("testuser").roles("USER")))
+            .andExpect(status().isBadRequest());
     }
 
     // ===== DELETE /api/friendship/{id} =====
@@ -143,5 +160,31 @@ class FriendControllerTest {
 
         mockMvc.perform(post("/api/friendship/reject/5").with(user("testuser").roles("USER")))
                 .andExpect(status().isNoContent());
+    }
+
+    // ===== DELETE /api/friendship/{id} =====
+
+    @Test
+    void removeFriend_returns204() throws Exception {
+        mockMvc.perform(delete("/api/friendship/5")
+            .with(user("testuser").roles("USER")))
+            .andExpect(status().isNoContent());
+    }
+
+    // ===== GET /api/friendship/leaderboard =====
+
+    @Test
+    void getLeaderboard_returnsSortedFriends() throws Exception {
+        List<FriendDto> leaderboard = List.of(
+            new FriendDto(1, "topUser", null, 10, false)
+        );
+
+        when(friendService.getFriendsSortedByStreak("testuser"))
+            .thenReturn(leaderboard);
+
+        mockMvc.perform(get("/api/friendship/leaderboard")
+            .with(user("testuser").roles("USER")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].username").value("topUser"));
     }
 }

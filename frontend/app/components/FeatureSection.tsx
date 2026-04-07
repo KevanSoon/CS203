@@ -7,45 +7,47 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 import TranslateAnimation from "../../public/Translate.json";
 import CommunityAnimation from "../../public/Community.json";
 import TrophyAnimation from "../../public/Trophy.json";
-import RobotAnimation from "../../public/Robot.json";
+import LessonAnimation from "../../public/Lesson.json";
 
 interface Feature {
   title: string;
   description: string;
   animation: object;
   reverse?: boolean;
+  animationClassName?: string;
 }
 
 const features: Feature[] = [
   {
-    title: 'The "Singlish Bridge" Translator',
+    title: "AI Tutor That Speaks Singlish",
     description:
-      'Confused by "Skibidi"? We don\'t just give you the English definition; we translate it into Singlish terms you actually understand. It\'s the fastest way to go from blur sotong to steady pom pi pi.',
+      'Our AI assistant doesn\'t just explain slang in textbook English — ask it about "Skibidi" and it\'ll break it down in Singlish lah. Powered by your actual lesson content, it remembers your past conversations and recommends lessons based on what you ask. No more blur blur.',
     animation: TranslateAnimation,
   },
   {
-    title: "Community-Verified Lessons",
+    title: "Lessons You Can Actually Trust",
     description:
-      'No fake news here. Our lessons are created and voted on by the community. The "Lesson Admin" system ensures that the definitions of "Gyatt" or "Fanum Tax" are accurate and agreed upon by the masses, not just hallucinated by a bot.',
-    animation: CommunityAnimation,
+      'Every lesson goes through a three-layer trust pipeline: created by vetted Lesson Admins, approved by a Root moderator, and cross-checked by AI that scans real news sources to filter out "AI slop." No hallucinated definitions, no made-up slang.',
+    animation: LessonAnimation,
     reverse: true,
+    animationClassName: "w-80 h-80 md:w-[28rem] md:h-[28rem]",
   },
   {
-    title: "Gamified Progress Tracker",
+    title: "Structured Learning That Actually Sticks",
     description:
-      'Treat learning like a game. Track your "Slang Proficiency" level, unlock badges, and challenge your friends to see who is the most "woke" uncle or auntie. Climb the leaderboard and prove you\'ve got the lobang on the latest trends.',
+      "Each lesson is broken into chapters, flashcards, and chapter quizzes so the slang actually sinks in. Build a daily streak, track your card and chapter completions, then compete with friends on the leaderboard to see who's the most woke uncle or auntie.",
     animation: TrophyAnimation,
   },
   {
-    title: "AI Learning Assistant",
+    title: "A Community With Roles, Not Just Users",
     description:
-      "Too shy to ask a real person? Our built-in AI assistant is here 24/7 to clarify lesson content and answer your burning questions without judgment. It's like having a private tutor in your pocket.",
-    animation: RobotAnimation,
+      "Start as a learner, rate lessons, and leave reviews. Prove yourself and apply to become a Lesson Admin — create your own slang lessons and contribute to Singapore's growing Gen Alpha dictionary. Got the lobang? Share it.",
+    animation: CommunityAnimation,
     reverse: true,
   },
 ];
 
-const FeatureCard = ({ title, description, animation, reverse }: Feature) => {
+const FeatureCard = ({ title, description, animation, reverse, animationClassName }: Feature) => {
   return (
     <div
       className={`grid md:grid-cols-2 gap-12 items-center py-16 ${
@@ -56,7 +58,7 @@ const FeatureCard = ({ title, description, animation, reverse }: Feature) => {
         <Lottie
           animationData={animation}
           loop
-          className="w-64 h-64 md:w-80 md:h-80"
+          className={animationClassName ?? "w-64 h-64 md:w-80 md:h-80"}
         />
       </div>
       <div className="space-y-4 md:[direction:ltr]">
