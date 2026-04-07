@@ -1,12 +1,12 @@
 -- Users
 INSERT INTO user (id, username, email, password, usertype, streak, created_at, last_login, deactivated_at, profile_picture_url, last_streak_date)
 VALUES
-(1,'alice', 'alice@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 5, NOW(), NOW(), NULL, 'profile-pictures/1/c17e7aa0-806f-4687-96ec-d0bd14939da9.png', NOW()),
-(2,'adam', 'adam@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 10, NOW(), NOW(), NULL, 'profile-pictures/2/8dca1b5d-6102-4667-a8b4-6caae485dd5d.png', NOW()),
+(1,'alice', 'alice@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 5, NOW(), NOW(), NULL, 'profile-pictures/1/71f888cb-4f18-4603-8154-ad0f030a5d14.png', NOW()),
+(2,'adam', 'adam@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 10, NOW(), NOW(), NULL, 'profile-pictures/2/3b4e33fa-b7a6-4ad7-a29d-1263487cbd16.png', NOW() - INTERVAL 7 DAY),
 (3,'ahmad', 'ahmad@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 3, NOW(), NOW(), NULL, 'profile-pictures/3/2f9cda2d-78e1-4efa-b763-a152e7978297.png', NOW()),
-(4,'agent', 'agent@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 100, NOW(), NOW(), NULL, 'profile-pictures/4/b8547473-375b-4470-88bf-d651fd31db80.png', NOW()),
+(4,'agent', 'agent@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 100, NOW(), NOW(), NULL, 'profile-pictures/4/37ca33fd-bf28-4d59-8228-8591d18f97c5.png', NOW()),
 (5,'amos', 'amos@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 1, NOW(), NOW(), NULL, 'profile-pictures/5/fb3985db-fd04-4a6a-969a-9679d040198a.png', NOW()),
-(6,'alan', 'alan@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 1, NOW(), NOW(), NULL, NULL, NOW()),
+(6,'alan', 'alan@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 1, NOW(), NOW(), NULL, '833eed25-62ba-4c07-83b5-708aaede99d0.png', NOW()),
 (7,'alladin', 'alladin@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 1, NOW(), NOW(), NULL, NULL, NOW()),
 (8,'ah tan', 'ah_tan@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 0, NOW(), NOW(), NULL, NULL, NOW()),
 (9,'ameen', 'ameen@example.com', '$2a$12$90muibBVecVXM91atxjQpul1mWyQ/7wgucYzcpcnLSenPqa3AzSd6', 'user', 0, NOW(), NOW(), NULL, NULL, NOW()),
@@ -62,8 +62,8 @@ VALUES
 (7,'Old Defunct Slang Lesson', 'This lesson is about 1990 Slangs, exploring the language trends that defined a generation. Discover the origins, meanings, and cultural impact of now-defunct phrases, and see how they influenced modern slang and communication styles over the years.', 'approved', NOW(), NOW(), 12, NULL),
 (8,'NSFW Lesson HaHa', 'This lesson contains NSFW slang and explores the boundaries of language in online spaces. It discusses the reasons behind the use of explicit terms, their social implications, and the importance of context and audience awareness in digital communication.', 'suspended', NOW(), NULL, 13, NULL),
 (9,'Let\'s learn about Trump', 'This lesson examines controversial slang and references to public figures, focusing on the impact of language in shaping opinions. It discusses the intersection of pop culture, politics, and online discourse.', 'suspended', NOW(), NOW(), 13, NULL),
-(10,'NSFW Content Here', 'This lesson explores NSFW content and the reasons why certain slang terms are considered inappropriate.', 'approved', NOW(), NULL, 13, NULL),
-(11,'F*** C**** D***', 'This lesson investigates the use of explicit and censored language in modern slang, analyzing why such terms gain popularity.', 'approved', NOW(), NULL, 13, NULL),
+(10,'NSFW Content Here', 'This lesson explores NSFW content and the reasons why certain slang terms are considered inappropriate.', 'approved', NOW(), NULL, 11, NULL),
+(11,'F*** C**** D***', 'This lesson investigates the use of explicit and censored language in modern slang, analyzing why such terms gain popularity.', 'approved', NOW(), NULL, 11, NULL),
 -- Lesson Applications
 (12,'Common Gen-Alpha Phrases', 'Learn how to be Skibidi with the younger generation like never before. This lesson introduces common Gen-Alpha phrases, their meanings, and practical usage tips, helping you bridge the generational gap and communicate more effectively with youth.', 'pending', NOW(), NULL, 11, NULL),
 (13,'Time to be Sigma', 'Learn how to be Sigma with the younger generation like never before. This lesson explores the traits of the Sigma personality, offering insights into self-reliance, quiet confidence, and how to inspire others through subtle leadership and authenticity.', 'saved', NOW(), NULL, 11, NULL),
@@ -182,8 +182,11 @@ VALUES
 (15, 'Short Phrases Quiz', 'Fill in the blank: "Hi" and "OK" are examples of ___ used frequently by Gen-Alpha.', 'fill_blank', '{"A":"short phrases","B":"long phrases","C":"slang","D":"acronyms"}', 'A', NOW(), 15),
 (16, 'Long Phrases Quiz', 'Which is an example of a longer phrase commonly used online?', 'mcq', '{"A":"What is up?","B":"LOL","C":"Yeet","D":"GG"}', 'A', NOW(), 16),
 (17, 'Some Skibidi Quiz', 'True or False: Skibidi is a phrase used to connect with younger generations.', 'true_false', '{"A":"True","B":"False"}', 'A', NOW(), 17),
-(18, 'A', 'Fill in the blank: "__".', 'fill_blank', '{"A":"A","B":"B","C":"C","D":"D"}', 'A', NOW(), 18),
-(19, 'A', 'True or False:', 'true_false', '{"A":"True","B":"False"}', 'A', NOW(), 19);
+(18, 'Some Skibidi Quiz', 'True or False: Skibidi is a vulgarity', 'true_false', '{"A":"True","B":"False"}', 'B', NOW(), 17),
+(19, 'A', 'Fill in the blank: "__".', 'fill_blank', '{"A":"A","B":"B","C":"C","D":"D"}', 'A', NOW(), 18),
+(20, 'A', 'True or False:', 'true_false', '{"A":"True","B":"False"}', 'A', NOW(), 19),
+(21, 'One with the Sigma Quiz', 'Skibidi ___ toilet', 'fill_blank', '{"A":"Sigma","B":"Ligma","C":"Skibidi","D":"Bidi"}', 'A', NOW(), 5),
+(22, 'One with the Sigma Quiz', 'Sigma Male is same as Alpha Male', 'true_false', '{"A":"True","B":"False"}', 'B', NOW(), 5);
 
 -- User Card Progress
 INSERT INTO user_card_progress (user_id, card_id, completed_at)
@@ -199,7 +202,7 @@ VALUES
 (2, 7, NOW()), (2, 8, NOW()), (2, 9, NOW()), (2, 10, NOW()), (2, 11, NOW()), (2, 12, NOW()), (2, 13, NOW()),
 -- User 2 completed Lesson 2 (cards 14–17)
 (2, 14, NOW()), (2, 15, NOW()), (2, 16, NOW()), (2, 17, NOW()),
-(2,23,NOW()),
+(2,23,NOW()),(2,40,NOW()),(2,41,NOW()),
 
 -- User 3 completed Lesson 1 (cards 1–13)
 (3, 1, NOW()), (3, 2, NOW()), (3, 3, NOW()), (3, 4, NOW()), (3, 5, NOW()), (3, 6, NOW()),
@@ -261,6 +264,8 @@ VALUES
 (2, 1, 'completed', NOW(), NOW(), NOW()),
 (2, 2, 'completed', NOW(), NOW(), NOW()),
 (2, 3, 'in_progress', NOW(), NOW(), NOW()),
+(2, 10, 'in_progress', NOW(), NOW(), NOW()),
+(2, 11, 'in_progress', NOW(), NOW(), NOW()),
 (3, 1, 'completed', NOW(), NOW(), NOW()),
 (3, 2, 'completed', NOW(), NOW(), NOW()),
 (3, 5, 'completed', NOW(), NOW(), NOW()),
@@ -353,7 +358,7 @@ VALUES
 -- Report
 INSERT INTO report (title, description, status, type, remarks, reported_by, lesson_id, chapter_id, created_at, updated_at, last_update)
 VALUES
-('Lesson is inappropriate', 'There is vulgar content here', 'reported', 'high', NULL, 1, 10, 1, NOW(), NOW(), NULL),
+('Lesson is inappropriate', 'There is vulgar content here', 'unresolved', 'high', 'this is fine', 1, 10, 1, NOW(), NOW(), 'admin'),
 ('Vulgar Lesson', 'Disgusting lesson content', 'reported', 'critical', NULL, 2, 10, 2, NOW(), NOW(), NULL),
 ('Vulgar', 'Disgusting content', 'unresolved', 'high', 'This is fine', 3, 10, NULL, NOW(), NOW(), 'admin'),
 ('Not appropriate for people', 'Disgusting', 'reported', 'high', NULL, 1, 11, NULL, NOW(), NOW(), NULL),

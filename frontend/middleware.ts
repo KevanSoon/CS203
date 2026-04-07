@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
 	const jwtCookie = request.cookies.get("jwt")?.value;
 
 	let userType: string | null = null;
-
+	let id: Number | null = null;
 	// Parse the site-storage cookie
 
 	if (jwtCookie) {
@@ -13,8 +13,10 @@ export function middleware(request: NextRequest) {
 			const payload = jwtCookie.split(".")[1];
 			const decoded = JSON.parse(Buffer.from(payload, "base64").toString());
 			userType = decoded.usertype || "user";
+			id = decoded.id;
 		} catch {
 			userType = "user";
+			id = null;
 		}
 	}
 
@@ -48,14 +50,40 @@ export function middleware(request: NextRequest) {
 
 	// Not logged in - redirect to /
 	if (!isLoggedIn) {
-        const res = NextResponse.redirect(new URL("/", request.url));
-        res.cookies.set("flash_toast", "unauthenticated", {
-            path: "/",
-            maxAge: 10,
-            httpOnly: false,
-            sameSite: "lax",
-        });
-        return res;
+		const res = NextResponse.redirect(new URL("/", request.url));
+		res.cookies.set("flash_toast", "unauthenticated", {
+			path: "/",
+			maxAge: 10,
+			httpOnly: false,
+			sameSite: "lax",
+		});
+		return res;
+	}
+
+	const profileMatch = pathname.match(/^\/profile\/(.+)$/);
+	if (profileMatch) {
+		const profileUserId = profileMatch[1];
+		if (userType === "admin") {
+			if (String(id) !== profileUserId) {
+				const res = NextResponse.redirect(new URL(url, request.url));
+				res.cookies.set("flash_toast", "unauthorized", {
+					path: "/",
+					maxAge: 10,
+					httpOnly: false,
+					sameSite: "lax",
+				});
+				return res;
+			}
+		} else if (userType === "root") {
+			const res = NextResponse.redirect(new URL(url, request.url));
+			res.cookies.set("flash_toast", "unauthorized", {
+				path: "/",
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: "lax",
+			});
+			return res;
+		}
 	}
 
 	// Role-based redirects
