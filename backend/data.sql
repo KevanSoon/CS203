@@ -53,22 +53,22 @@ VALUES
 -- Lessons
 INSERT INTO lesson (id, title, description, status, created_at, deleted_at, created_by_id, lesson_picture_url)
 VALUES
-(1,'Intro to Gen-Alpha', 'Learn about Gen-Alpha slang and how deeply it can impact your daily life', 'approved', NOW(), NULL, 11, 'lesson-pictures/3616e872-c30e-4e00-aa55-c38e65f2ff79.png'),
-(2,'The Sigma Mindset', 'How to be the most Alpha Sigma around', 'approved', NOW(), NULL, 11, NULL),
-(3,'The Chill & Reactive Personality', 'Learn slang used by laid-back, observant, and reactive personalities, people who comment on situations rather than lead them.', 'approved', NOW(), NULL, 12, 'lesson-pictures/9faaa717-c892-4437-8e4f-2334c1df2605.jpg'),
-(4,'Competitive & Toxic Gamer Personality', 'Learn slang used in competitive gaming environments, including teamwork, trash talk, and high-pressure situations.', 'approved', NOW(), NULL, 12, 'lesson-pictures/d1a56879-62a9-4e1f-85d2-971324c922f9.png'),
-(5,'Gaming Slang & Culture', 'Learn slang commonly used in gaming communities, especially in competitive and online multiplayer environments.', 'approved', NOW(), NULL, 12, NULL),
-(6,'Streaming & Online Gamer Personality', 'Learn slang used in livestreams, gaming communities, and chat culture (e.g. Twitch, Discord, TikTok streams).', 'approved', NOW(), NULL, 12, NULL),
-(7,'Old Defunct Slang Lesson', 'This lesson is about 1990 Slangs', 'approved', NOW(), NOW(), 12, NULL), -- Deleted Lesson
-(8,'NSFW Lesson HaHa', 'I am a bad guy', 'suspended', NOW(), NULL, 13, NULL), -- Suspended Lesson
-(9,'Let\'s learn about Trump', 'I am a bad guy', 'suspended', NOW(), NOW(), 13, NULL), -- Deleted and Suspended Lesson
-(10,'NSFW Content Here', 'I am a bad guy', 'approved', NOW(), NULL, 13, NULL), -- Lesson to be Reported later on
-(11,'F*** C**** D***', 'K****** C****C***B* P*****', 'approved', NOW(), NULL, 13, NULL), -- Lesson to be Reported later on
+(1,'Intro to Gen-Alpha', 'Learn about Gen-Alpha slang and how deeply it can impact your daily life. This highly informative course explores the origins, usage, and cultural significance of modern slang, providing real-life examples and practical applications for all ages.', 'approved', NOW(), NULL, 11, 'lesson-pictures/3616e872-c30e-4e00-aa55-c38e65f2ff79.png'),
+(2,'The Sigma Mindset', 'Discover how to be the most Alpha Sigma around by mastering the Sigma mindset. This lesson delves into the psychology of independence, self-improvement, and nonconformity, offering actionable strategies and real-world scenarios to help you stand out.', 'approved', NOW(), NULL, 11, NULL),
+(3,'The Chill & Reactive Personality', 'Learn slang used by laid-back, observant, and reactive personalities—people who comment on situations rather than lead them. This lesson covers the nuances of chill communication, social observation, and how to navigate group dynamics with ease.', 'approved', NOW(), NULL, 12, 'lesson-pictures/9faaa717-c892-4437-8e4f-2334c1df2605.jpg'),
+(4,'Competitive & Toxic Gamer Personality', 'Learn slang used in competitive gaming environments, including teamwork, trash talk, and high-pressure situations. Explore the language of esports, the psychology behind competitive banter, and how to thrive in both friendly and intense matches.', 'approved', NOW(), NULL, 12, 'lesson-pictures/d1a56879-62a9-4e1f-85d2-971324c922f9.png'),
+(5,'Gaming Slang & Culture', 'Learn slang commonly used in gaming communities, especially in competitive and online multiplayer environments. This lesson covers the evolution of gaming language, its impact on player identity, and how to communicate effectively with fellow gamers.', 'approved', NOW(), NULL, 12, NULL),
+(6,'Streaming & Online Gamer Personality', 'Learn slang used in livestreams, gaming communities, and chat culture (e.g., Twitch, Discord, TikTok streams). Understand the fast-paced world of online interaction, meme culture, and how digital slang shapes the way we connect and entertain audiences.', 'approved', NOW(), NULL, 12, NULL),
+(7,'Old Defunct Slang Lesson', 'This lesson is about 1990 Slangs, exploring the language trends that defined a generation. Discover the origins, meanings, and cultural impact of now-defunct phrases, and see how they influenced modern slang and communication styles over the years.', 'approved', NOW(), NOW(), 12, NULL),
+(8,'NSFW Lesson HaHa', 'This lesson contains NSFW slang and explores the boundaries of language in online spaces. It discusses the reasons behind the use of explicit terms, their social implications, and the importance of context and audience awareness in digital communication.', 'suspended', NOW(), NULL, 13, NULL),
+(9,'Let\'s learn about Trump', 'This lesson examines controversial slang and references to public figures, focusing on the impact of language in shaping opinions. It discusses the intersection of pop culture, politics, and online discourse.', 'suspended', NOW(), NOW(), 13, NULL),
+(10,'NSFW Content Here', 'This lesson explores NSFW content and the reasons why certain slang terms are considered inappropriate.', 'approved', NOW(), NULL, 13, NULL),
+(11,'F*** C**** D***', 'This lesson investigates the use of explicit and censored language in modern slang, analyzing why such terms gain popularity.', 'approved', NOW(), NULL, 13, NULL),
 -- Lesson Applications
-(12,'Common Gen-Alpha Phrases', 'Learn how to be Skibidi with the younger generation like never before', 'pending', NOW(), NULL, 11, NULL),
-(13,'Time to be Sigma', 'Learn how to be Sigma with the younger generation like never before', 'saved', NOW(), NULL, 11, NULL),
-(14,'Failure of a Lesson', 'This lesson fails =)', 'rejected', NOW(), NULL, 11, NULL), -- Rejected Application
-(15,'Failure Content', 'This content fails =)', 'rejected', NOW(), NULL, 11, NULL); -- Rejected Application
+(12,'Common Gen-Alpha Phrases', 'Learn how to be Skibidi with the younger generation like never before. This lesson introduces common Gen-Alpha phrases, their meanings, and practical usage tips, helping you bridge the generational gap and communicate more effectively with youth.', 'pending', NOW(), NULL, 11, NULL),
+(13,'Time to be Sigma', 'Learn how to be Sigma with the younger generation like never before. This lesson explores the traits of the Sigma personality, offering insights into self-reliance, quiet confidence, and how to inspire others through subtle leadership and authenticity.', 'saved', NOW(), NULL, 11, NULL),
+(14,'Failure of a Lesson', 'This lesson fails =) and serves as an example of what not to do when creating educational content. It highlights common pitfalls, such as lack of clarity', 'rejected', NOW(), NULL, 11, NULL),
+(15,'Failure Content', 'This content fails =) and demonstrates the importance of thoughtful lesson design.', 'rejected', NOW(), NULL, 11, NULL);
 
 -- Chapters
 INSERT INTO chapter (id, title, description, lesson_id, created_at) VALUES
