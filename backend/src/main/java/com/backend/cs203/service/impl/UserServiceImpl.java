@@ -323,17 +323,17 @@ public class UserServiceImpl implements UserService {
         String viewerUsername = requireUsername();
 
         User viewer = userRepository.findByUsername(viewerUsername)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
         User target = userRepository.findById(targetId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (target.getUsertype() != User.UserType.user) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new RuntimeException("User not found");
         }
 
         if (target.getDeactivatedAt() != null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new RuntimeException("User not found");
         }
 
         List<User> targetFriends = getAcceptedFriends(target.getId());
