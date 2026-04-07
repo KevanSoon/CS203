@@ -50,9 +50,11 @@ api.interceptors.response.use(
 );
 
 const showErrorToast = (response: AxiosResponse<ApiErrorBody>) => {
-  if (response?.data?.message){
-    toast.error(response.data.message)
-  }else{
+  if (response?.data?.message) {
+    const raw = response.data.message;
+    const cleaned = raw.replace(/^\d{3}\s+[A-Z_]+\s+"?/, "").replace(/"$/, "");
+    toast.error(cleaned);
+  } else {
     toast.error("Request failed. Please try again later.");
   }
 };
