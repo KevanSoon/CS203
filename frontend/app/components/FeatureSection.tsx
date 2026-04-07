@@ -14,6 +14,7 @@ interface Feature {
   description: string;
   animation: object;
   reverse?: boolean;
+  animationClassName?: string;
 }
 
 const features: Feature[] = [
@@ -29,6 +30,7 @@ const features: Feature[] = [
       'Every lesson goes through a three-layer trust pipeline: created by vetted Lesson Admins, approved by a Root moderator, and cross-checked by AI that scans real news sources to filter out "AI slop." No hallucinated definitions, no made-up slang.',
     animation: LessonAnimation,
     reverse: true,
+    animationClassName: "w-80 h-80 md:w-[28rem] md:h-[28rem]",
   },
   {
     title: "Structured Learning That Actually Sticks",
@@ -45,7 +47,7 @@ const features: Feature[] = [
   },
 ];
 
-const FeatureCard = ({ title, description, animation, reverse }: Feature) => {
+const FeatureCard = ({ title, description, animation, reverse, animationClassName }: Feature) => {
   return (
     <div
       className={`grid md:grid-cols-2 gap-12 items-center py-16 ${
@@ -56,7 +58,7 @@ const FeatureCard = ({ title, description, animation, reverse }: Feature) => {
         <Lottie
           animationData={animation}
           loop
-          className="w-64 h-64 md:w-80 md:h-80"
+          className={animationClassName ?? "w-64 h-64 md:w-80 md:h-80"}
         />
       </div>
       <div className="space-y-4 md:[direction:ltr]">
