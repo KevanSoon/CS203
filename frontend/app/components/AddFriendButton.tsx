@@ -43,7 +43,7 @@ export default function AddFriendButton({
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/friendship/outgoing/pending/${targetUserId}`, {
+      const res = await fetch(`/api/friendship/pending/outgoing/${targetUserId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to cancel request");
@@ -59,29 +59,13 @@ export default function AddFriendButton({
 
   if (initialSent) {
     return (
-      <div
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        className="relative inline-block"
+      <button
+        onClick={handleCancel}
+        disabled={loading}
+        className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
       >
-        <span
-          className={`text-xs font-semibold text-amber-600 transition-opacity duration-200 ${
-            hover ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          Request Sent
-        </span>
-
-        <button
-          onClick={handleCancel}
-          disabled={loading}
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600 transition-opacity duration-200 hover:bg-red-100 ${
-            hover ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          {loading ? "..." : "Cancel"}
-        </button>
-      </div>
+        {loading ? "Cancelling..." : "Cancel Request"}
+      </button>
     );
   }
 
