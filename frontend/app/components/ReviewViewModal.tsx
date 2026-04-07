@@ -59,7 +59,6 @@ export default function ViewReviewsModal({
     fetchReviews();
   }, [lessonId]);
 
-  // Check scroll arrows
   useEffect(() => {
     const el = sliderRef.current;
     if (!el) return;
@@ -119,7 +118,6 @@ export default function ViewReviewsModal({
     });
   };
 
-  // Sync dot indicator with scroll
   useEffect(() => {
     const el = sliderRef.current;
     if (!el) return;
@@ -134,6 +132,23 @@ export default function ViewReviewsModal({
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
   }, [reviews]);
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < 640;
+    if (!isMobile) return;
+
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   const getInitial = (username?: string) =>
     (username?.trim()?.[0] || "?").toUpperCase();
@@ -159,7 +174,7 @@ export default function ViewReviewsModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-5xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
+        className="relative w-full max-w-5xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -174,6 +189,9 @@ export default function ViewReviewsModal({
                 {allReviews.length !== 1 ? "s" : ""}
               </p>
             )}
+            {loading && (
+              <div className="mt-1 h-4 w-40 rounded bg-muted animate-pulse" />
+            )}
           </div>
 
           <button
@@ -185,16 +203,49 @@ export default function ViewReviewsModal({
           </button>
         </div>
 
-        <div className="p-5 sm:p-6">
-          {/* Loading */}
+        <div className="p-5 sm:p-6 overflow-y-auto">
+          {/* Loading — mirrors the loaded layout exactly but without borders/dividers */}
           {loading && (
-            <div className="flex flex-col gap-3 py-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-[160px] rounded-2xl bg-muted animate-pulse"
-                />
-              ))}
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Summary skeleton */}
+              <div className="flex-shrink-0 lg:w-48 flex flex-col items-center lg:items-start gap-3">
+                <div className="h-14 w-20 rounded-lg bg-muted animate-pulse" />
+                <div className="h-5 w-28 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-12 rounded bg-muted animate-pulse" />
+                <div className="space-y-1.5 mt-1 w-full">
+                  {[5, 4, 3, 2, 1].map((i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-muted animate-pulse" />
+                      <div className="w-3 h-3 rounded bg-muted animate-pulse" />
+                      <div className="flex-1 h-2 rounded-full bg-muted animate-pulse" />
+                      <div className="w-4 h-3 rounded bg-muted animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider (Hidden during loading to avoid ghost lines) */}
+              <div className="hidden lg:block w-px bg-transparent self-stretch" />
+
+              {/* Cards skeleton */}
+              <div className="flex-1 flex gap-3 overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="min-w-[300px] rounded-2xl bg-muted/30 p-4 flex flex-col gap-3 h-[220px]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-11 w-11 rounded-full bg-muted animate-pulse flex-shrink-0" />
+                      <div className="flex flex-col gap-1.5 flex-1">
+                        <div className="h-3.5 w-24 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-16 rounded bg-muted animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+                    <div className="h-[90px] rounded-xl bg-muted animate-pulse" />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -264,9 +315,7 @@ export default function ViewReviewsModal({
 
               {/* Carousel section */}
               <div className="flex-1 min-w-0 flex flex-col gap-3">
-                {/* Slider */}
                 <div className="relative">
-                  {/* Desktop left arrow — only when scrollable */}
                   {canScrollLeft && (
                     <button
                       onClick={() => scrollByCard("left")}
@@ -354,7 +403,6 @@ export default function ViewReviewsModal({
                     ))}
                   </div>
 
-                  {/* Desktop right arrow — only when scrollable */}
                   {canScrollRight && (
                     <button
                       onClick={() => scrollByCard("right")}
@@ -367,7 +415,7 @@ export default function ViewReviewsModal({
                   )}
                 </div>
 
-                {/* Mobile controls — only when scrollable */}
+                {/* Mobile controls */}
                 {(canScrollLeft || canScrollRight) && (
                   <div className="flex sm:hidden items-center justify-between mt-1">
                     <button
