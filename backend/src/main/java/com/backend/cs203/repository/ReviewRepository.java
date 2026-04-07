@@ -14,12 +14,10 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
    boolean existsByReviewedByIdAndLessonId(Integer userId, Integer lessonId);
 
-
-   @Query("SELECT AVG(r.rating) FROM Review r WHERE r.lesson.id = :lessonId")
+   @Query("SELECT AVG(r.rating) FROM Review r WHERE r.lesson.id = :lessonId AND r.reviewedBy.deactivatedAt IS NULL")
    Double findAverageRatingByLessonId(Integer lessonId);
 
-
-   @Query("SELECT COUNT(r) FROM Review r WHERE r.lesson.id = :lessonId")
+   @Query("SELECT COUNT(r) FROM Review r WHERE r.lesson.id = :lessonId AND r.reviewedBy.deactivatedAt IS NULL")
    Integer findRatingCountByLessonId(Integer lessonId);
 
    Optional<Review> findByReviewedByIdAndLessonId(Integer userId, Integer lessonId);

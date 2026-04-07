@@ -587,6 +587,7 @@ public class LessonServiceImpl implements LessonService {
         return reviewRepository
                 .findByLessonIdOrderByCreatedAtDesc(lessonId)
                 .stream()
+                .filter(r -> r.getReviewedBy().getDeactivatedAt() == null)
                 .map(r -> {
                     User user = r.getReviewedBy();
                     String avatarUrl = user.getProfilePictureUrl() != null
