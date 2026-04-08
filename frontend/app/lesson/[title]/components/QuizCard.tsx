@@ -157,7 +157,6 @@ export const QuizCard = ({
     const handleNext = () => {
         if (currentIndex + 1 >= total) {
             const finalScore = score + (isCorrect ? 1 : 0);
-            console.log(finalScore, total, score, isCorrect)
             const percentage = Math.min(Math.round((finalScore / total) * 100),100);
 
             if (!previewMode) {
