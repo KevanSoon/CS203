@@ -171,8 +171,7 @@ export const QuizCard = ({
 
     const handleNext = () => {
         if (currentIndex + 1 >= total) {
-            const finalScore = score + (isCorrect ? 1 : 0);
-            const percentage = Math.min(Math.round((finalScore / total) * 100),100);
+            const percentage = Math.min(Math.round((score / total) * 100),100);
 
             if (!previewMode) {
                 api.post("/api/quiz", {
