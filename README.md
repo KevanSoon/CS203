@@ -84,6 +84,97 @@ To further support learning:
 
 ---
 
+# backend-ai
+
+FastAPI service powering the Gen Alpha slang chatbot. Uses a LangGraph agent with RAG retrieval, long-term memory, and multi-route query handling.
+
+## LangGraph Graph
+
+### State
+
+```python
+class GraphState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]  # conversation history
+    route: str        # classification result: "singlish" | "video" | "general"
+    rag_context: str  # retrieved documents from the vector store
+```
+
+### Graph Flow
+
+```
+START
+  │
+  ▼
+┌─────────┐
+│ classify │  ── classifies query into: singlish | video | general
+└─────────┘
+  │ (conditional: all routes → run_rag)
+  ▼
+┌─────────┐
+│ run_rag  │  ── hybrid semantic + full-text search against Supabase vector store
+└─────────┘
+  │ (conditional: branches on stored route)
+  ├── singlish ──► ┌───────────────────┐
+  │                │ singlish_translate │ ── explains slang in Singlish style
+  │                └───────────────────┘
+  │                         │
+  ├── video ────► ┌──────────────┐      ▼
+  │               │ video_search  │ ── Tavily search on YouTube/TikTok → markdown table
+  │               └──────────────┘
+  │                         │
+  └── general ──► ┌────────────┐        ▼
+                  │ call_model  │ ── general slang Q&A with long-term memory
+                  └────────────┘
+                           │
+                           ▼
+                          END
+```
+
+### Nodes
+
+| Node | Description |
+|------|-------------|
+| `classify` | Calls Ollama to classify the user query as `singlish`, `video`, or `general`. Stores result in `state["route"]`. |
+| `run_rag` | Shared retrieval step for all routes. Embeds the user query via HuggingFace API and calls `hybrid_search_filtered` RPC on Supabase (top 5 `card`-type documents). Result stored in `state["rag_context"]`. |
+| `singlish_translate` | Uses RAG context to explain the slang term in Singlish style (lah, leh, lor, etc.) with three sections: *What it means*, *When to use it*, *Example*. |
+| `video_search` | Calls Tavily to find YouTube/TikTok videos about the slang term. Returns a markdown table of results. |
+| `call_model` | General slang explanation using RAG context. Reads user memories from PostgreSQL store (`namespace = ("memories", user_id)`) and appends the current message as a new memory. |
+
+### Edges
+
+| From | To | Type | Condition |
+|------|----|------|-----------|
+| `START` | `classify` | Direct | — |
+| `classify` | `run_rag` | Conditional | All three routes map to `run_rag` |
+| `run_rag` | `singlish_translate` | Conditional | `route == "singlish"` |
+| `run_rag` | `video_search` | Conditional | `route == "video"` |
+| `run_rag` | `call_model` | Conditional | `route == "general"` |
+| `singlish_translate` | `END` | Direct | — |
+| `video_search` | `END` | Direct | — |
+| `call_model` | `END` | Direct | — |
+
+### Persistence
+
+- **Checkpointer** — `AsyncPostgresSaver` (Supabase): persists full conversation history per `thread_id`.
+- **Store** — `AsyncPostgresStore` (Supabase): persists long-term user memories per `user_id`, used by `call_model`.
+
+### External Services
+
+| Service | Purpose |
+|---------|---------|
+| Ollama | Local LLM for classification and response generation |
+| Supabase | Vector store (pgvector) + PostgreSQL for checkpointing and memory |
+| HuggingFace API | Text embedding for RAG queries |
+| Tavily | Video search (YouTube, TikTok) |
+
+## Key Files
+
+- [graph/builder.py](graph/builder.py) — graph definition, all node implementations, `build_graph_with_memory()`
+- [graph/tools.py](graph/tools.py) — `rag_search` and `tavily_video_search` LangChain tools
+- [app.py](app.py) — FastAPI app, graph initialization, `/chat` endpoint
+
+---
+
 ## 🚀 Getting Started
 
 ### ✅ Prerequisites
