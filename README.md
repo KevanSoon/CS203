@@ -71,7 +71,7 @@ To further support learning:
 - Supabase Storage  
 
 ### AI Services
-- Ollama (LLM for chatbot & explanations)  
+- Ollama Cloud gpt-oss-120B (LLM for chatbot & explanations)  
 - `google/embeddinggemma-300M` (embedding model)  
 - Supabase RPC for Hybrid Search (Keyword + Semantic via RRF)  
 - DeepEval (LLM-as-a-judge for detecting low-quality AI content)  
@@ -162,7 +162,7 @@ START
 
 | Service | Purpose |
 |---------|---------|
-| Ollama | Local LLM for classification and response generation |
+| Ollama | Cloud LLM for classification and response generation |
 | Supabase | Vector store (pgvector) + PostgreSQL for checkpointing and memory |
 | HuggingFace API | Text embedding for RAG queries |
 | Tavily | Video search (YouTube, TikTok) |
