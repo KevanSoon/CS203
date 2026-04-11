@@ -84,11 +84,10 @@ To further support learning:
 
 ---
 
-# backend-ai
+## LangGraph Graph
 
 FastAPI service powering the Gen Alpha slang chatbot. Uses a LangGraph agent with RAG retrieval, long-term memory, and multi-route query handling.
 
-## LangGraph Graph
 
 ### State
 
@@ -134,7 +133,7 @@ START
 
 | Node | Description |
 |------|-------------|
-| `classify` | Calls Ollama to classify the user query as `singlish`, `video`, or `general`. Stores result in `state["route"]`. |
+| `classify` | Calls Ollama Cloud gpt-oss-120B to classify the user query as `singlish`, `video`, or `general`. Stores result in `state["route"]`. |
 | `run_rag` | Shared retrieval step for all routes. Embeds the user query via HuggingFace API and calls `hybrid_search_filtered` RPC on Supabase (top 5 `card`-type documents). Result stored in `state["rag_context"]`. |
 | `singlish_translate` | Uses RAG context to explain the slang term in Singlish style (lah, leh, lor, etc.) with three sections: *What it means*, *When to use it*, *Example*. |
 | `video_search` | Calls Tavily to find YouTube/TikTok videos about the slang term. Returns a markdown table of results. |
@@ -162,7 +161,7 @@ START
 
 | Service | Purpose |
 |---------|---------|
-| Ollama | Cloud LLM for classification and response generation |
+| Ollama Cloud LLM | gpt-oss-120B for classification and response generation |
 | Supabase | Vector store (pgvector) + PostgreSQL for checkpointing and memory |
 | HuggingFace API | Text embedding for RAG queries |
 | Tavily | Video search (YouTube, TikTok) |
@@ -183,7 +182,7 @@ START
 - Java 21  
 - MySQL  
 - Python 3.10+  
-- Ollama  
+- Ollama Cloud LLM gpt-oss-120B
 - Supabase Project  
 
 ---
@@ -250,7 +249,7 @@ SUPABASE_DB_URI=your_supabase_uri
 EMBEDDING_API_URL=your_embedding_api
 HF_TOKEN=your_huggingface_token
 
-OLLAMA_MODEL=llama3
+OLLAMA_MODEL=gpt-oss-120B
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_API_KEY=
 
