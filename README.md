@@ -100,33 +100,27 @@ class GraphState(TypedDict):
 
 ### Graph Flow
 
-```
-START
-  │
-  ▼
-┌─────────┐
-│ classify │  ── classifies query into: singlish | video | general
-└─────────┘
-  │ (conditional: all routes → run_rag)
-  ▼
-┌─────────┐
-│ run_rag  │  ── hybrid semantic + full-text search against Supabase vector store
-└─────────┘
-  │ (conditional: branches on stored route)
-  ├── singlish ──► ┌───────────────────┐
-  │                │ singlish_translate │ ── explains slang in Singlish style
-  │                └───────────────────┘
-  │                         │
-  ├── video ────► ┌──────────────┐      ▼
-  │               │ video_search  │ ── Tavily search on YouTube/TikTok → markdown table
-  │               └──────────────┘
-  │                         │
-  └── general ──► ┌────────────┐        ▼
-                  │ call_model  │ ── general slang Q&A with long-term memory
-                  └────────────┘
-                           │
-                           ▼
-                          END
+```mermaid
+flowchart TD
+    START([START]) --> classify
+
+    classify["classify\nClassifies query:\nsinglish | video | general"]
+
+    classify -->|all routes| run_rag
+
+    run_rag["run_rag\nHybrid search against\nSupabase vector store"]
+
+    run_rag -->|route == singlish| singlish_translate
+    run_rag -->|route == video| video_search
+    run_rag -->|route == general| call_model
+
+    singlish_translate["singlish_translate\nExplains slang in\nSinglish style"]
+    video_search["video_search\nTavily search on\nYouTube / TikTok"]
+    call_model["call_model\nGeneral slang Q&A\nwith long-term memory"]
+
+    singlish_translate --> END([END])
+    video_search --> END
+    call_model --> END
 ```
 
 ### Nodes
@@ -166,11 +160,51 @@ START
 | HuggingFace API | Text embedding for RAG queries |
 | Tavily | Video search (YouTube, TikTok) |
 
+## Slang Verification Pipeline
+
+The `/verify` endpoint exposes an AI-powered pipeline that determines whether a submitted Gen Alpha slang term is genuine or AI-generated slop.
+
+### How It Works
+
+```mermaid
+flowchart TD
+    A([POST /verify]) --> B
+
+    B["crawl_evidence\nTavily advanced search\nfor slang term + gen alpha slang"]
+
+    B --> C["DeepEval GEval\nSlangAuthenticity\nLLM-as-a-judge via Ollama Cloud gpt-oss-120B\nscores definition against web evidence"]
+
+    C --> D{"Score"}
+
+    D -->|">= 0.7"| V1["real"]
+    D -->|">= 0.4"| V2["likely_real"]
+    D -->|">= 0.2"| V3["unverified"]
+    D -->|"< 0.2"| V4["ai_slop"]
+
+    V1 --> END([VerifyResponse\nslang_term, verdict, confidence, evidence, reasoning])
+    V2 --> END
+    V3 --> END
+    V4 --> END
+```
+
+### Verification Files
+
+| File | Description |
+|------|-------------|
+| `verification/__init__.py` | End-to-end `verify_content()` orchestrator |
+| `verification/searcher.py` | Tavily web crawl — fetches evidence sources for the slang term |
+| `verification/evaluator.py` | DeepEval `GEval` metric with `OllamaJudgeLLM` as the judge |
+| `verification/models.py` | Pydantic schemas: `VerifyRequest`, `VerifyResponse`, `Evidence` |
+| `verification/config.py` | Env config: `VERDICT_THRESHOLD`, Ollama and Tavily credentials |
+
+---
+
 ## Key Files
 
 - [graph/builder.py](graph/builder.py) — graph definition, all node implementations, `build_graph_with_memory()`
 - [graph/tools.py](graph/tools.py) — `rag_search` and `tavily_video_search` LangChain tools
-- [app.py](app.py) — FastAPI app, graph initialization, `/chat` endpoint
+- [app.py](app.py) — FastAPI app, graph initialization, `/chat` and `/verify` endpoints
+- [verification/](verification/) — slang authenticity verification pipeline
 
 ---
 
