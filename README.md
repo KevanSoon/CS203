@@ -101,26 +101,20 @@ class GraphState(TypedDict):
 ### Graph Flow
 
 ```mermaid
-flowchart TD
+flowchart LR
     START([START]) --> classify
 
-    classify["classify\nClassifies query:\nsinglish | video | general"]
+    classify["classify<br/>singlish | video | general"]
 
     classify -->|all routes| run_rag
 
-    run_rag["run_rag\nHybrid search against\nSupabase vector store"]
+    run_rag["run_rag<br/>Hybrid search<br/>Supabase vector store"]
 
-    run_rag -->|route == singlish| singlish_translate
-    run_rag -->|route == video| video_search
-    run_rag -->|route == general| call_model
+    run_rag -->|singlish| singlish_translate["singlish_translate<br/>Singlish style explanation"]
+    run_rag -->|video| video_search["video_search<br/>Tavily YouTube / TikTok"]
+    run_rag -->|general| call_model["call_model<br/>Q&A with long-term memory"]
 
-    singlish_translate["singlish_translate\nExplains slang in\nSinglish style"]
-    video_search["video_search\nTavily search on\nYouTube / TikTok"]
-    call_model["call_model\nGeneral slang Q&A\nwith long-term memory"]
-
-    singlish_translate --> END([END])
-    video_search --> END
-    call_model --> END
+    singlish_translate & video_search & call_model --> END([END])
 ```
 
 ### Nodes
@@ -167,24 +161,17 @@ The `/verify` endpoint exposes an AI-powered pipeline that determines whether a 
 ### How It Works
 
 ```mermaid
-flowchart TD
-    A([POST /verify]) --> B
-
-    B["crawl_evidence\nTavily advanced search\nfor slang term + gen alpha slang"]
-
-    B --> C["DeepEval GEval\nSlangAuthenticity\nLLM-as-a-judge via Ollama Cloud gpt-oss-120B\nscores definition against web evidence"]
-
+flowchart LR
+    A([POST /verify]) --> B["crawl_evidence<br/>Tavily web search for slang term"]
+    B --> C["DeepEval GEval<br/>LLM-as-a-judge<br/>Ollama gpt-oss-120B"]
     C --> D{"Score"}
 
-    D -->|">= 0.7"| V1["real"]
-    D -->|">= 0.4"| V2["likely_real"]
-    D -->|">= 0.2"| V3["unverified"]
-    D -->|"< 0.2"| V4["ai_slop"]
+    D -->|">= 0.7"| V1[real]
+    D -->|">= 0.4"| V2[likely_real]
+    D -->|">= 0.2"| V3[unverified]
+    D -->|"< 0.2"| V4[ai_slop]
 
-    V1 --> END([VerifyResponse\nslang_term, verdict, confidence, evidence, reasoning])
-    V2 --> END
-    V3 --> END
-    V4 --> END
+    V1 & V2 & V3 & V4 --> END([VerifyResponse])
 ```
 
 ### Verification Files
