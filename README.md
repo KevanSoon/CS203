@@ -127,19 +127,6 @@ flowchart LR
 | `video_search` | Calls Tavily to find YouTube/TikTok videos about the slang term. Returns a markdown table of results. |
 | `call_model` | General slang explanation using RAG context. Reads user memories from PostgreSQL store (`namespace = ("memories", user_id)`) and appends the current message as a new memory. |
 
-### Edges
-
-| From | To | Type | Condition |
-|------|----|------|-----------|
-| `START` | `classify` | Direct | — |
-| `classify` | `run_rag` | Conditional | All three routes map to `run_rag` |
-| `run_rag` | `singlish_translate` | Conditional | `route == "singlish"` |
-| `run_rag` | `video_search` | Conditional | `route == "video"` |
-| `run_rag` | `call_model` | Conditional | `route == "general"` |
-| `singlish_translate` | `END` | Direct | — |
-| `video_search` | `END` | Direct | — |
-| `call_model` | `END` | Direct | — |
-
 ### Persistence
 
 - **Checkpointer** — `AsyncPostgresSaver` (Supabase): persists full conversation history per `thread_id`.
